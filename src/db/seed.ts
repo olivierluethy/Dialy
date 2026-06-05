@@ -1,0 +1,197 @@
+import { getDb } from '@/db/database';
+import { SEED_FOODS } from '@/data/seedFoods';
+import { SEED_ARTICLES } from '@/data/seedArticles';
+import { estimateBgCurve } from '@/utils/sportCurve';
+import { carbsToBe } from '@/utils/format';
+import { nowIso, uuidv4 } from '@/utils/id';
+
+/**
+ * Idempotently seed read-mostly content (foods, articles) and — on first run
+ * only — a couple of example diary days so every screen looks populated.
+ *
+ * Foods/articles are upserted by their stable seed id, so re-running is safe
+ * and mirrors how a real "sync down from the central DB" would behave.
+ */
+export async function seedDatabase(): Promise<void> {
+  const db = await getDb();
+  const ts = nowIso();
+
+  await db.withTransactionAsync(async () => {
+    for (const f of SEED_FOODS) {
+      await db.runAsync(
+        `INSERT INTO foods
+           (id, user_id, created_at, updated_at, deleted_at, name, food_group,
+            carbs_per_100g, sugar_per_100g, fat_per_100g, glycemic_index, portions)
+         VALUES (?,?,?,?,NULL,?,?,?,?,?,?,?)
+         ON CONFLICT(id) DO UPDATE SET
+           name=excluded.name, food_group=excluded.food_group,
+           carbs_per_100g=excluded.carbs_per_100g, sugar_per_100g=excluded.sugar_per_100g,
+           fat_per_100g=excluded.fat_per_100g, glycemic_index=excluded.glycemic_index,
+           portions=excluded.portions, updated_at=excluded.updated_at`,
+        [
+          f.id,
+          null,
+          ts,
+          ts,
+          f.name,
+          f.food_group,
+          f.carbs_per_100g,
+          f.sugar_per_100g,
+          f.fat_per_100g,
+          f.glycemic_index,
+          JSON.stringify(f.portions),
+        ]
+      );
+    }
+
+    for (const a of SEED_ARTICLES) {
+      await db.runAsync(
+        `INSERT INTO articles
+           (id, user_id, created_at, updated_at, deleted_at, category, title, body,
+            read_minutes, published_at, diabetes_type)
+         VALUES (?,?,?,?,NULL,?,?,?,?,?,?)
+         ON CONFLICT(id) DO UPDATE SET
+           category=excluded.category, title=excluded.title, body=excluded.body,
+           read_minutes=excluded.read_minutes, published_at=excluded.published_at,
+           diabetes_type=excluded.diabetes_type, updated_at=excluded.updated_at`,
+        [
+          a.id,
+          null,
+          ts,
+          ts,
+          a.category,
+          a.title,
+          a.body,
+          a.read_minutes,
+          a.published_at,
+          a.diabetes_type,
+        ]
+      );
+    }
+  });
+
+  await seedExampleDiary();
+}
+
+/** One-time example diary content so the Tagebuch isn't empty on first launch. */
+async function seedExampleDiary(): Promise<void> {
+  const db = await getDb();
+  const existing = await db.getFirstAsync<{ c: number }>(
+    'SELECT COUNT(*) as c FROM meal_entries'
+  );
+  if ((existing?.c ?? 0) > 0) return; // already populated
+
+  const ts = nowIso();
+  const at = (daysAgo: number, h: number, m: number): string => {
+    const d = new Date();
+    d.setDate(d.getDate() - daysAgo);
+    d.setHours(h, m, 0, 0);
+    return d.toISOString();
+  };
+
+  const meals: Array<{
+    name: string;
+    grams: number;
+    carbs: number;
+    sugar: number;
+    fat: number;
+    gi: number;
+    photo: boolean;
+    when: string;
+  }> = [
+    {
+      name: 'Haferflocken mit Beeren',
+      grams: 80,
+      carbs: 36,
+      sugar: 8,
+      fat: 6,
+      gi: 55,
+      photo: true,
+      when: at(0, 7, 45),
+    },
+    {
+      name: 'Vollkornbrot mit Käse',
+      grams: 100,
+      carbs: 41,
+      sugar: 3,
+      fat: 12,
+      gi: 50,
+      photo: false,
+      when: at(0, 12, 30),
+    },
+    {
+      name: 'Apfel',
+      grams: 150,
+      carbs: 21,
+      sugar: 15,
+      fat: 0.3,
+      gi: 38,
+      photo: false,
+      when: at(1, 16, 0),
+    },
+    {
+      name: 'Teigwaren mit Gemüse',
+      grams: 250,
+      carbs: 75,
+      sugar: 4,
+      fat: 8,
+      gi: 50,
+      photo: true,
+      when: at(1, 19, 15),
+    },
+  ];
+
+  for (const meal of meals) {
+    await db.runAsync(
+      `INSERT INTO meal_entries
+         (id, user_id, created_at, updated_at, deleted_at, food_id, name, grams,
+          carbs_g, sugar_g, fat_g, glycemic_index, be, photo_uri, logged_at)
+       VALUES (?,?,?,?,NULL,NULL,?,?,?,?,?,?,?,?,?)`,
+      [
+        uuidv4(),
+        null,
+        ts,
+        ts,
+        meal.name,
+        meal.grams,
+        meal.carbs,
+        meal.sugar,
+        meal.fat,
+        meal.gi,
+        carbsToBe(meal.carbs),
+        meal.photo ? 'seed://photo' : null,
+        meal.when,
+      ]
+    );
+  }
+
+  const curve = estimateBgCurve({
+    activity: 'wandern',
+    durationMin: 90,
+    bgBeforeMmol: 7.4,
+  });
+  await db.runAsync(
+    `INSERT INTO sport_entries
+       (id, user_id, created_at, updated_at, deleted_at, activity, duration_min,
+        bg_before_mmol, carbs_before_g, carbs_before_hours, carbs_after_g,
+        carbs_after_hours, pump_reduction_pct, pump_reduction_min, bg_curve, logged_at)
+     VALUES (?,?,?,?,NULL,?,?,?,?,?,?,?,?,?,?,?)`,
+    [
+      uuidv4(),
+      null,
+      ts,
+      ts,
+      'wandern',
+      90,
+      7.4,
+      20,
+      0.5,
+      15,
+      1.5,
+      30,
+      60,
+      JSON.stringify(curve),
+      at(1, 14, 0),
+    ]
+  );
+}

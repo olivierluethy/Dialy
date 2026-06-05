@@ -1,0 +1,361 @@
+import type { Food } from '@/types/models';
+
+/**
+ * Seed food database (~per 100 g). Values are approximate, common-knowledge
+ * nutrition figures for typical Swiss foods — good enough for an estimate,
+ * not a clinical reference. Glycaemic index is a property of the food and is
+ * NOT scaled by portion size.
+ *
+ * `id` values are stable string keys so seeding is idempotent. Sync metadata
+ * is filled in by the seeding routine.
+ */
+export type FoodSeed = Pick<
+  Food,
+  | 'id'
+  | 'name'
+  | 'food_group'
+  | 'carbs_per_100g'
+  | 'sugar_per_100g'
+  | 'fat_per_100g'
+  | 'glycemic_index'
+  | 'portions'
+>;
+
+export const SEED_FOODS: FoodSeed[] = [
+  {
+    id: 'food-vollkornbrot',
+    name: 'Vollkornbrot',
+    food_group: 'Brot & Getreide',
+    carbs_per_100g: 41,
+    sugar_per_100g: 3,
+    fat_per_100g: 3.3,
+    glycemic_index: 50,
+    portions: [
+      { label: '½ Scheibe', grams: 20 },
+      { label: '1 Scheibe', grams: 40 },
+      { label: '2 Scheiben', grams: 80 },
+    ],
+  },
+  {
+    id: 'food-weissbrot',
+    name: 'Weissbrot (Ruchbrot)',
+    food_group: 'Brot & Getreide',
+    carbs_per_100g: 48,
+    sugar_per_100g: 2.5,
+    fat_per_100g: 2,
+    glycemic_index: 73,
+    portions: [
+      { label: '1 Scheibe', grams: 35 },
+      { label: '2 Scheiben', grams: 70 },
+      { label: '1 Brötchen', grams: 60 },
+    ],
+  },
+  {
+    id: 'food-haferflocken',
+    name: 'Haferflocken',
+    food_group: 'Brot & Getreide',
+    carbs_per_100g: 59,
+    sugar_per_100g: 1,
+    fat_per_100g: 7,
+    glycemic_index: 55,
+    portions: [
+      { label: '3 EL', grams: 30 },
+      { label: '1 Portion', grams: 50 },
+      { label: 'grosse Portion', grams: 80 },
+    ],
+  },
+  {
+    id: 'food-mueesli',
+    name: 'Birchermüesli',
+    food_group: 'Brot & Getreide',
+    carbs_per_100g: 22,
+    sugar_per_100g: 12,
+    fat_per_100g: 4,
+    glycemic_index: 49,
+    portions: [
+      { label: 'kleine Schale', grams: 150 },
+      { label: '1 Schale', grams: 220 },
+    ],
+  },
+  {
+    id: 'food-reis-gekocht',
+    name: 'Reis (gekocht)',
+    food_group: 'Beilagen',
+    carbs_per_100g: 28,
+    sugar_per_100g: 0.1,
+    fat_per_100g: 0.3,
+    glycemic_index: 73,
+    portions: [
+      { label: '½ Portion', grams: 75 },
+      { label: '1 Portion', grams: 150 },
+      { label: 'grosse Portion', grams: 220 },
+    ],
+  },
+  {
+    id: 'food-pasta-gekocht',
+    name: 'Teigwaren (gekocht)',
+    food_group: 'Beilagen',
+    carbs_per_100g: 30,
+    sugar_per_100g: 1,
+    fat_per_100g: 1.1,
+    glycemic_index: 50,
+    portions: [
+      { label: '½ Portion', grams: 90 },
+      { label: '1 Portion', grams: 180 },
+      { label: 'grosse Portion', grams: 250 },
+    ],
+  },
+  {
+    id: 'food-kartoffeln',
+    name: 'Kartoffeln (gekocht)',
+    food_group: 'Beilagen',
+    carbs_per_100g: 17,
+    sugar_per_100g: 0.8,
+    fat_per_100g: 0.1,
+    glycemic_index: 78,
+    portions: [
+      { label: '1 kleine', grams: 70 },
+      { label: '1 Portion', grams: 200 },
+      { label: 'grosse Portion', grams: 300 },
+    ],
+  },
+  {
+    id: 'food-pommes',
+    name: 'Pommes frites',
+    food_group: 'Beilagen',
+    carbs_per_100g: 36,
+    sugar_per_100g: 0.5,
+    fat_per_100g: 15,
+    glycemic_index: 75,
+    portions: [
+      { label: 'kleine Portion', grams: 100 },
+      { label: '1 Portion', grams: 150 },
+    ],
+  },
+  {
+    id: 'food-apfel',
+    name: 'Apfel',
+    food_group: 'Früchte',
+    carbs_per_100g: 14,
+    sugar_per_100g: 10,
+    fat_per_100g: 0.2,
+    glycemic_index: 38,
+    portions: [
+      { label: '½ Apfel', grams: 75 },
+      { label: '1 Apfel', grams: 150 },
+    ],
+  },
+  {
+    id: 'food-banane',
+    name: 'Banane',
+    food_group: 'Früchte',
+    carbs_per_100g: 23,
+    sugar_per_100g: 12,
+    fat_per_100g: 0.3,
+    glycemic_index: 51,
+    portions: [
+      { label: '½ Banane', grams: 60 },
+      { label: '1 Banane', grams: 120 },
+    ],
+  },
+  {
+    id: 'food-beeren',
+    name: 'Beeren gemischt',
+    food_group: 'Früchte',
+    carbs_per_100g: 8,
+    sugar_per_100g: 6,
+    fat_per_100g: 0.3,
+    glycemic_index: 40,
+    portions: [
+      { label: 'Handvoll', grams: 50 },
+      { label: '1 Schale', grams: 125 },
+    ],
+  },
+  {
+    id: 'food-orange',
+    name: 'Orange',
+    food_group: 'Früchte',
+    carbs_per_100g: 9,
+    sugar_per_100g: 9,
+    fat_per_100g: 0.1,
+    glycemic_index: 42,
+    portions: [
+      { label: '1 Orange', grams: 130 },
+    ],
+  },
+  {
+    id: 'food-joghurt-natur',
+    name: 'Joghurt nature',
+    food_group: 'Milchprodukte',
+    carbs_per_100g: 5,
+    sugar_per_100g: 5,
+    fat_per_100g: 3.5,
+    glycemic_index: 36,
+    portions: [
+      { label: '½ Becher', grams: 90 },
+      { label: '1 Becher', grams: 180 },
+    ],
+  },
+  {
+    id: 'food-joghurt-frucht',
+    name: 'Fruchtjoghurt',
+    food_group: 'Milchprodukte',
+    carbs_per_100g: 13,
+    sugar_per_100g: 12,
+    fat_per_100g: 3,
+    glycemic_index: 41,
+    portions: [
+      { label: '1 Becher', grams: 180 },
+    ],
+  },
+  {
+    id: 'food-milch',
+    name: 'Milch (Vollmilch)',
+    food_group: 'Milchprodukte',
+    carbs_per_100g: 4.8,
+    sugar_per_100g: 4.8,
+    fat_per_100g: 3.5,
+    glycemic_index: 30,
+    portions: [
+      { label: '1 Glas', grams: 200 },
+      { label: '1 Tasse', grams: 250 },
+    ],
+  },
+  {
+    id: 'food-kaese-hartkaese',
+    name: 'Hartkäse (Gruyère)',
+    food_group: 'Milchprodukte',
+    carbs_per_100g: 0.4,
+    sugar_per_100g: 0.1,
+    fat_per_100g: 33,
+    glycemic_index: 0,
+    portions: [
+      { label: '1 Stück', grams: 30 },
+      { label: '2 Stücke', grams: 60 },
+    ],
+  },
+  {
+    id: 'food-ei',
+    name: 'Ei (gekocht)',
+    food_group: 'Eier & Proteine',
+    carbs_per_100g: 0.6,
+    sugar_per_100g: 0.4,
+    fat_per_100g: 11,
+    glycemic_index: 0,
+    portions: [
+      { label: '1 Ei', grams: 60 },
+      { label: '2 Eier', grams: 120 },
+    ],
+  },
+  {
+    id: 'food-poulet',
+    name: 'Pouletbrust',
+    food_group: 'Eier & Proteine',
+    carbs_per_100g: 0,
+    sugar_per_100g: 0,
+    fat_per_100g: 2,
+    glycemic_index: 0,
+    portions: [
+      { label: '1 Portion', grams: 120 },
+    ],
+  },
+  {
+    id: 'food-linsen',
+    name: 'Linsen (gekocht)',
+    food_group: 'Hülsenfrüchte',
+    carbs_per_100g: 16,
+    sugar_per_100g: 1.8,
+    fat_per_100g: 0.4,
+    glycemic_index: 29,
+    portions: [
+      { label: '1 Portion', grams: 150 },
+    ],
+  },
+  {
+    id: 'food-kichererbsen',
+    name: 'Kichererbsen (gekocht)',
+    food_group: 'Hülsenfrüchte',
+    carbs_per_100g: 18,
+    sugar_per_100g: 3,
+    fat_per_100g: 2.6,
+    glycemic_index: 33,
+    portions: [
+      { label: '1 Portion', grams: 150 },
+    ],
+  },
+  {
+    id: 'food-roesti',
+    name: 'Rösti',
+    food_group: 'Beilagen',
+    carbs_per_100g: 20,
+    sugar_per_100g: 0.6,
+    fat_per_100g: 8,
+    glycemic_index: 74,
+    portions: [
+      { label: '1 Portion', grams: 200 },
+    ],
+  },
+  {
+    id: 'food-gipfeli',
+    name: 'Gipfeli (Butter)',
+    food_group: 'Gebäck',
+    carbs_per_100g: 46,
+    sugar_per_100g: 8,
+    fat_per_100g: 21,
+    glycemic_index: 67,
+    portions: [
+      { label: '1 Gipfeli', grams: 55 },
+    ],
+  },
+  {
+    id: 'food-schokolade',
+    name: 'Milchschokolade',
+    food_group: 'Süsses',
+    carbs_per_100g: 57,
+    sugar_per_100g: 52,
+    fat_per_100g: 33,
+    glycemic_index: 43,
+    portions: [
+      { label: '1 Reihe', grams: 20 },
+      { label: '½ Tafel', grams: 50 },
+    ],
+  },
+  {
+    id: 'food-orangensaft',
+    name: 'Orangensaft',
+    food_group: 'Getränke',
+    carbs_per_100g: 10,
+    sugar_per_100g: 9,
+    fat_per_100g: 0,
+    glycemic_index: 50,
+    portions: [
+      { label: '1 Glas', grams: 200 },
+    ],
+  },
+  {
+    id: 'food-cola',
+    name: 'Cola',
+    food_group: 'Getränke',
+    carbs_per_100g: 10.6,
+    sugar_per_100g: 10.6,
+    fat_per_100g: 0,
+    glycemic_index: 63,
+    portions: [
+      { label: '1 Glas', grams: 200 },
+      { label: '1 Dose', grams: 330 },
+    ],
+  },
+  {
+    id: 'food-traubenzucker',
+    name: 'Traubenzucker',
+    food_group: 'Süsses',
+    carbs_per_100g: 100,
+    sugar_per_100g: 100,
+    fat_per_100g: 0,
+    glycemic_index: 100,
+    portions: [
+      { label: '1 Plättchen', grams: 6 },
+      { label: '3 Plättchen', grams: 18 },
+    ],
+  },
+];
