@@ -10,7 +10,250 @@ Blutzuckerwerten führen.
 > eingegebene Werte und schätzt Kohlenhydrate sowie einen *illustrativen*
 > Blutzucker‑Trend.
 
+Built with **React Native + TypeScript** on **Expo (managed workflow)**. Runs on
+**iOS** and **Android**, fully **offline-first**, **dark-mode only**.
+
 ---
+
+# 📲 Getting started (read this first)
+
+Because Dialy is a **mobile** app, you run it on a phone or an emulator/simulator
+— not in a browser. There are two ways to see it running:
+
+| Method | Needs | Best for |
+|---|---|---|
+| **A. Expo Go on a real phone** | Just your phone + the Expo Go app | ✅ Fastest, works on **any** computer (Windows/Mac/Linux) |
+| **B. Emulator / Simulator** | Android Studio (all OS) or Xcode (Mac only) | No phone needed; iOS Simulator only on macOS |
+
+**If you just want to see it quickly: use Method A with your phone.** It takes
+about 2 minutes and is identical on Windows, macOS and Linux.
+
+> **iOS Simulator requires a Mac.** There is no way around this — Apple only
+> ships the iOS Simulator with Xcode on macOS. On Windows/Linux, run iOS via
+> **Expo Go on a real iPhone** (Method A) instead.
+
+---
+
+## 0. Prerequisites (all operating systems)
+
+You need **Node.js 18 or newer** and **Git**. Check what you have:
+
+```bash
+node --version   # should print v18.x or higher
+git --version
+```
+
+If Node is missing or too old, install it (per-OS steps below), then continue.
+
+### Install Node.js & Git
+
+<details>
+<summary><b>🪟 Windows</b></summary>
+
+1. Download the **LTS** installer from <https://nodejs.org> and run it
+   (accept the defaults). This installs both `node` and `npm`.
+2. Install **Git** from <https://git-scm.com/download/win> (accept the defaults).
+3. Close and reopen your terminal (use **PowerShell** or **Windows Terminal**),
+   then verify:
+   ```powershell
+   node --version
+   git --version
+   ```
+
+> Tip: alternatively `winget install OpenJS.NodeJS.LTS` and
+> `winget install Git.Git`.
+</details>
+
+<details>
+<summary><b>🍎 macOS</b></summary>
+
+Using [Homebrew](https://brew.sh) (recommended):
+```bash
+brew install node git
+```
+Or download the macOS installer from <https://nodejs.org>. Verify:
+```bash
+node --version
+git --version
+```
+</details>
+
+<details>
+<summary><b>🐧 Linux</b></summary>
+
+Debian/Ubuntu:
+```bash
+# Node.js LTS via NodeSource
+curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+sudo apt-get install -y nodejs git
+```
+Fedora:
+```bash
+sudo dnf install -y nodejs git
+```
+Arch:
+```bash
+sudo pacman -S nodejs npm git
+```
+Verify:
+```bash
+node --version
+git --version
+```
+</details>
+
+---
+
+## 1. Get the code & install dependencies (all operating systems)
+
+```bash
+git clone https://github.com/olivierluethy/Dialy.git
+cd Dialy
+npm install
+```
+
+`npm install` downloads everything the app needs (~1–2 minutes). You only do
+this once (and again whenever dependencies change).
+
+---
+
+## 2. Start the development server (all operating systems)
+
+```bash
+npx expo start
+```
+
+This starts the **Metro bundler** and prints a **QR code** plus a menu of
+shortcut keys. **Leave this terminal running** — it serves the JavaScript to
+your device. Press `Ctrl + C` to stop it later.
+
+Now pick **Method A** (real phone) or **Method B** (emulator/simulator) below.
+
+---
+
+## 3A. Run on a real phone with Expo Go (Windows / macOS / Linux)
+
+This is the easiest path and works the same on every operating system.
+
+1. Install **Expo Go** on your phone:
+   - **iPhone:** App Store → search "Expo Go".
+   - **Android:** Google Play → search "Expo Go".
+2. Make sure your **phone and computer are on the same Wi‑Fi network**.
+3. With `npx expo start` running, scan the **QR code** in the terminal:
+   - **iPhone:** open the **Camera** app, point it at the QR code, tap the
+     banner that appears → it opens in Expo Go.
+   - **Android:** open **Expo Go** → "Scan QR code" → scan it.
+4. The app downloads and launches. Edit a file and save → it **hot-reloads**
+   on the phone automatically.
+
+**Wi‑Fi blocking the connection?** Some home/office/guest networks block
+device‑to‑device traffic. Use a tunnel instead:
+```bash
+npx expo start --tunnel
+```
+(The first time, it may ask to install `@expo/ngrok` — say yes.) Then scan the
+QR code again.
+
+---
+
+## 3B. Run on an emulator / simulator
+
+### 🤖 Android emulator (Windows / macOS / Linux)
+
+1. Install **[Android Studio](https://developer.android.com/studio)**.
+2. Open Android Studio → **More Actions → Virtual Device Manager** → **Create
+   Device** → pick e.g. *Pixel 7*, choose a recent system image (download it),
+   finish, then **press ▶** to boot the emulator. Leave it running.
+3. Make sure the Android SDK command-line tools are on your `PATH`:
+
+   <details><summary>🪟 Windows (PowerShell, set once)</summary>
+
+   ```powershell
+   setx ANDROID_HOME "$env:LOCALAPPDATA\Android\Sdk"
+   # Then add these to PATH (Settings → Environment Variables), or:
+   setx PATH "$env:PATH;$env:LOCALAPPDATA\Android\Sdk\platform-tools"
+   ```
+   Reopen the terminal afterwards.
+   </details>
+
+   <details><summary>🍎 macOS / 🐧 Linux (add to ~/.zshrc or ~/.bashrc)</summary>
+
+   ```bash
+   export ANDROID_HOME=$HOME/Android/Sdk         # macOS: $HOME/Library/Android/sdk
+   export PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator
+   ```
+   Reload with `source ~/.bashrc` (or `~/.zshrc`).
+   </details>
+
+   Verify the emulator is detected: `adb devices` should list it.
+4. With `npx expo start` running, **press `a`** in that terminal. Expo installs
+   Expo Go into the emulator and launches Dialy.
+
+### 🍎 iOS Simulator (macOS only)
+
+1. Install **Xcode** from the Mac App Store (large download).
+2. Open Xcode once to finish component installation, then install the command
+   line tools:
+   ```bash
+   xcode-select --install
+   ```
+3. With `npx expo start` running, **press `i`**. Expo boots the iOS Simulator,
+   installs Expo Go, and launches Dialy.
+
+> On Windows/Linux there is no iOS Simulator — use **Method A** with a real
+> iPhone for iOS.
+
+---
+
+## 4. Quick per-OS cheat sheet
+
+**🪟 Windows**
+```powershell
+# 1) install Node LTS + Git (see above), then:
+git clone https://github.com/olivierluethy/Dialy.git
+cd Dialy
+npm install
+npx expo start
+# scan QR with Expo Go (iPhone/Android), or press "a" for Android emulator
+```
+
+**🍎 macOS**
+```bash
+brew install node git
+git clone https://github.com/olivierluethy/Dialy.git
+cd Dialy
+npm install
+npx expo start
+# press "i" (iOS Simulator) or "a" (Android emulator), or scan the QR code
+```
+
+**🐧 Linux**
+```bash
+# install Node LTS + Git (see above), then:
+git clone https://github.com/olivierluethy/Dialy.git
+cd Dialy
+npm install
+npx expo start
+# scan QR with Expo Go, or press "a" for Android emulator (no iOS Simulator on Linux)
+```
+
+---
+
+## 5. Troubleshooting
+
+| Symptom | Fix |
+|---|---|
+| QR code won't connect / "Something went wrong" | Same Wi‑Fi? Try `npx expo start --tunnel`. |
+| `command not found: npx` / `node` | Node isn't installed or terminal wasn't reopened after install. Re-check step 0. |
+| Metro cache acting up after edits | Restart with `npx expo start -c` (clears the cache). |
+| Pressing `a` does nothing | The Android emulator isn't running, or `adb devices` doesn't list it. Boot the AVD first; check `ANDROID_HOME`/PATH. |
+| Pressing `i` fails (Mac) | Run `xcode-select --install` and open Xcode once to finish setup. |
+| Port 8081 already in use | Stop the other Metro instance, or run `npx expo start --port 8082`. |
+| Want to verify it compiles without a device | `npm run typecheck` (type check) and `npx expo-doctor` (health check). |
+
+---
+
+# Project details
 
 ## Tech-Stack
 
@@ -36,37 +279,14 @@ Blutzuckerwerten führen.
 
 ---
 
-## Schnellstart
-
-Voraussetzungen: Node 18+ und npm. Für Gerätetests die **Expo Go**-App.
-
-```bash
-cd Dialy
-npm install
-npx expo start
-```
-
-Dann:
-- **iOS-Simulator:** im Expo-CLI `i` drücken (macOS + Xcode)
-- **Android-Emulator:** `a` drücken (Android Studio)
-- **Echtes Gerät:** QR-Code mit Expo Go scannen (gleiches WLAN)
-
-Beim ersten Start wird die lokale Datenbank mit Lebensmitteln, Artikeln (Typ 1
-& Typ 2) und ein paar Beispiel-Tagebuchtagen befüllt — alle Screens sehen also
-sofort gefüllt aus. **Alle Kernfunktionen laufen vollständig offline.**
-
-### TypeScript prüfen
-
-```bash
-npm run typecheck
-```
-
----
-
 ## Konfiguration (alles optional)
 
 Ohne Konfiguration läuft die App komplett offline (Auth & Sync deaktiviert).
-Zum Aktivieren `.env.example` nach `.env` kopieren und ausfüllen:
+Beim ersten Start wird die lokale Datenbank mit Lebensmitteln, Artikeln (Typ 1
+& Typ 2) und ein paar Beispiel-Tagebuchtagen befüllt — alle Screens sehen also
+sofort gefüllt aus.
+
+Zum Aktivieren von Konto/Sync `.env.example` nach `.env` kopieren und ausfüllen:
 
 ```bash
 cp .env.example .env
@@ -141,8 +361,7 @@ ohne externe Konfiguration läuft. Im Code als `TODO(native)` markiert.
 ## Bewusste Entscheidungen
 
 - **Dark-Mode only.** Es gibt kein helles Theme, keinen Umschalter und kein
-  Folgen der System-Darstellung. Die Wireframes sind in Light gezeichnet —
-  umgesetzt ist ausschliesslich das Dark-Theme aus `src/theme/theme.ts`.
+  Folgen der System-Darstellung.
 - **Kein Medizinprodukt.** Keine Insulindosis-Berechnung, keine
   Therapieempfehlung — eine bewusste rechtliche Grenze (hält Dialy ausserhalb
   EU‑MDR / Schweizer Medizinprodukte-Regulierung). Das „Insulinrate reduzieren
@@ -175,4 +394,15 @@ Dialy/
 └─ supabase/
    ├─ migrations/               # Schema + RLS (SQL)
    └─ functions/notify-sync/    # Edge-Function-Stub (Sync-Trigger)
+```
+
+---
+
+## Scripts
+
+```bash
+npm start            # = npx expo start
+npm run android      # start + open Android
+npm run ios          # start + open iOS (macOS only)
+npm run typecheck    # TypeScript type check (tsc --noEmit)
 ```
