@@ -1,0 +1,103 @@
+import { getSupabase } from '@/sync/supabaseClient';
+import { softDeleteAllUserData } from '@/db/repositories/userData';
+
+export interface AuthUser {
+  id: string;
+  email: string;
+}
+
+export interface AuthResult {
+  user: AuthUser | null;
+  error: string | null;
+}
+
+const SYNC_TABLES = [
+  'meal_entries',
+  'sport_entries',
+  'bg_readings',
+] as const;
+
+/**
+ * Auth + account service backed by Supabase Auth (email + password, JWT).
+ *
+ * When Supabase isn't configured these calls return a friendly error so the UI
+ * can explain that an account needs a backend — the rest of the app keeps
+ * working offline.
+ */
+export const authService = {
+  isConfigured(): boolean {
+    return getSupabase() !== null;
+  },
+
+  async signIn(email: string, password: string): Promise<AuthResult> {
+    const sb = getSupabase();
+    if (!sb) return { user: null, error: NO_BACKEND };
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) return { user: null, error: translateAuthError(error.message) };
+    return { user: toUser(data.user), error: null };
+  },
+
+  async signUp(email: string, password: string): Promise<AuthResult> {
+    const sb = getSupabase();
+    if (!sb) return { user: null, error: NO_BACKEND };
+    const { data, error } = await sb.auth.signUp({ email, password });
+    if (error) return { user: null, error: translateAuthError(error.message) };
+    return { user: toUser(data.user), error: null };
+  },
+
+  async signOut(): Promise<void> {
+    const sb = getSupabase();
+    await sb?.auth.signOut();
+  },
+
+  async currentUser(): Promise<AuthUser | null> {
+    const sb = getSupabase();
+    if (!sb) return null;
+    const { data } = await sb.auth.getUser();
+    return toUser(data.user);
+  },
+
+  /**
+   * Privacy: erase all of the user's data. Soft-deletes locally (so the
+   * deletion syncs out and can't resurface), then issues matching deletes on
+   * Supabase. Best-effort on the server; local deletion always succeeds.
+   */
+  async deleteAccountData(): Promise<{ error: string | null }> {
+    await softDeleteAllUserData();
+    const sb = getSupabase();
+    if (!sb) return { error: null }; // offline-only: local deletion is enough
+    const { data } = await sb.auth.getUser();
+    const uid = data.user?.id;
+    if (!uid) return { error: null };
+    try {
+      const ts = new Date().toISOString();
+      for (const table of SYNC_TABLES) {
+        await sb
+          .from(table)
+          .update({ deleted_at: ts, updated_at: ts })
+          .eq('user_id', uid);
+      }
+      return { error: null };
+    } catch (e) {
+      return { error: String(e) };
+    }
+  },
+};
+
+const NO_BACKEND =
+  'Kein Konto-Server konfiguriert. Lege in der .env eine Supabase-URL und einen Anon-Key ab, um Konten zu nutzen.';
+
+function toUser(user: { id: string; email?: string | null } | null): AuthUser | null {
+  if (!user) return null;
+  return { id: user.id, email: user.email ?? '' };
+}
+
+/** Map common Supabase auth errors to simple Swiss-German copy. */
+function translateAuthError(msg: string): string {
+  const m = msg.toLowerCase();
+  if (m.includes('invalid login')) return 'E-Mail oder Passwort ist falsch.';
+  if (m.includes('already registered')) return 'Diese E-Mail ist bereits registriert.';
+  if (m.includes('password')) return 'Das Passwort erfüllt die Anforderungen nicht (mind. 6 Zeichen).';
+  if (m.includes('email')) return 'Bitte gib eine gültige E-Mail-Adresse ein.';
+  return 'Es ist ein Fehler aufgetreten. Bitte versuche es erneut.';
+}
