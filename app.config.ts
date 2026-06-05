@@ -1,0 +1,65 @@
+import { ExpoConfig, ConfigContext } from 'expo/config';
+
+/**
+ * Dialy – Diabetes-Begleiter (dark-mode only, offline-first).
+ *
+ * Secrets are NEVER hard-coded here. Public, client-safe values
+ * (Supabase project URL + anon key) come from environment variables
+ * and are exposed via `extra`. A missing value simply disables sync /
+ * auth and the app keeps running fully offline.
+ *
+ * IMPORTANT: only the Supabase *anon* key belongs in the client.
+ * Never put a service-role key or DB credentials here.
+ */
+export default ({ config }: ConfigContext): ExpoConfig => ({
+  ...config,
+  name: 'Dialy',
+  slug: 'dialy',
+  version: '1.0.0',
+  orientation: 'portrait',
+  scheme: 'dialy',
+  userInterfaceStyle: 'dark', // Dark-mode only. No light theme, ever.
+  backgroundColor: '#0E1512',
+  splash: {
+    backgroundColor: '#0E1512',
+    resizeMode: 'contain',
+  },
+  assetBundlePatterns: ['**/*'],
+  ios: {
+    supportsTablet: true,
+    bundleIdentifier: 'net.dialy.app',
+    userInterfaceStyle: 'dark',
+    infoPlist: {
+      // Manual-entry CGM/health fallback always works; native HealthKit
+      // bridge is a TODO(native) follow-up – see services/health.ts.
+      NSCameraUsageDescription:
+        'Dialy verwendet die Kamera, um ein Foto deiner Mahlzeit zum Tagebuch hinzuzufügen.',
+      NSPhotoLibraryUsageDescription:
+        'Dialy greift auf deine Fotos zu, um ein Mahlzeitenbild auszuwählen.',
+    },
+  },
+  android: {
+    package: 'net.dialy.app',
+    userInterfaceStyle: 'dark',
+    adaptiveIcon: {
+      backgroundColor: '#0E1512',
+    },
+    permissions: ['CAMERA', 'READ_EXTERNAL_STORAGE'],
+  },
+  plugins: [
+    'expo-asset',
+    'expo-font',
+    'expo-secure-store',
+    'expo-image-picker',
+    'expo-sqlite',
+  ],
+  extra: {
+    supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL ?? '',
+    supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
+    sentryDsn: process.env.EXPO_PUBLIC_SENTRY_DSN ?? '',
+    // Feature flags – everything external is off by default so the app
+    // runs with zero configuration.
+    featureFcm: process.env.EXPO_PUBLIC_FEATURE_FCM === 'true',
+    featureHealthImport: process.env.EXPO_PUBLIC_FEATURE_HEALTH === 'true',
+  },
+});
