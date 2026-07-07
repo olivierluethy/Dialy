@@ -250,6 +250,9 @@ npx expo start
 | Pressing `i` fails (Mac) | Run `xcode-select --install` and open Xcode once to finish setup. |
 | Port 8081 already in use | Stop the other Metro instance, or run `npx expo start --port 8082`. |
 | Want to verify it compiles without a device | `npm run typecheck` (type check) and `npx expo-doctor` (health check). |
+| **Web: blank/white page**, console shows `MIME type ("application/json") mismatch` | The web bundle failed to build and Metro returned a JSON error. Read the terminal / the JSON body for the real cause. Known ones are already handled in `metro.config.js` (see **Web-Unterstützung** below); if new, restart with `npx expo start -c`. |
+| **Web: white page**, console shows `Cannot find native module 'ExpoSQLite'` | `expo-sqlite` has no web build. Handled by `src/db/database.web.ts` (sql.js). Make sure it exists and that `npm install` ran. |
+| **Web: white page** with a `requireNativeComponent` / `BVLinearGradient` error | A bare native module leaked into the web bundle. `react-native-linear-gradient` is aliased to `expo-linear-gradient` in `metro.config.js` — restart with `-c`. |
 
 ---
 
@@ -276,6 +279,26 @@ npx expo start
   Das §7‑Datenmodell und der Sync-Vertrag sind in einer kleinen
   Repository-/Sync-Schicht darauf umgesetzt — der Vertrag hält unabhängig von
   der Storage-Engine.
+
+---
+
+## Web-Unterstützung (Browser)
+
+Die App läuft nativ (iOS/Android via Expo Go) **und** im Browser
+(`npm run web` bzw. `npx expo start` → Taste `w`). Drei native Bausteine haben
+im Web keinen Gegenpart und würden sonst zu einer **weissen Seite** führen (der
+Fehler passiert bei der Modul-Auswertung, _bevor_ React etwas rendert). Alle
+drei sind zentral in `metro.config.js` + einer plattform-spezifischen Datei
+gelöst — der native Pfad bleibt unverändert:
+
+| Problem im Web | Ursache | Lösung |
+|---|---|---|
+| Bundle-Build bricht ab (`@opentelemetry/api` nicht auflösbar) | `@supabase/supabase-js` macht im Browser-Build ein optionales `import('@opentelemetry/api')`; Metro versucht es statisch aufzulösen | `metro.config.js` mappt das Modul auf ein leeres Modul (`{ type: 'empty' }`) — Supabase fängt das Fehlen selbst ab |
+| `requireNativeComponent is not a function` / `BVLinearGradient` | `react-native-gifted-charts` zieht `react-native-linear-gradient` (bare native module) rein; dessen Web-Pfad ruft `requireNativeComponent` beim Import auf | `metro.config.js` aliased `react-native-linear-gradient` → **`expo-linear-gradient`** (funktioniert auf Web + iOS + Android + Expo Go) |
+| `Cannot find native module 'ExpoSQLite'` | `expo-sqlite` liefert in SDK 52 **kein** Web-Build | `src/db/database.web.ts` — Metro wählt es im Web automatisch (`.web.ts`) und implementiert dieselbe async-API mit **sql.js** (SQLite als WebAssembly). Persistenz via IndexedDB; Fallback: In-Memory pro Session. Nativ bleibt `database.ts` (echtes `expo-sqlite`) die Quelle der Wahrheit. |
+
+Nach Änderungen an `metro.config.js` immer mit `npx expo start -c`
+(Cache leeren) neu starten.
 
 ---
 
