@@ -205,6 +205,53 @@ QR code again.
 
 ---
 
+## 3C. Enable accounts & sync — local backend with Docker (Windows / macOS / Linux)
+
+The **Ratgeber** and **KH-Rechner** work with no backend. Creating an account
+(needed for the **Tagebuch** / diary + photo sync) needs a Supabase backend. The
+easiest, fully cross-platform way is to run Supabase **locally in Docker** — no
+cloud account, no keys to copy. It's the same three commands on every OS.
+
+**One-time: install Docker**
+
+| OS | How |
+|---|---|
+| 🪟 Windows | Install **[Docker Desktop](https://www.docker.com/products/docker-desktop/)**, launch it, wait for "Engine running". |
+| 🍎 macOS | Install **Docker Desktop** (or `brew install --cask docker`), launch it. |
+| 🐧 Linux | `curl -fsSL https://get.docker.com \| sudo sh` then `sudo usermod -aG docker $USER` and **log out/in**. |
+
+**Every time — start the backend, then the app:**
+
+```bash
+npm install            # first time only (also fetches the Supabase CLI locally)
+npm run backend:start  # boots local Supabase in Docker + writes .env automatically
+npm start -- --clear   # start Expo (‑‑clear so it picks up the new .env)
+```
+
+That's it — open the app, tap **Konto erstellen**, and register. Local Supabase
+has email confirmation **off**, so you're signed in immediately (no verification
+email). Data now persists in Postgres and syncs.
+
+Useful commands:
+
+```bash
+npm run backend:status   # show local URLs + keys (Studio UI at http://localhost:54323)
+npm run backend:stop     # stop the containers (data is kept)
+npm run backend:reset     # re-apply migrations from scratch (wipes local data)
+```
+
+> **📱 Using a real phone with the local backend?** The phone must reach your
+> computer. Over USB (Android): run `npm run phone:link` (forwards Metro **and**
+> Supabase ports via `adb reverse`). On the same Wi‑Fi you can instead set
+> `EXPO_PUBLIC_SUPABASE_URL` in `.env` to `http://<your-computer-ip>:54321`.
+> For **web in the browser**, `localhost` just works — nothing extra needed.
+
+> **☁️ Prefer the cloud** (works anywhere, no Docker)? See
+> [Supabase einrichten](#supabase-einrichten-optional) below — create a free
+> project and drop its URL + anon key into `.env`.
+
+---
+
 ## 4. Quick per-OS cheat sheet
 
 **🪟 Windows**
@@ -330,6 +377,10 @@ cp .env.example .env
 
 ### Supabase einrichten (optional)
 
+> 💡 Für lokale Entwicklung ist **[Abschnitt 3C](#3c-enable-accounts--sync--local-backend-with-docker-windows--macos--linux)**
+> (Supabase lokal via Docker) meist der einfachste Weg — kein Cloud-Konto, keine
+> Keys zum Kopieren. Der folgende Abschnitt beschreibt die **Cloud**-Variante.
+
 ```bash
 # Schema + RLS anwenden (Supabase CLI)
 supabase db push
@@ -427,5 +478,13 @@ Dialy/
 npm start            # = npx expo start
 npm run android      # start + open Android
 npm run ios          # start + open iOS (macOS only)
+npm run web          # start + open in the browser
 npm run typecheck    # TypeScript type check (tsc --noEmit)
+
+# Local backend (Supabase in Docker) — see section 3C
+npm run backend:start   # boot local Supabase + auto-write .env
+npm run backend:stop    # stop containers (keeps data)
+npm run backend:reset   # re-apply migrations (wipes local data)
+npm run backend:status  # print local URLs + keys
+npm run phone:link      # forward Metro + Supabase ports to a USB Android device
 ```
