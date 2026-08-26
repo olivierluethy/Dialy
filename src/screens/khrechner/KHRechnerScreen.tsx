@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -40,6 +40,35 @@ export function KHRechnerScreen() {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
+  // ── Slider performance (issue #1) ──────────────────────────────────────────
+  // The Slider fires onValueChange at a very high rate while dragging. Committing
+  // every raw event to state re-rendered the whole screen (search list + card +
+  // four nutrient bars + photo) on every pixel and fed the controlled `value`
+  // back into the native slider each time — which is what made it stutter and
+  // feel "verbuggt". We now:
+  //   1. coalesce drag events to at most one state update per animation frame, and
+  //   2. only re-seed the slider (via `key`) when grams is set from OUTSIDE the
+  //      drag (preset chip, gram field, food select), so the round-trip that
+  //      caused the fight no longer happens mid-drag.
+  const [sliderSeed, setSliderSeed] = useState(0);
+  const rafRef = useRef<number | null>(null);
+  const pendingGramsRef = useRef(0);
+
+  // Cancel any in-flight slider frame if the screen unmounts mid-drag.
+  useEffect(() => {
+    return () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
+
+  // Set grams from a source other than the slider drag, and re-seed the slider
+  // so its thumb jumps to the new position.
+  const setGramsExternal = (n: number) => {
+    setGrams(n);
+    setSliderSeed((s) => s + 1);
+    setSaved(false);
+  };
+
   const navigation = useNavigation<any>();
   const user = useAppStore((s) => s.user);
   const isPremium = useAppStore((s) => s.isPremium);
@@ -62,9 +91,8 @@ export function KHRechnerScreen() {
   const selectFood = (food: Food) => {
     setSelected(food);
     setPhotoUri(null);
-    setSaved(false);
     // Default to the first preset portion, or 100 g.
-    setGrams(food.portions[0]?.grams ?? 100);
+    setGramsExternal(food.portions[0]?.grams ?? 100);
   };
 
   // Live nutrient math. GI is a property of the food, not scaled by portion.
@@ -172,10 +200,7 @@ export function KHRechnerScreen() {
                 key={p.label}
                 label={p.label}
                 selected={Math.round(grams) === p.grams}
-                onPress={() => {
-                  setGrams(p.grams);
-                  setSaved(false);
-                }}
+                onPress={() => setGramsExternal(p.grams)}
               />
             ))}
           </View>
@@ -186,8 +211,7 @@ export function KHRechnerScreen() {
               value={String(Math.round(grams))}
               onChangeText={(t) => {
                 const n = parseInt(t.replace(/[^0-9]/g, ''), 10);
-                setGrams(Number.isNaN(n) ? 0 : Math.min(n, MAX_GRAMS));
-                setSaved(false);
+                setGramsExternal(Number.isNaN(n) ? 0 : Math.min(n, MAX_GRAMS));
               }}
               keyboardType="number-pad"
               containerStyle={styles.gramField}
@@ -196,11 +220,26 @@ export function KHRechnerScreen() {
             <Text style={styles.gramUnit}>Gramm</Text>
           </View>
           <Slider
+            key={sliderSeed}
             minimumValue={0}
             maximumValue={MAX_GRAMS}
             step={1}
             value={grams}
             onValueChange={(v) => {
+              // Coalesce the burst of drag events into one commit per frame so
+              // the nutrient math + re-render can keep up (issue #1).
+              pendingGramsRef.current = v;
+              if (rafRef.current !== null) return;
+              rafRef.current = requestAnimationFrame(() => {
+                rafRef.current = null;
+                setGrams(Math.round(pendingGramsRef.current));
+              });
+            }}
+            onSlidingComplete={(v) => {
+              if (rafRef.current !== null) {
+                cancelAnimationFrame(rafRef.current);
+                rafRef.current = null;
+              }
               setGrams(Math.round(v));
               setSaved(false);
             }}
