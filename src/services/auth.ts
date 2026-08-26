@@ -1,5 +1,6 @@
 import { getSupabase } from '@/sync/supabaseClient';
 import { softDeleteAllUserData } from '@/db/repositories/userData';
+import { localAuth } from '@/services/localAuth';
 
 export interface AuthUser {
   id: string;
@@ -20,9 +21,12 @@ const SYNC_TABLES = [
 /**
  * Auth + account service backed by Supabase Auth (email + password, JWT).
  *
- * When Supabase isn't configured these calls return a friendly error so the UI
- * can explain that an account needs a backend — the rest of the app keeps
- * working offline.
+ * When Supabase isn't configured, every method transparently falls back to a
+ * local, on-device account store (services/localAuth.ts) so registration and
+ * login work fully offline — the account-gated features (Tagebuch, Foto) are
+ * usable with zero backend setup. Configuring Supabase is preferred and takes
+ * over automatically (it enables cross-device sync); until then the local
+ * store keeps everything on the device.
  */
 export const authService = {
   isConfigured(): boolean {
@@ -31,7 +35,7 @@ export const authService = {
 
   async signIn(email: string, password: string): Promise<AuthResult> {
     const sb = getSupabase();
-    if (!sb) return { user: null, error: NO_BACKEND };
+    if (!sb) return localAuth.signIn(email, password);
     const { data, error } = await sb.auth.signInWithPassword({ email, password });
     if (error) return { user: null, error: translateAuthError(error.message) };
     return { user: toUser(data.user), error: null };
@@ -39,7 +43,7 @@ export const authService = {
 
   async signUp(email: string, password: string): Promise<AuthResult> {
     const sb = getSupabase();
-    if (!sb) return { user: null, error: NO_BACKEND };
+    if (!sb) return localAuth.signUp(email, password);
     const { data, error } = await sb.auth.signUp({ email, password });
     if (error) return { user: null, error: translateAuthError(error.message) };
     return { user: toUser(data.user), error: null };
@@ -47,12 +51,13 @@ export const authService = {
 
   async signOut(): Promise<void> {
     const sb = getSupabase();
-    await sb?.auth.signOut();
+    if (!sb) return localAuth.signOut();
+    await sb.auth.signOut();
   },
 
   async currentUser(): Promise<AuthUser | null> {
     const sb = getSupabase();
-    if (!sb) return null;
+    if (!sb) return localAuth.currentUser();
     const { data } = await sb.auth.getUser();
     return toUser(data.user);
   },
@@ -83,9 +88,6 @@ export const authService = {
     }
   },
 };
-
-const NO_BACKEND =
-  'Kein Konto-Server konfiguriert. Lege in der .env eine Supabase-URL und einen Anon-Key ab, um Konten zu nutzen.';
 
 function toUser(user: { id: string; email?: string | null } | null): AuthUser | null {
   if (!user) return null;
