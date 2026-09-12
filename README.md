@@ -1,5 +1,9 @@
 # Dialy — Diabetes-Begleiter
 
+<p>
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-blue.svg"></a>
+</p>
+
 Dialy ist ein Alltagsbegleiter für Menschen mit Typ‑1‑ (und Typ‑2‑) Diabetes.
 Er hilft bei drei Dingen: Kohlenhydrate einer Mahlzeit schätzen, Sport und
 seine Wirkung auf den Blutzucker planen, und ein Tagebuch aus Mahlzeiten und
@@ -488,3 +492,12 @@ npm run backend:reset   # re-apply migrations (wipes local data)
 npm run backend:status  # print local URLs + keys
 npm run phone:link      # forward Metro + Supabase ports to a USB Android device
 ```
+
+## License
+
+Released under the [MIT License](LICENSE) © 2026 Olivier Lüthy. You're free to use, modify and distribute this
+software, including commercially, as long as the copyright notice and license are included.
+
+## Author
+
+Built by **Olivier Lüthy** — [GitHub](https://github.com/olivierluethy).
