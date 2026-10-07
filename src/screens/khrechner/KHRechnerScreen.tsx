@@ -47,10 +47,13 @@ export function KHRechnerScreen() {
   // back into the native slider each time — which is what made it stutter and
   // feel "verbuggt". We now:
   //   1. coalesce drag events to at most one state update per animation frame, and
-  //   2. only re-seed the slider (via `key`) when grams is set from OUTSIDE the
-  //      drag (preset chip, gram field, food select), so the round-trip that
-  //      caused the fight no longer happens mid-drag.
-  const [sliderSeed, setSliderSeed] = useState(0);
+  //   2. drive the slider's `value` from its own state that only changes when
+  //      grams is set from OUTSIDE the drag (preset chip, gram field, food
+  //      select) or when the drag ends. Feeding `grams` back in mid-drag made the
+  //      thumb snap to a stale (frame-throttled) value, which fired another
+  //      onValueChange — a feedback loop that froze the app on fast back-and-forth
+  //      dragging.
+  const [sliderValue, setSliderValue] = useState(0);
   const rafRef = useRef<number | null>(null);
   const pendingGramsRef = useRef(0);
 
@@ -61,11 +64,15 @@ export function KHRechnerScreen() {
     };
   }, []);
 
-  // Set grams from a source other than the slider drag, and re-seed the slider
-  // so its thumb jumps to the new position.
+  // Set grams from a source other than the slider drag, and move the slider
+  // thumb to the new position.
   const setGramsExternal = (n: number) => {
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
     setGrams(n);
-    setSliderSeed((s) => s + 1);
+    setSliderValue(n);
     setSaved(false);
   };
 
@@ -220,11 +227,10 @@ export function KHRechnerScreen() {
             <Text style={styles.gramUnit}>Gramm</Text>
           </View>
           <Slider
-            key={sliderSeed}
             minimumValue={0}
             maximumValue={MAX_GRAMS}
             step={1}
-            value={grams}
+            value={sliderValue}
             onValueChange={(v) => {
               // Coalesce the burst of drag events into one commit per frame so
               // the nutrient math + re-render can keep up (issue #1).
@@ -240,7 +246,10 @@ export function KHRechnerScreen() {
                 cancelAnimationFrame(rafRef.current);
                 rafRef.current = null;
               }
+              // Sync the slider's own value once the drag is over, so a later
+              // external set to the previous value still moves the thumb.
               setGrams(Math.round(v));
+              setSliderValue(Math.round(v));
               setSaved(false);
             }}
             minimumTrackTintColor={colors.accent}
