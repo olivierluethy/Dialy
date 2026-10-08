@@ -566,15 +566,10 @@ const makeStyles = (colors: Colors) =>
     gramUnit: { marginLeft: spacing.md, color: colors.textSecondary, fontSize: 16 },
     nutrientLabel: { marginTop: spacing.lg },
     summaryChip: {
-      backgroundColor: colors.accentSubtle,
-      borderRadius: radius.card,
-      borderWidth: 1,
-      borderColor: colors.accent,
       paddingVertical: spacing.md,
-      paddingHorizontal: spacing.lg,
       marginTop: spacing.sm,
     },
-    summaryText: { color: colors.accent, fontWeight: '700', fontSize: 16, textAlign: 'center' },
+    summaryText: { color: colors.textPrimary, fontWeight: '700', fontSize: 16, textAlign: 'center' },
     photo: { width: '100%', height: 160, borderRadius: radius.card, marginTop: spacing.lg },
     spacedBtn: { marginTop: spacing.md },
   });

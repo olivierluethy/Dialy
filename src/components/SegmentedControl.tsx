@@ -87,5 +87,5 @@ const makeStyles = (colors: Colors) =>
     },
     segmentActive: { backgroundColor: colors.accent },
     label: { fontSize: 15, fontWeight: '600', color: colors.textSecondary },
-    labelActive: { color: '#FFFFFF' },
+    labelActive: { color: colors.textOnAccent },
   });

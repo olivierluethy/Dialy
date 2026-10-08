@@ -43,60 +43,63 @@ export interface Colors {
   overlay: string; // dimmed backdrop behind dialogs
 }
 
+// Soft, pastel palette: desaturated mint accent, peach / lavender / coral
+// instead of saturated orange / teal / red.
 export const darkColors: Colors = {
-  bgBase: '#0E1512', // near-black, slight green tint
-  bgSurface: '#161D1A',
-  bgSurfaceAlt: '#1E2723',
-  bgInput: '#1B2420',
+  bgBase: '#131A17', // soft charcoal, slight green tint
+  bgSurface: '#1A221F',
+  bgSurfaceAlt: '#222B27',
+  bgInput: '#1F2824',
 
-  accent: '#3DBA7D',
-  accentPressed: '#34A06C',
-  accentSubtle: '#14271F',
+  accent: '#8FD3B0', // pastel mint
+  accentPressed: '#7CC3A0',
+  accentSubtle: '#1E2F28',
 
-  textPrimary: '#F2F5F3',
-  textSecondary: '#9DACA3',
-  textTertiary: '#6B7A72',
-  textOnAccent: '#0E1512',
+  textPrimary: '#EEF2EF',
+  textSecondary: '#A9B6AF',
+  textTertiary: '#7A877F',
+  textOnAccent: '#13201A',
 
-  dataCarb: '#3DBA7D',
-  dataSugar: '#E8915A',
-  dataGlyc: '#4FD1B5',
-  dataFat: '#8C9A92',
-  warn: '#E8915A',
-  danger: '#E5654F',
-  hypo: '#5AA9E8',
-  border: '#2A332E',
-  shadow: 'rgba(0, 0, 0, 0.35)',
-  overlay: 'rgba(0, 0, 0, 0.6)',
+  dataCarb: '#8FD3B0', // mint
+  dataSugar: '#F2B48C', // peach
+  dataGlyc: '#B5A8E6', // lavender
+  dataFat: '#B9C4BE', // soft grey-green
+  warn: '#F2B48C',
+  danger: '#F0998A', // coral
+  hypo: '#9CC3EC', // powder blue
+  border: '#2C3631',
+  shadow: 'rgba(0, 0, 0, 0.30)',
+  overlay: 'rgba(0, 0, 0, 0.55)',
 };
 
-// Light palette: same green-tinted neutrals, with the accent and semantic
-// colours darkened so text on white keeps a readable contrast.
+// Light palette: pastel fills (bars, tints, surfaces), while colours used as
+// text on white (accent, warn, danger) stay muted but dark enough for ≥ 4.5:1
+// contrast.
 export const lightColors: Colors = {
-  bgBase: '#F4F7F5',
+  bgBase: '#F6F8F7',
   bgSurface: '#FFFFFF',
-  bgSurfaceAlt: '#EAF0EC',
-  bgInput: '#EEF2EF',
+  bgSurfaceAlt: '#EEF3F0',
+  bgInput: '#F0F4F2',
 
-  accent: '#1B7F50',
-  accentPressed: '#176C44',
-  accentSubtle: '#DCEFE4',
+  accent: '#3A8562', // muted sage
+  accentPressed: '#327354',
+  accentSubtle: '#E1F0E8',
 
-  textPrimary: '#111A16',
-  textSecondary: '#4A5952',
-  textTertiary: '#66756D',
+  textPrimary: '#1C2622',
+  textSecondary: '#55635C',
+  textTertiary: '#6F7D76',
   textOnAccent: '#FFFFFF',
 
-  dataCarb: '#1B7F50',
-  dataSugar: '#D9733A',
-  dataGlyc: '#1FA88A',
-  dataFat: '#7D8B83',
-  warn: '#B85C1E',
-  danger: '#C9402B',
-  hypo: '#2F7FC1',
-  border: '#D5DED8',
-  shadow: 'rgba(16, 32, 24, 0.10)',
-  overlay: 'rgba(16, 32, 24, 0.35)',
+  dataCarb: '#7CC4A0', // mint
+  dataSugar: '#F0B08A', // peach
+  dataGlyc: '#AFA2E0', // lavender
+  dataFat: '#B8C2BC', // soft grey-green
+  warn: '#A8653A',
+  danger: '#B65A4B',
+  hypo: '#5B93C7',
+  border: '#DCE4DF',
+  shadow: 'rgba(30, 50, 40, 0.08)',
+  overlay: 'rgba(30, 50, 40, 0.30)',
 };
 
 export const palettes: Record<ColorScheme, Colors> = {
