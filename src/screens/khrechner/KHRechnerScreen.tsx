@@ -12,24 +12,51 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import { Screen } from '@/components/Screen';
-import { ScreenTitle, SectionLabel, IconBubble, Card } from '@/components/primitives';
+import { ScreenTitle, SectionLabel, Card } from '@/components/primitives';
 import { Button } from '@/components/Button';
 import { TextField } from '@/components/TextField';
 import { SelectableChip } from '@/components/Chip';
 import { NutrientBar } from '@/components/NutrientBar';
-import { GateNotice } from '@/components/GateNotice';
+import { Dialog } from '@/components/Dialog';
 import { radius, spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import { foodsRepo } from '@/db/repositories/foods';
 import { mealsRepo } from '@/db/repositories/meals';
 import { useAppStore } from '@/state/store';
 import { can, gateCopy } from '@/policy/gating';
-import { carbsToBe, formatCarbsWithBe } from '@/utils/format';
+import { carbsToBe, formatCarbs } from '@/utils/format';
+import { nowIso, uuidv4 } from '@/utils/id';
 import type { Food } from '@/types/models';
 
 // Reference maxima used only to scale the visual nutrient bars.
 const BAR_MAX = { carbs: 80, sugar: 50, gi: 100, fat: 40 };
 const MAX_GRAMS = 500;
+
+/** A food + chosen portion collected into the meal being built. */
+interface MealItem {
+  key: string;
+  food: Food;
+  grams: number;
+  photoUri: string | null;
+}
+
+type DialogState =
+  | null
+  | { kind: 'account' }
+  | { kind: 'meal' }
+  | { kind: 'saved'; count: number }
+  | { kind: 'error' };
+
+// GI is a property of the food, not scaled by portion.
+function portionNutrients(food: Food, grams: number) {
+  const f = grams / 100;
+  return {
+    carbs: food.carbs_per_100g * f,
+    sugar: food.sugar_per_100g * f,
+    fat: food.fat_per_100g * f,
+    gi: food.glycemic_index,
+  };
+}
 
 export function KHRechnerScreen() {
   const { colors } = useTheme();
@@ -40,7 +67,9 @@ export function KHRechnerScreen() {
   const [selected, setSelected] = useState<Food | null>(null);
   const [grams, setGrams] = useState(0);
   const [photoUri, setPhotoUri] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+  const [meal, setMeal] = useState<MealItem[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [dialog, setDialog] = useState<DialogState>(null);
 
   // ── Slider performance (issue #1) ──────────────────────────────────────────
   // The Slider fires onValueChange at a very high rate while dragging. Committing
@@ -75,7 +104,6 @@ export function KHRechnerScreen() {
     }
     setGrams(n);
     setSliderValue(n);
-    setSaved(false);
   };
 
   const navigation = useNavigation<any>();
@@ -104,17 +132,17 @@ export function KHRechnerScreen() {
     setGramsExternal(food.portions[0]?.grams ?? 100);
   };
 
-  // Live nutrient math. GI is a property of the food, not scaled by portion.
-  const nutrients = useMemo(() => {
-    if (!selected) return null;
-    const f = grams / 100;
-    return {
-      carbs: selected.carbs_per_100g * f,
-      sugar: selected.sugar_per_100g * f,
-      fat: selected.fat_per_100g * f,
-      gi: selected.glycemic_index,
-    };
-  }, [selected, grams]);
+  // Live nutrient math for the food currently being edited.
+  const nutrients = useMemo(
+    () => (selected ? portionNutrients(selected, grams) : null),
+    [selected, grams]
+  );
+
+  // Running carb total of everything collected into the meal so far.
+  const mealCarbs = useMemo(
+    () => meal.reduce((sum, i) => sum + portionNutrients(i.food, i.grams).carbs, 0),
+    [meal]
+  );
 
   const pickPhoto = async () => {
     if (!can('uploadPhoto', ctx)) return;
@@ -131,31 +159,121 @@ export function KHRechnerScreen() {
     }
   };
 
-  const saveToDiary = async () => {
-    if (!selected || !nutrients) return;
-    if (!can('saveDiaryEntry', ctx)) return;
-    await mealsRepo.create(
-      {
-        food_id: selected.id,
-        name: selected.name,
-        grams,
-        carbs_g: nutrients.carbs,
-        sugar_g: nutrients.sugar,
-        fat_g: nutrients.fat,
-        glycemic_index: nutrients.gi,
-        be: carbsToBe(nutrients.carbs),
-        photo_uri: photoUri,
-      },
-      user?.id ?? null
-    );
-    setSaved(true);
+  // Collect the current food + portion into the meal, then clear the editor
+  // so the next food can be searched.
+  const addToMeal = () => {
+    if (!selected || grams <= 0) return;
+    setMeal((m) => [...m, { key: uuidv4(), food: selected, grams, photoUri }]);
+    setSelected(null);
+    setPhotoUri(null);
+  };
+
+  const clearMeal = () => setMeal([]);
+
+  const canSaveDiary = can('saveDiaryEntry', ctx);
+
+  // Write every collected food (with its portion) to the diary as one meal:
+  // all entries share the same timestamp.
+  const saveMeal = async () => {
+    if (!canSaveDiary) {
+      setDialog({ kind: 'account' });
+      return;
+    }
+    if (meal.length === 0 || saving) return;
+    setSaving(true);
+    const loggedAt = nowIso();
+    let savedCount = 0;
+    try {
+      for (const item of meal) {
+        const n = portionNutrients(item.food, item.grams);
+        await mealsRepo.create(
+          {
+            food_id: item.food.id,
+            name: item.food.name,
+            grams: item.grams,
+            carbs_g: n.carbs,
+            sugar_g: n.sugar,
+            fat_g: n.fat,
+            glycemic_index: n.gi,
+            be: carbsToBe(n.carbs),
+            photo_uri: item.photoUri,
+            logged_at: loggedAt,
+          },
+          user?.id ?? null
+        );
+        savedCount += 1;
+      }
+      setMeal([]);
+      setDialog({ kind: 'saved', count: savedCount });
+    } catch {
+      // Keep only what wasn't saved, so a retry doesn't create duplicates.
+      setMeal((m) => m.slice(savedCount));
+      setDialog({ kind: 'error' });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const goRegister = () => navigation.navigate('Login', { screen: 'Register' });
+  const closeDialog = () => setDialog(null);
 
   return (
     <Screen>
-      <ScreenTitle>KH-Rechner</ScreenTitle>
+      <View style={styles.titleRow}>
+        <ScreenTitle style={styles.title}>KH-Rechner</ScreenTitle>
+        <View style={styles.totalRow}>
+          {/* Tap the total to see which foods it's made of. */}
+          <Pressable
+            onPress={() => setDialog({ kind: 'meal' })}
+            disabled={meal.length === 0}
+            style={({ pressed }) => [styles.total, pressed && styles.totalPressed]}
+            accessibilityRole="button"
+            accessibilityLabel={`Zwischentotal ${formatCarbs(mealCarbs)}, Lebensmittel anzeigen`}
+            hitSlop={6}
+          >
+            <Text style={styles.totalValue}>{Math.round(mealCarbs)} g</Text>
+            <Text style={styles.totalUnit}>KH</Text>
+          </Pressable>
+          {/* Greyed out without an account, but still tappable to explain why. */}
+          <Pressable
+            onPress={saveMeal}
+            disabled={canSaveDiary && (meal.length === 0 || saving)}
+            style={({ pressed }) => [
+              styles.iconBtn,
+              pressed && styles.iconBtnPressed,
+              (!canSaveDiary || meal.length === 0) && styles.iconBtnDimmed,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Mahlzeit im Tagebuch speichern"
+            hitSlop={4}
+          >
+            {saving ? (
+              <ActivityIndicator size="small" color={colors.accent} />
+            ) : (
+              <Ionicons
+                name="save-outline"
+                size={20}
+                color={canSaveDiary ? colors.accent : colors.textTertiary}
+              />
+            )}
+          </Pressable>
+          <Pressable
+            onPress={clearMeal}
+            disabled={meal.length === 0}
+            style={({ pressed }) => [
+              styles.iconBtn,
+              pressed && styles.iconBtnPressed,
+              meal.length === 0 && styles.iconBtnDimmed,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Zwischentotal auf null setzen"
+            hitSlop={4}
+          >
+            <Ionicons name="trash-outline" size={20} color={colors.danger} />
+          </Pressable>
+        </View>
+      </View>
+
 
       <View style={styles.searchRow}>
         <Ionicons name="search" size={18} color={colors.textTertiary} />
@@ -179,7 +297,6 @@ export function KHRechnerScreen() {
             style={styles.resultRow}
             onPress={() => selectFood(food)}
           >
-            <IconBubble name="nutrition" size={18} />
             <View style={styles.resultBody}>
               <Text style={styles.resultName}>{food.name}</Text>
               <Text style={styles.resultGroup}>{food.food_group}</Text>
@@ -193,8 +310,7 @@ export function KHRechnerScreen() {
         <Card style={styles.selectedCard}>
           {/* Header */}
           <View style={styles.foodHeader}>
-            <IconBubble name="nutrition" />
-            <View style={styles.foodHeaderText}>
+            <View>
               <Text style={styles.foodName}>{selected.name}</Text>
               <Text style={styles.foodGroup}>{selected.food_group}</Text>
             </View>
@@ -251,7 +367,6 @@ export function KHRechnerScreen() {
               // external set to the previous value still moves the thumb.
               setGrams(Math.round(v));
               setSliderValue(Math.round(v));
-              setSaved(false);
             }}
             minimumTrackTintColor={colors.accent}
             maximumTrackTintColor={colors.bgInput}
@@ -285,10 +400,10 @@ export function KHRechnerScreen() {
             color={colors.dataFat}
           />
 
-          {/* Total summary chip */}
+          {/* Carbs of this portion */}
           <View style={styles.summaryChip}>
             <Text style={styles.summaryText}>
-              Kohlenhydrate total {formatCarbsWithBe(nutrients.carbs)}
+              Diese Portion: {formatCarbs(nutrients.carbs)}
             </Text>
           </View>
 
@@ -303,28 +418,129 @@ export function KHRechnerScreen() {
             style={styles.spacedBtn}
           />
 
-          {/* Save / gating */}
-          {can('saveDiaryEntry', ctx) ? (
-            <Button
-              title={saved ? 'Im Tagebuch gespeichert ✓' : 'Zu Tagebuch hinzufügen'}
-              icon={saved ? 'checkmark' : 'add'}
-              onPress={saveToDiary}
-              disabled={saved}
-              style={styles.spacedBtn}
-            />
-          ) : (
-            <View style={styles.spacedBtn}>
-              <GateNotice message={gateCopy.saveMeal} onRegister={goRegister} />
-            </View>
-          )}
+          {/* Collect into the meal (saved to the diary via the title icon). */}
+          <Button
+            title="Zur Mahlzeit hinzufügen"
+            icon="add"
+            onPress={addToMeal}
+            disabled={grams <= 0}
+            style={styles.spacedBtn}
+          />
         </Card>
       )}
+
+      {/* Foods collected into the meal so far. */}
+      <Dialog
+        visible={dialog?.kind === 'meal'}
+        title="Mahlzeit"
+        onClose={closeDialog}
+        actions={[{ label: 'Schliessen', onPress: closeDialog }]}
+      >
+        <View style={styles.mealList}>
+          {meal.map((item) => (
+            <View key={item.key} style={[styles.mealRow, styles.mealRowBorder]}>
+              <Text style={styles.mealName} numberOfLines={1}>
+                {item.food.name}
+              </Text>
+              <Text style={styles.mealGrams}>{item.grams} g</Text>
+              <Text style={styles.mealCarbs}>
+                {formatCarbs(portionNutrients(item.food, item.grams).carbs)}
+              </Text>
+            </View>
+          ))}
+          <View style={styles.mealRow}>
+            <Text style={styles.mealTotalLabel}>Total</Text>
+            <Text style={styles.mealCarbs}>{formatCarbs(mealCarbs)}</Text>
+          </View>
+        </View>
+      </Dialog>
+      <Dialog
+        visible={dialog?.kind === 'account'}
+        title="Konto erforderlich"
+        message={`${gateCopy.saveMeal} Mit einem kostenlosen Konto werden deine Mahlzeiten im Tagebuch gespeichert.`}
+        onClose={closeDialog}
+        actions={[
+          { label: 'Abbrechen', onPress: closeDialog },
+          {
+            label: 'Konto erstellen',
+            variant: 'primary',
+            onPress: () => {
+              closeDialog();
+              goRegister();
+            },
+          },
+        ]}
+      />
+      <Dialog
+        visible={dialog?.kind === 'saved'}
+        title="Gespeichert"
+        message={
+          dialog?.kind === 'saved' && dialog.count === 1
+            ? '1 Lebensmittel wurde im Tagebuch eingetragen.'
+            : `${dialog?.kind === 'saved' ? dialog.count : 0} Lebensmittel wurden im Tagebuch eingetragen.`
+        }
+        onClose={closeDialog}
+        actions={[
+          { label: 'OK', onPress: closeDialog },
+          {
+            label: 'Zum Tagebuch',
+            variant: 'primary',
+            onPress: () => {
+              closeDialog();
+              navigation.navigate('Tagebuch');
+            },
+          },
+        ]}
+      />
+      <Dialog
+        visible={dialog?.kind === 'error'}
+        title="Speichern fehlgeschlagen"
+        message="Nicht alle Lebensmittel konnten gespeichert werden. Die übrigen sind noch in der Mahlzeit – bitte versuche es erneut."
+        onClose={closeDialog}
+        actions={[{ label: 'OK', variant: 'primary', onPress: closeDialog }]}
+      />
     </Screen>
   );
 }
 
 const makeStyles = (colors: Colors) =>
   StyleSheet.create({
+    titleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: spacing.lg,
+    },
+    title: { marginBottom: 0, flexShrink: 1 },
+    totalRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+    total: {
+      alignItems: 'flex-end',
+      marginRight: spacing.xs,
+      paddingHorizontal: spacing.xs,
+      borderRadius: radius.input,
+    },
+    totalPressed: { backgroundColor: colors.bgSurfaceAlt },
+    totalValue: { fontSize: 20, fontWeight: '700', color: colors.accent },
+    totalUnit: { fontSize: 12, color: colors.textTertiary },
+    iconBtn: {
+      width: 40,
+      height: 40,
+      borderRadius: radius.pill,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.bgSurface,
+    },
+    iconBtnPressed: { backgroundColor: colors.bgSurfaceAlt },
+    iconBtnDimmed: { opacity: 0.4 },
+    mealList: { marginTop: spacing.md },
+    mealRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm },
+    mealRowBorder: { borderBottomWidth: 1, borderBottomColor: colors.border },
+    mealName: { flex: 1, fontSize: 15, fontWeight: '600', color: colors.textPrimary },
+    mealGrams: { fontSize: 13, color: colors.textTertiary, marginHorizontal: spacing.md },
+    mealCarbs: { fontSize: 14, fontWeight: '700', color: colors.accent },
+    mealTotalLabel: { flex: 1, fontSize: 15, fontWeight: '700', color: colors.textPrimary },
     searchRow: { flexDirection: 'row', alignItems: 'center', position: 'relative' },
     searchField: { flex: 1, marginBottom: spacing.md, marginLeft: -26 },
     searchInput: { paddingLeft: 42 },
@@ -335,13 +551,12 @@ const makeStyles = (colors: Colors) =>
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
     },
-    resultBody: { flex: 1, marginHorizontal: spacing.md },
+    resultBody: { flex: 1, marginRight: spacing.md },
     resultName: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
     resultGroup: { fontSize: 13, color: colors.textTertiary },
     resultCarbs: { fontSize: 13, color: colors.textSecondary },
     selectedCard: { marginTop: spacing.lg },
     foodHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.lg },
-    foodHeaderText: { marginLeft: spacing.md },
     foodName: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
     foodGroup: { fontSize: 14, color: colors.textTertiary },
     chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },

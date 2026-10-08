@@ -25,17 +25,16 @@ const WEEKDAYS_DE = [
   'Samstag',
 ];
 
-/** 1 BE (Broteinheit) = 10 g Kohlenhydrate. */
+/**
+ * 1 BE (Broteinheit) = 10 g Kohlenhydrate. Only stored (meal_entries.be);
+ * the UI shows carbohydrates in grams, never BE.
+ */
 export const GRAMS_PER_BE = 10;
 
 export const carbsToBe = (carbsG: number): number => carbsG / GRAMS_PER_BE;
 
-/** "18 g · 1.8 BE" */
-export const formatCarbsWithBe = (carbsG: number): string => {
-  const g = Math.round(carbsG);
-  const be = carbsToBe(carbsG);
-  return `${g} g · ${be.toFixed(1)} BE`;
-};
+/** "18 g KH" */
+export const formatCarbs = (carbsG: number): string => `${Math.round(carbsG)} g KH`;
 
 /** Blood glucose: mmol/l, one decimal. */
 export const formatMmol = (value: number): string => `${value.toFixed(1)} mmol/l`;

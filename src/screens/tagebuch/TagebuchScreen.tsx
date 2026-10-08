@@ -11,7 +11,7 @@ import { useAppStore } from '@/state/store';
 import { mealsRepo } from '@/db/repositories/meals';
 import { sportsRepo } from '@/db/repositories/sports';
 import { can, gateCopy } from '@/policy/gating';
-import { dayKey, formatDayHeader, formatTime, formatCarbsWithBe } from '@/utils/format';
+import { dayKey, formatDayHeader, formatTime, formatCarbs } from '@/utils/format';
 import type { MealEntry, SportEntry } from '@/types/models';
 
 type FeedItem =
@@ -142,7 +142,7 @@ function FeedRow({ item, last }: { item: FeedItem; last: boolean }) {
         <IconBubble name="restaurant" size={18} />
         <View style={styles.rowBody}>
           <Text style={styles.rowTitle}>{m.name}</Text>
-          <Text style={styles.rowMeta}>{formatCarbsWithBe(m.carbs_g)}</Text>
+          <Text style={styles.rowMeta}>{formatCarbs(m.carbs_g)}</Text>
           {m.photo_uri && <Text style={styles.rowSub}>Foto gespeichert</Text>}
         </View>
       </View>

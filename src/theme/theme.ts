@@ -40,6 +40,7 @@ export interface Colors {
   hypo: string; // low-glucose marker
   border: string; // dividers, card outlines
   shadow: string; // card shadow (alpha baked in)
+  overlay: string; // dimmed backdrop behind dialogs
 }
 
 export const darkColors: Colors = {
@@ -66,6 +67,7 @@ export const darkColors: Colors = {
   hypo: '#5AA9E8',
   border: '#2A332E',
   shadow: 'rgba(0, 0, 0, 0.35)',
+  overlay: 'rgba(0, 0, 0, 0.6)',
 };
 
 // Light palette: same green-tinted neutrals, with the accent and semantic
@@ -94,6 +96,7 @@ export const lightColors: Colors = {
   hypo: '#2F7FC1',
   border: '#D5DED8',
   shadow: 'rgba(16, 32, 24, 0.10)',
+  overlay: 'rgba(16, 32, 24, 0.35)',
 };
 
 export const palettes: Record<ColorScheme, Colors> = {

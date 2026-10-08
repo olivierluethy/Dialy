@@ -36,9 +36,15 @@ export function SectionLabel({
 }
 
 /** Large bold screen title. */
-export function ScreenTitle({ children }: { children: React.ReactNode }) {
+export function ScreenTitle({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: StyleProp<TextStyle>;
+}) {
   const styles = useThemedStyles(makeStyles);
-  return <Text style={styles.title}>{children}</Text>;
+  return <Text style={[styles.title, style]}>{children}</Text>;
 }
 
 /** Accent-tinted circular icon bubble. */
