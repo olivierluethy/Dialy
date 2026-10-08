@@ -28,7 +28,7 @@ const SECTIONS: Array<{ h: string; b: string }> = [
   },
   {
     h: 'Quellen',
-    b: 'Nährwerte der meisten Lebensmittel im KH-Rechner: Schweizer Nährwertdatenbank, Bundesamt für Lebensmittelsicherheit und Veterinärwesen (BLV), naehrwertdaten.ch.',
+    b: 'Nährwerte der meisten Lebensmittel im KH-Rechner: Schweizer Nährwertdatenbank, Bundesamt für Lebensmittelsicherheit und Veterinärwesen (BLV), naehrwertdaten.ch. Übliche Portionsgrössen: BLV, Nationale Ernährungserhebung menuCH 2014-15.',
   },
   {
     h: 'Kontakt',

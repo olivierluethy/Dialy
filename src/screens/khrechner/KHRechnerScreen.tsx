@@ -373,12 +373,12 @@ export function KHRechnerScreen() {
             <Card style={styles.selectedCard}>
               {/* Header */}
               <View style={styles.foodHeader}>
-                <View>
+                <View style={styles.foodHeaderText}>
                   <Text style={styles.foodName}>{selected.name}</Text>
+                  {/* Nutrients (and usual portion, if any) come from BLV datasets;
+                      the full source names are listed in the privacy screen. */}
                   {selected.id.startsWith('blv-') && (
-                    <Text style={styles.foodSource}>
-                      Quelle: Schweizer Nährwertdatenbank (BLV)
-                    </Text>
+                    <Text style={styles.foodSource}>Quelle: BLV</Text>
                   )}
                 </View>
               </View>
@@ -622,6 +622,8 @@ const makeStyles = (colors: Colors) =>
     categoryRow: { gap: spacing.sm, paddingHorizontal: spacing.lg },
     selectedCard: { marginTop: spacing.lg },
     foodHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.lg },
+    // flex: 1 lets long names and the source line wrap instead of overflowing.
+    foodHeaderText: { flex: 1 },
     foodName: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
     foodSource: { fontSize: 12, color: colors.textTertiary, marginTop: 2 },
     chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },

@@ -36,3 +36,6 @@ yarn-error.*
 .idea/
 .vscode/
 *.log
+
+# Raw downloads (BLV / menuCH Excel files) - only needed by the import scripts
+data-sources/

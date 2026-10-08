@@ -1,3 +1,6 @@
+/** Label prefix of portions derived from menuCH (see scripts/import-menuch.mjs). */
+export const USUAL_PORTION_LABEL = 'Übliche Portion';
+
 /**
  * Top-level food categories (those of the Swiss Food Composition Database),
  * in the order shown by the KH-Rechner filter: carbohydrate-rich groups

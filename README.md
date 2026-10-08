@@ -362,6 +362,29 @@ npm run import:blv -- pfad/zu/Schweizer_Nahrwertdatenbank.xlsx
 Das schreibt `src/data/blvFoods.json`; die App übernimmt die neue Version beim
 nächsten Start automatisch.
 
+### Übliche Portionsgrössen (menuCH)
+
+Rund 680 der BLV-Lebensmittel haben eine „Übliche Portion“ (z. B. Teigwaren,
+gekocht: 170 g; Apfel: 207 g). Sie stammt aus der Nationalen
+Ernährungserhebung **menuCH 2014-15** des BLV (Median der tatsächlich
+gegessenen Menge, pro Kategorie die Mahlzeit mit den meisten Beobachtungen).
+
+- Die Zuordnung BLV-Lebensmittel → menuCH-Kategorie steht als Regeln in
+  `scripts/import-menuch.mjs`. Sie gilt **nur für Lebensmittel im verzehrten
+  Zustand** (gekocht, zubereitet, roh essbar) – nie für trockene oder rohe
+  Zutaten wie Mehl, Teigwaren trocken oder rohes Fleisch. Kräuter, Gewürze und
+  Saucen erhalten keine Portion.
+- Quelle: [opendata.swiss – menuCH Portionsgrössen](https://ckan.opendata.swiss/dataset/groups/menuch-portionsgrossen),
+  Datei „Portionsgrössen pro Mahlzeit“. Quellenangabe in der App.
+
+**Aktualisieren** (Rohdateien gehören in den von Git ignorierten Ordner
+`data-sources/`):
+
+```bash
+npm run import:blv -- data-sources/Schweizer_Nahrwertdatenbank.xlsx
+npm run import:menuch -- data-sources/menuCH_portion_sizes_2014_2015_per_meal.xlsx
+```
+
 ---
 
 ## Web-Unterstützung (Browser)
