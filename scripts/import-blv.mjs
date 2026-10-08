@@ -6,7 +6,8 @@
  *   1. Download the Excel file from https://naehrwertdaten.ch/de/downloads/
  *   2. npm run import:blv -- path/to/Schweizer_Nahrwertdatenbank.xlsx
  *
- * Only the values the app uses are kept (per 100 g edible portion): available
+ * Kept per food: name, sub-category (shown as food group), top-level
+ * categories (for the category filter) and, per 100 g edible portion: available
  * carbohydrates, sugar, total fat. "Sp." (traces) and "<x" become 0. Foods with
  * an unknown ("k.A.") value for any of the three are skipped rather than
  * guessed. The database has no glycaemic index and no portion sizes.
@@ -100,18 +101,26 @@ for (const r of rows.slice(headerIdx + 1)) {
     skipped += 1;
     continue;
   }
-  // "Früchte/Früchte frisch;Getränke/…" -> "Früchte frisch"
-  const firstCategory = String(r[C.category]).split(';')[0];
-  const group = firstCategory.split('/').pop().trim() || firstCategory;
-  foods.push([`blv-${r[C.id]}`, String(r[C.name]).trim(), group, carbs, sugar, fat]);
+  // "Früchte/Fruchtsäfte;Alkoholfreie Getränke/Frucht- und Gemüsesäfte"
+  //   -> group "Fruchtsäfte", categories ["Früchte", "Alkoholfreie Getränke"]
+  const paths = String(r[C.category]).split(';').map((p) => p.trim()).filter(Boolean);
+  const group = paths[0]?.split('/').pop().trim() || paths[0] || '';
+  const categories = [...new Set(paths.map((p) => p.split('/')[0].trim()))];
+  foods.push([`blv-${r[C.id]}`, String(r[C.name]).trim(), group, categories, carbs, sugar, fat]);
 }
 foods.sort((a, b) => a[1].localeCompare(b[1], 'de'));
+
+// Category names are stored once; foods reference them by index.
+const categoryNames = [...new Set(foods.flatMap((f) => f[3]))].sort((a, b) => a.localeCompare(b, 'de'));
+for (const f of foods) f[3] = f[3].map((c) => categoryNames.indexOf(c));
 
 const out = {
   source: 'Schweizer Nährwertdatenbank, Bundesamt für Lebensmittelsicherheit und Veterinärwesen (BLV)',
   version,
-  // Tuple layout keeps the bundled file small.
-  fields: ['id', 'name', 'food_group', 'carbs_per_100g', 'sugar_per_100g', 'fat_per_100g'],
+  // Tuple layout keeps the bundled file small; `categories` holds indexes
+  // into `categoryNames`.
+  fields: ['id', 'name', 'food_group', 'categories', 'carbs_per_100g', 'sugar_per_100g', 'fat_per_100g'],
+  categoryNames,
   foods,
 };
 writeFileSync(outPath, JSON.stringify(out) + '\n');

@@ -1,8 +1,9 @@
 import { getDb } from '@/db/database';
 import type { Food, Portion } from '@/types/models';
 
-interface FoodRow extends Omit<Food, 'portions'> {
+interface FoodRow extends Omit<Food, 'portions' | 'categories'> {
   portions: string;
+  categories: string; // ";"-separated
 }
 
 function mapRow(row: FoodRow): Food {
@@ -12,7 +13,8 @@ function mapRow(row: FoodRow): Food {
   } catch {
     portions = [];
   }
-  return { ...row, portions };
+  const categories = row.categories ? row.categories.split(';') : [];
+  return { ...row, portions, categories };
 }
 
 // Explicit fold table (instead of String.normalize) so it behaves the same on
@@ -58,10 +60,12 @@ export const foodsRepo = {
    * Foods whose name contains the query (umlaut/accent/case-insensitive).
    * Exact spellings rank before folded ones ("öl": "… im Öl" before "Olive"),
    * then matches at the start of the name, at the start of a word ("Reis"
-   * before "Milchreis"), anywhere; alphabetical within.
+   * before "Milchreis"), anywhere; alphabetical within. Optionally limited
+   * to one top-level category.
    */
-  async search(query: string): Promise<Food[]> {
-    const foods = await loadIndex();
+  async search(query: string, category: string | null = null): Promise<Food[]> {
+    const all = await loadIndex();
+    const foods = category ? all.filter((f) => f.food.categories.includes(category)) : all;
     const q = foldText(query.trim());
     if (!q) return foods.map((f) => f.food);
     const exact = query.trim().toLowerCase();
@@ -74,6 +78,12 @@ export const foodsRepo = {
     }
     // Array sort is stable, so the alphabetical order holds within a rank.
     return ranked.sort((a, b) => a.rank - b.rank).map((r) => r.food);
+  },
+
+  /** Categories that have at least one food. */
+  async categories(): Promise<Set<string>> {
+    const all = await loadIndex();
+    return new Set(all.flatMap((f) => f.food.categories));
   },
 
   /** Drop the in-memory search index (call after the foods table changes). */

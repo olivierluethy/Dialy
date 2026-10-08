@@ -10,6 +10,7 @@
  *   1 — initial schema
  *   2 — glycemic_index nullable in foods + meal_entries (the Swiss Food
  *       Composition Database has no GI values)
+ *   3 — foods.categories (top-level categories, ";"-separated)
  */
 
 /** Minimal DB surface needed to migrate; both implementations provide it. */
@@ -18,7 +19,7 @@ export interface MigratableDb {
   getFirstAsync<T>(sql: string): Promise<T | null>;
 }
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 const FOODS_TABLE = `
 CREATE TABLE IF NOT EXISTS foods (
@@ -29,6 +30,7 @@ CREATE TABLE IF NOT EXISTS foods (
   deleted_at TEXT,
   name TEXT NOT NULL,
   food_group TEXT NOT NULL,
+  categories TEXT NOT NULL DEFAULT '',
   carbs_per_100g REAL NOT NULL,
   sugar_per_100g REAL NOT NULL,
   fat_per_100g REAL NOT NULL,
@@ -152,22 +154,35 @@ DROP TABLE meal_entries_v1;
 CREATE INDEX IF NOT EXISTS idx_meal_logged ON meal_entries(logged_at);
 `;
 
+/**
+ * v2 -> v3: foods only holds seed content, so it's rebuilt with the new
+ * column; clearing the BLV marker makes seeding write the foods again.
+ */
+const MIGRATE_TO_3 = `
+DROP TABLE IF EXISTS foods;
+${FOODS_TABLE}
+DELETE FROM app_meta WHERE key = 'blv_foods';
+`;
+
+async function inTransaction(db: MigratableDb, sql: string): Promise<void> {
+  await db.execAsync('BEGIN;');
+  try {
+    await db.execAsync(sql);
+    await db.execAsync('COMMIT;');
+  } catch (e) {
+    await db.execAsync('ROLLBACK;');
+    throw e;
+  }
+}
+
 export async function migrate(db: MigratableDb): Promise<void> {
   const row = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version;');
   const current = row?.user_version ?? 0;
   await db.execAsync(SCHEMA);
   // Also runs for fresh installs and for web databases created before
   // user_version was tracked (0) — rebuilding is harmless there.
-  if (current < 2) {
-    await db.execAsync('BEGIN;');
-    try {
-      await db.execAsync(MIGRATE_TO_2);
-      await db.execAsync('COMMIT;');
-    } catch (e) {
-      await db.execAsync('ROLLBACK;');
-      throw e;
-    }
-  }
+  if (current < 2) await inTransaction(db, MIGRATE_TO_2);
+  if (current < 3) await inTransaction(db, MIGRATE_TO_3);
   if (current < SCHEMA_VERSION) {
     await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION};`);
   }

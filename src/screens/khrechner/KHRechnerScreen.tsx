@@ -21,6 +21,7 @@ import { FadeIn } from '@/components/FadeIn';
 import { radius, spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import { foodsRepo } from '@/db/repositories/foods';
+import { FOOD_CATEGORIES } from '@/data/foodCategories';
 import { mealsRepo } from '@/db/repositories/meals';
 import { useAppStore } from '@/state/store';
 import { can, gateCopy } from '@/policy/gating';
@@ -65,6 +66,8 @@ export function KHRechnerScreen() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Food[]>([]);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [category, setCategory] = useState<string | null>(null);
+  const [categories, setCategories] = useState<typeof FOOD_CATEGORIES>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Food | null>(null);
   const [grams, setGrams] = useState(0);
@@ -116,7 +119,7 @@ export function KHRechnerScreen() {
   // (no flicker per keystroke). A new query starts again at the first page.
   useEffect(() => {
     let active = true;
-    foodsRepo.search(query).then((rows) => {
+    foodsRepo.search(query, category).then((rows) => {
       if (active) {
         setResults(rows);
         setVisibleCount(PAGE_SIZE);
@@ -126,7 +129,14 @@ export function KHRechnerScreen() {
     return () => {
       active = false;
     };
-  }, [query]);
+  }, [query, category]);
+
+  // Filter chips: only categories that actually contain foods.
+  useEffect(() => {
+    foodsRepo.categories().then((present) =>
+      setCategories(FOOD_CATEGORIES.filter((c) => present.has(c.name)))
+    );
+  }, []);
 
   // Scroll the calculation card into view when a food is picked. On first
   // show the card's position is only known after layout, so the scroll is
@@ -162,7 +172,6 @@ export function KHRechnerScreen() {
         >
           <View style={styles.resultBody}>
             <Text style={styles.resultName}>{food.name}</Text>
-            <Text style={styles.resultGroup}>{food.food_group}</Text>
           </View>
           <Text style={styles.resultCarbs}>{food.carbs_per_100g} g / 100 g</Text>
         </Pressable>
@@ -311,6 +320,25 @@ export function KHRechnerScreen() {
         />
       </View>
 
+      {/* Category filter (tap the active one again to clear it). */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.categoryScroll}
+        contentContainerStyle={styles.categoryRow}
+        keyboardShouldPersistTaps="handled"
+      >
+        <SelectableChip label="Alle" selected={category === null} onPress={() => setCategory(null)} />
+        {categories.map((c) => (
+          <SelectableChip
+            key={c.name}
+            label={c.label}
+            selected={category === c.name}
+            onPress={() => setCategory((cur) => (cur === c.name ? null : c.name))}
+          />
+        ))}
+      </ScrollView>
+
       {/* Search results, paged. */}
       {loading ? (
         <ActivityIndicator color={colors.accent} />
@@ -347,7 +375,6 @@ export function KHRechnerScreen() {
               <View style={styles.foodHeader}>
                 <View>
                   <Text style={styles.foodName}>{selected.name}</Text>
-                  <Text style={styles.foodGroup}>{selected.food_group}</Text>
                   {selected.id.startsWith('blv-') && (
                     <Text style={styles.foodSource}>
                       Quelle: Schweizer Nährwertdatenbank (BLV)
@@ -588,13 +615,14 @@ const makeStyles = (colors: Colors) =>
     },
     resultBody: { flex: 1, marginRight: spacing.md },
     resultName: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
-    resultGroup: { fontSize: 13, color: colors.textTertiary },
     resultCarbs: { fontSize: 13, color: colors.textSecondary },
     resultCount: { fontSize: 12, color: colors.textTertiary, marginBottom: spacing.xs },
+    // Bleed to the screen edges so chips scroll under the side padding.
+    categoryScroll: { marginHorizontal: -spacing.lg, marginBottom: spacing.md },
+    categoryRow: { gap: spacing.sm, paddingHorizontal: spacing.lg },
     selectedCard: { marginTop: spacing.lg },
     foodHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.lg },
     foodName: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
-    foodGroup: { fontSize: 14, color: colors.textTertiary },
     foodSource: { fontSize: 12, color: colors.textTertiary, marginTop: 2 },
     chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
     gramRow: { flexDirection: 'row', alignItems: 'center' },

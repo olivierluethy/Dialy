@@ -28,7 +28,8 @@ export interface Article extends SyncMeta {
 
 export interface Food extends SyncMeta {
   name: string;
-  food_group: string;
+  food_group: string; // sub-category, shown under the name
+  categories: string[]; // top-level categories, for filtering
   carbs_per_100g: number;
   sugar_per_100g: number;
   fat_per_100g: number;

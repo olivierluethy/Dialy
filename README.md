@@ -341,7 +341,9 @@ Der KH-Rechner enthält rund 1'200 generische Lebensmittel aus der
 handgepflegten Einträgen in `src/data/seedFoods.ts` (mit Portionsgrössen und
 glykämischem Index).
 
-- Übernommen werden pro 100 g: verfügbare Kohlenhydrate, Zucker, Fett.
+- Übernommen werden die Kategorien (für den Kategorie-Filter im KH-Rechner;
+  Kurznamen in `src/data/foodCategories.ts`) und pro 100 g: verfügbare
+  Kohlenhydrate, Zucker, Fett.
   „Sp.“ (Spuren) und „<x“ werden zu 0; Lebensmittel mit unbekanntem Wert
   („k.A.“) werden ausgelassen statt geschätzt.
 - Die BLV-Daten enthalten **keinen glykämischen Index** (Anzeige „k.A.“) und
