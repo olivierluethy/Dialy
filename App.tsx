@@ -9,15 +9,20 @@ import {
   type Theme as NavTheme,
 } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
+import { useFonts } from 'expo-font';
 import type { Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
+import { fontAssets } from '@/theme/fonts';
 import { useAppStore } from '@/state/store';
 import { useBootstrap } from '@/state/useBootstrap';
 import { RootNavigator } from '@/navigation/RootNavigator';
 
 export default function App() {
   useBootstrap();
-  const ready = useAppStore((s) => s.ready);
+  const dataReady = useAppStore((s) => s.ready);
+  // If the font fails to load, render anyway with the system font.
+  const [fontsLoaded, fontError] = useFonts(fontAssets);
+  const ready = dataReady && (fontsLoaded || fontError !== null);
   const { scheme, colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
 

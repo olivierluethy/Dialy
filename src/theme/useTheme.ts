@@ -1,6 +1,7 @@
 import { useColorScheme } from 'react-native';
 import { useAppStore } from '@/state/store';
 import { palettes, type ColorScheme, type Colors } from '@/theme/theme';
+import { withAppFont } from '@/theme/fonts';
 
 /**
  * The active colour scheme and palette, resolved from the user's appearance
@@ -20,7 +21,8 @@ const styleCache = new WeakMap<object, Partial<Record<ColorScheme, unknown>>>();
 
 /**
  * Theme-aware replacement for a module-level `StyleSheet.create`. Pass a
- * module-level factory `(colors) => StyleSheet.create({...})`.
+ * module-level factory `(colors) => StyleSheet.create({...})`. Text styles
+ * also get the app font (see theme/fonts.ts).
  */
 export function useThemedStyles<T>(factory: (colors: Colors) => T): T {
   const { scheme, colors } = useTheme();
@@ -29,6 +31,6 @@ export function useThemedStyles<T>(factory: (colors: Colors) => T): T {
     entry = {};
     styleCache.set(factory, entry);
   }
-  if (!(scheme in entry)) entry[scheme] = factory(colors);
+  if (!(scheme in entry)) entry[scheme] = withAppFont(factory(colors));
   return entry[scheme] as T;
 }
