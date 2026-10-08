@@ -52,6 +52,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL ?? '',
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
     sentryDsn: process.env.EXPO_PUBLIC_SENTRY_DSN ?? '',
+    // Recipient of the Kontakt form (food suggestions / corrections).
+    contactEmail: process.env.EXPO_PUBLIC_CONTACT_EMAIL ?? '',
     // Feature flags – everything external is off by default so the app
     // runs with zero configuration.
     featureFcm: process.env.EXPO_PUBLIC_FEATURE_FCM === 'true',

@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import type { BottomTabHeaderProps } from '@react-navigation/bottom-tabs';
+import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { radius, spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import { useAppStore } from '@/state/store';
@@ -37,6 +38,8 @@ const MORE: MenuItem[] = [
   { label: 'Datenschutz', tab: 'Login', screen: 'Privacy' },
 ];
 
+const itemKey = (item: MenuItem) => item.screen ?? item.tab;
+
 export function AppHeader({ navigation, route }: BottomTabHeaderProps) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
@@ -44,14 +47,25 @@ export function AppHeader({ navigation, route }: BottomTabHeaderProps) {
   const user = useAppStore((s) => s.user);
   const [open, setOpen] = useState(false);
 
-  // Section order is fixed (§3): Ratgeber, KH-Rechner, Tagebuch, Sport, Login.
+  // Section order is fixed (§3): Ratgeber, KH-Rechner, Tagebuch, Sport,
+  // then Kontakt and Login (both screens of the Login stack).
   const sections: MenuItem[] = [
     { label: 'Ratgeber', tab: 'Ratgeber' },
     { label: 'KH-Rechner', tab: 'KHRechner' },
     { label: 'Tagebuch', tab: 'Tagebuch' },
     { label: 'Sport', tab: 'Sport' },
-    { label: user ? 'Konto' : 'Anmelden', tab: 'Login' },
+    { label: 'Kontakt', tab: 'Login', screen: 'Contact' },
+    { label: user ? 'Konto' : 'Anmelden', tab: 'Login', screen: 'LoginHome' },
   ];
+
+  // Highlight the section matching the focused screen; within the Login stack
+  // that's Kontakt on its screen and Anmelden/Konto everywhere else.
+  const focused = getFocusedRouteNameFromRoute(route);
+  const inTab = sections.filter((s) => s.tab === route.name);
+  const activeItem =
+    inTab.find((s) => s.screen !== undefined && s.screen === focused) ??
+    inTab.find((s) => s.screen === undefined || s.screen === 'LoginHome');
+  const activeKey = activeItem ? itemKey(activeItem) : null;
 
   const go = (item: MenuItem) => {
     setOpen(false);
@@ -85,7 +99,7 @@ export function AppHeader({ navigation, route }: BottomTabHeaderProps) {
       <MenuOverlay
         visible={open}
         sections={sections}
-        activeTab={route.name}
+        activeKey={activeKey}
         onSelect={go}
         onClose={() => setOpen(false)}
       />
@@ -96,13 +110,13 @@ export function AppHeader({ navigation, route }: BottomTabHeaderProps) {
 function MenuOverlay({
   visible,
   sections,
-  activeTab,
+  activeKey,
   onSelect,
   onClose,
 }: {
   visible: boolean;
   sections: MenuItem[];
-  activeTab: string;
+  activeKey: string | null;
   onSelect: (item: MenuItem) => void;
   onClose: () => void;
 }) {
@@ -161,9 +175,9 @@ function MenuOverlay({
 
         <ScrollView contentContainerStyle={styles.menuList}>
           {sections.map((item, i) => {
-            const active = item.tab === activeTab;
+            const active = itemKey(item) === activeKey;
             return (
-              <Animated.View key={item.tab} style={rowAnim(i)}>
+              <Animated.View key={itemKey(item)} style={rowAnim(i)}>
                 <Pressable
                   onPress={() => onSelect(item)}
                   style={styles.item}

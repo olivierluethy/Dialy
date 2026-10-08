@@ -8,6 +8,7 @@ interface DialyExtra {
   supabaseUrl: string;
   supabaseAnonKey: string;
   sentryDsn: string;
+  contactEmail: string;
   featureFcm: boolean;
   featureHealthImport: boolean;
 }
@@ -18,6 +19,8 @@ export const config = {
   supabaseUrl: extra.supabaseUrl ?? '',
   supabaseAnonKey: extra.supabaseAnonKey ?? '',
   sentryDsn: extra.sentryDsn ?? '',
+  // Recipient of the Kontakt form. Placeholder until a real address is set.
+  contactEmail: extra.contactEmail || 'kontakt@dialy.example',
   featureFcm: Boolean(extra.featureFcm),
   featureHealthImport: Boolean(extra.featureHealthImport),
 };

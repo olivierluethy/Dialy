@@ -402,6 +402,7 @@ cp .env.example .env
 | `EXPO_PUBLIC_SUPABASE_URL` | Supabase Projekt-URL (Settings → API) |
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Supabase **anon**-Key (öffentlich, client-sicher) |
 | `EXPO_PUBLIC_SENTRY_DSN` | Sentry DSN (leer = No-op) |
+| `EXPO_PUBLIC_CONTACT_EMAIL` | Empfänger des Kontaktformulars (Lebensmittel vorschlagen / Fehler melden); leer = Platzhalter `kontakt@dialy.example` |
 | `EXPO_PUBLIC_FEATURE_FCM` | `true` aktiviert FCM-Sync-Trigger (sonst Sync-on-Foreground) |
 | `EXPO_PUBLIC_FEATURE_HEALTH` | `true` aktiviert die Health-Import-Schnittstelle |
 
