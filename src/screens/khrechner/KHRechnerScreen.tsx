@@ -17,6 +17,7 @@ import { TextField } from '@/components/TextField';
 import { SelectableChip } from '@/components/Chip';
 import { NutrientBar } from '@/components/NutrientBar';
 import { Dialog } from '@/components/Dialog';
+import { FadeIn } from '@/components/FadeIn';
 import { radius, spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import { foodsRepo } from '@/db/repositories/foods';
@@ -310,115 +311,117 @@ export function KHRechnerScreen() {
             }
           }}
         >
-          <Card style={styles.selectedCard}>
-            {/* Header */}
-            <View style={styles.foodHeader}>
-              <View>
-                <Text style={styles.foodName}>{selected.name}</Text>
-                <Text style={styles.foodGroup}>{selected.food_group}</Text>
+          <FadeIn key={selected.id}>
+            <Card style={styles.selectedCard}>
+              {/* Header */}
+              <View style={styles.foodHeader}>
+                <View>
+                  <Text style={styles.foodName}>{selected.name}</Text>
+                  <Text style={styles.foodGroup}>{selected.food_group}</Text>
+                </View>
               </View>
-            </View>
 
-            {/* Portion presets */}
-            <SectionLabel>Portionsgrösse</SectionLabel>
-            <View style={styles.chipRow}>
-              {selected.portions.map((p) => (
-                <SelectableChip
-                  key={p.label}
-                  label={p.label}
-                  selected={Math.round(grams) === p.grams}
-                  onPress={() => setGramsExternal(p.grams)}
+              {/* Portion presets */}
+              <SectionLabel>Portionsgrösse</SectionLabel>
+              <View style={styles.chipRow}>
+                {selected.portions.map((p) => (
+                  <SelectableChip
+                    key={p.label}
+                    label={p.label}
+                    selected={Math.round(grams) === p.grams}
+                    onPress={() => setGramsExternal(p.grams)}
+                  />
+                ))}
+              </View>
+
+              {/* Gram field + slider, two-way bound */}
+              <View style={styles.gramRow}>
+                <TextField
+                  value={String(Math.round(grams))}
+                  onChangeText={(t) => {
+                    const n = parseInt(t.replace(/[^0-9]/g, ''), 10);
+                    setGramsExternal(Number.isNaN(n) ? 0 : Math.min(n, MAX_GRAMS));
+                  }}
+                  keyboardType="number-pad"
+                  containerStyle={styles.gramField}
+                  style={styles.gramInput}
                 />
-              ))}
-            </View>
-
-            {/* Gram field + slider, two-way bound */}
-            <View style={styles.gramRow}>
-              <TextField
-                value={String(Math.round(grams))}
-                onChangeText={(t) => {
-                  const n = parseInt(t.replace(/[^0-9]/g, ''), 10);
-                  setGramsExternal(Number.isNaN(n) ? 0 : Math.min(n, MAX_GRAMS));
+                <Text style={styles.gramUnit}>Gramm</Text>
+              </View>
+              <Slider
+                minimumValue={0}
+                maximumValue={MAX_GRAMS}
+                step={1}
+                value={sliderValue}
+                onValueChange={(v) => {
+                  // Coalesce the burst of drag events into one commit per frame so
+                  // the nutrient math + re-render can keep up (issue #1).
+                  pendingGramsRef.current = v;
+                  if (rafRef.current !== null) return;
+                  rafRef.current = requestAnimationFrame(() => {
+                    rafRef.current = null;
+                    setGrams(Math.round(pendingGramsRef.current));
+                  });
                 }}
-                keyboardType="number-pad"
-                containerStyle={styles.gramField}
-                style={styles.gramInput}
+                onSlidingComplete={(v) => {
+                  if (rafRef.current !== null) {
+                    cancelAnimationFrame(rafRef.current);
+                    rafRef.current = null;
+                  }
+                  // Sync the slider's own value once the drag is over, so a later
+                  // external set to the previous value still moves the thumb.
+                  setGrams(Math.round(v));
+                  setSliderValue(Math.round(v));
+                }}
+                minimumTrackTintColor={colors.accent}
+                maximumTrackTintColor={colors.bgInput}
+                thumbTintColor={colors.accent}
               />
-              <Text style={styles.gramUnit}>Gramm</Text>
-            </View>
-            <Slider
-              minimumValue={0}
-              maximumValue={MAX_GRAMS}
-              step={1}
-              value={sliderValue}
-              onValueChange={(v) => {
-                // Coalesce the burst of drag events into one commit per frame so
-                // the nutrient math + re-render can keep up (issue #1).
-                pendingGramsRef.current = v;
-                if (rafRef.current !== null) return;
-                rafRef.current = requestAnimationFrame(() => {
-                  rafRef.current = null;
-                  setGrams(Math.round(pendingGramsRef.current));
-                });
-              }}
-              onSlidingComplete={(v) => {
-                if (rafRef.current !== null) {
-                  cancelAnimationFrame(rafRef.current);
-                  rafRef.current = null;
-                }
-                // Sync the slider's own value once the drag is over, so a later
-                // external set to the previous value still moves the thumb.
-                setGrams(Math.round(v));
-                setSliderValue(Math.round(v));
-              }}
-              minimumTrackTintColor={colors.accent}
-              maximumTrackTintColor={colors.bgInput}
-              thumbTintColor={colors.accent}
-            />
 
-            {/* Nutrient bars */}
-            <SectionLabel style={styles.nutrientLabel}>Nährwerte</SectionLabel>
-            <NutrientBar
-              label="Kohlenhydrate"
-              value={`${Math.round(nutrients.carbs)} g`}
-              fraction={nutrients.carbs / BAR_MAX.carbs}
-              color={colors.dataCarb}
-            />
-            <NutrientBar
-              label="Zucker"
-              value={`${Math.round(nutrients.sugar)} g`}
-              fraction={nutrients.sugar / BAR_MAX.sugar}
-              color={colors.dataSugar}
-            />
-            <NutrientBar
-              label="Glyk. Index"
-              value={`${Math.round(nutrients.gi)}`}
-              fraction={nutrients.gi / BAR_MAX.gi}
-              color={colors.dataGlyc}
-            />
-            <NutrientBar
-              label="Fett"
-              value={`${Math.round(nutrients.fat)} g`}
-              fraction={nutrients.fat / BAR_MAX.fat}
-              color={colors.dataFat}
-            />
+              {/* Nutrient bars */}
+              <SectionLabel style={styles.nutrientLabel}>Nährwerte</SectionLabel>
+              <NutrientBar
+                label="Kohlenhydrate"
+                value={`${Math.round(nutrients.carbs)} g`}
+                fraction={nutrients.carbs / BAR_MAX.carbs}
+                color={colors.dataCarb}
+              />
+              <NutrientBar
+                label="Zucker"
+                value={`${Math.round(nutrients.sugar)} g`}
+                fraction={nutrients.sugar / BAR_MAX.sugar}
+                color={colors.dataSugar}
+              />
+              <NutrientBar
+                label="Glyk. Index"
+                value={`${Math.round(nutrients.gi)}`}
+                fraction={nutrients.gi / BAR_MAX.gi}
+                color={colors.dataGlyc}
+              />
+              <NutrientBar
+                label="Fett"
+                value={`${Math.round(nutrients.fat)} g`}
+                fraction={nutrients.fat / BAR_MAX.fat}
+                color={colors.dataFat}
+              />
 
-            {/* Carbs of this portion */}
-            <View style={styles.summaryChip}>
-              <Text style={styles.summaryText}>
-                Diese Portion: {formatCarbs(nutrients.carbs)}
-              </Text>
-            </View>
+              {/* Carbs of this portion */}
+              <View style={styles.summaryChip}>
+                <Text style={styles.summaryText}>
+                  Diese Portion: {formatCarbs(nutrients.carbs)}
+                </Text>
+              </View>
 
-            {/* Collect into the meal (saved to the diary via the title icon). */}
-            <Button
-              title="Zur Mahlzeit hinzufügen"
-              icon="add"
-              onPress={addToMeal}
-              disabled={grams <= 0}
-              style={styles.spacedBtn}
-            />
-          </Card>
+              {/* Collect into the meal (saved to the diary via the title icon). */}
+              <Button
+                title="Zur Mahlzeit hinzufügen"
+                icon="add"
+                onPress={addToMeal}
+                disabled={grams <= 0}
+                style={styles.spacedBtn}
+              />
+            </Card>
+          </FadeIn>
         </View>
       )}
 

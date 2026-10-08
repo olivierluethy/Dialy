@@ -6,7 +6,6 @@ import {
   Modal,
   ScrollView,
   Animated,
-  Platform,
   StyleSheet,
   type PressableStateCallbackType,
 } from 'react-native';
@@ -16,6 +15,7 @@ import type { BottomTabHeaderProps } from '@react-navigation/bottom-tabs';
 import { radius, spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import { useAppStore } from '@/state/store';
+import { USE_NATIVE_DRIVER, useReducedMotion } from '@/components/FadeIn';
 import type { LoginStackParamList, RootTabParamList } from '@/navigation/types';
 
 /**
@@ -31,9 +31,6 @@ interface MenuItem {
   tab: keyof RootTabParamList;
   screen?: keyof LoginStackParamList;
 }
-
-// Animated native driver isn't available on web.
-const USE_NATIVE_DRIVER = Platform.OS !== 'web';
 
 const MORE: MenuItem[] = [
   { label: 'Premium', tab: 'Login', screen: 'Paywall' },
@@ -114,6 +111,7 @@ function MenuOverlay({
   const styles = useThemedStyles(makeStyles);
   const setThemeMode = useAppStore((s) => s.setThemeMode);
   const nextScheme = scheme === 'dark' ? 'light' : 'dark';
+  const reducedMotion = useReducedMotion();
 
   // One animated value per row (sections + secondary links), staggered in.
   const anims = useRef(
@@ -122,6 +120,10 @@ function MenuOverlay({
 
   useEffect(() => {
     if (!visible) return;
+    if (reducedMotion) {
+      anims.forEach((a) => a.setValue(1));
+      return;
+    }
     anims.forEach((a) => a.setValue(0));
     Animated.stagger(
       35,
@@ -129,7 +131,7 @@ function MenuOverlay({
         Animated.timing(a, { toValue: 1, duration: 280, useNativeDriver: USE_NATIVE_DRIVER })
       )
     ).start();
-  }, [visible, anims]);
+  }, [visible, anims, reducedMotion]);
 
   const rowAnim = (i: number) => {
     const a = anims[i]!;

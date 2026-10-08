@@ -4,6 +4,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/Screen';
 import { ScreenTitle, Card, IconBubble } from '@/components/primitives';
+import { FadeIn, staggerDelay } from '@/components/FadeIn';
 import { Button } from '@/components/Button';
 import { radius, spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
@@ -104,8 +105,8 @@ export function TagebuchScreen() {
               Noch keine Einträge. Füge im KH-Rechner oder im Sport-Planer etwas hinzu.
             </Text>
           ) : (
-            groups.map((g) => (
-              <View key={g.key} style={styles.dayBlock}>
+            groups.map((g, i) => (
+              <FadeIn key={g.key} delay={staggerDelay(i)} style={styles.dayBlock}>
                 <Text style={styles.dayHeader}>{g.header}</Text>
                 <Card>
                   {g.items.map((item, idx) => (
@@ -122,7 +123,7 @@ export function TagebuchScreen() {
                   <SummaryChip label="Mahlzeiten" value={`${g.mealCount}`} />
                   <SummaryChip label="Sport" value={`${g.sportCount}×`} />
                 </View>
-              </View>
+              </FadeIn>
             ))
           )}
         </>

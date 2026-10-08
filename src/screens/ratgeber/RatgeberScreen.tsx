@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/Screen';
 import { TypeSegmentedControl } from '@/components/SegmentedControl';
 import { ScreenTitle, IconBubble } from '@/components/primitives';
+import { FadeIn, staggerDelay } from '@/components/FadeIn';
 import { radius, spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import { useAppStore } from '@/state/store';
@@ -60,25 +61,26 @@ export function RatgeberScreen() {
       {loading ? (
         <ActivityIndicator color={colors.accent} style={{ marginTop: spacing.xl }} />
       ) : (
-        articles.map((a) => (
-          <Pressable
-            key={a.id}
-            style={styles.card}
-            onPress={() => navigation.navigate('ArticleDetail', { id: a.id })}
-            accessibilityRole="button"
-          >
-            <IconBubble name={CATEGORY_ICON[a.category] ?? 'book'} />
-            <View style={styles.cardBody}>
-              <Text style={styles.category}>{a.category.toUpperCase()}</Text>
-              <Text style={styles.title} numberOfLines={2}>
-                {a.title}
-              </Text>
-              <Text style={styles.meta}>
-                {a.read_minutes} min · {formatDate(a.published_at)}
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
-          </Pressable>
+        articles.map((a, i) => (
+          <FadeIn key={a.id} delay={staggerDelay(i)}>
+            <Pressable
+              style={styles.card}
+              onPress={() => navigation.navigate('ArticleDetail', { id: a.id })}
+              accessibilityRole="button"
+            >
+              <IconBubble name={CATEGORY_ICON[a.category] ?? 'book'} />
+              <View style={styles.cardBody}>
+                <Text style={styles.category}>{a.category.toUpperCase()}</Text>
+                <Text style={styles.title} numberOfLines={2}>
+                  {a.title}
+                </Text>
+                <Text style={styles.meta}>
+                  {a.read_minutes} min · {formatDate(a.published_at)}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
+            </Pressable>
+          </FadeIn>
         ))
       )}
     </Screen>
