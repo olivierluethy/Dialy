@@ -115,6 +115,12 @@ export function KHRechnerScreen() {
   const isPremium = useAppStore((s) => s.isPremium);
   const ctx = { isLoggedIn: user !== null, isPremium };
 
+  // A collected (unsaved) meal belongs to whoever built it: drop it when the
+  // account changes so it can't be saved into someone else's diary.
+  useEffect(() => {
+    setMeal([]);
+  }, [user?.id]);
+
   // Search runs in memory, so the spinner only shows on the very first load
   // (no flicker per keystroke). A new query starts again at the first page.
   useEffect(() => {

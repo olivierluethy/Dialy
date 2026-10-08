@@ -43,6 +43,7 @@ export function TagebuchScreen() {
   const user = useAppStore((s) => s.user);
   const isPremium = useAppStore((s) => s.isPremium);
   const ctx = { isLoggedIn: user !== null, isPremium };
+  const userId = user?.id ?? null;
 
   const [groups, setGroups] = useState<DayGroup[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,8 +51,13 @@ export function TagebuchScreen() {
   useFocusEffect(
     useCallback(() => {
       let active = true;
+      if (!userId) {
+        setGroups([]);
+        setLoading(false);
+        return;
+      }
       setLoading(true);
-      Promise.all([mealsRepo.listAll(), sportsRepo.listAll()]).then(
+      Promise.all([mealsRepo.listAll(userId), sportsRepo.listAll(userId)]).then(
         ([meals, sports]) => {
           if (active) {
             setGroups(buildGroups(meals, sports));
@@ -62,7 +68,7 @@ export function TagebuchScreen() {
       return () => {
         active = false;
       };
-    }, [])
+    }, [userId])
   );
 
   const goRegister = () => navigation.navigate('Login', { screen: 'Register' });

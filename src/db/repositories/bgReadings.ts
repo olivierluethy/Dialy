@@ -40,10 +40,12 @@ export const bgReadingsRepo = {
     return reading;
   },
 
-  async listAll(): Promise<BgReading[]> {
+  /** Entries of one account only — a device can hold several accounts. */
+  async listAll(userId: string): Promise<BgReading[]> {
     const db = await getDb();
     return db.getAllAsync<BgReading>(
-      `SELECT * FROM bg_readings WHERE deleted_at IS NULL ORDER BY logged_at DESC`
+      `SELECT * FROM bg_readings WHERE deleted_at IS NULL AND user_id = ? ORDER BY logged_at DESC`,
+      [userId]
     );
   },
 };

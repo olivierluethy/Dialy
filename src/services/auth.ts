@@ -67,20 +67,19 @@ export const authService = {
    * deletion syncs out and can't resurface), then issues matching deletes on
    * Supabase. Best-effort on the server; local deletion always succeeds.
    */
-  async deleteAccountData(): Promise<{ error: string | null }> {
-    await softDeleteAllUserData();
+  async deleteAccountData(userId: string): Promise<{ error: string | null }> {
+    await softDeleteAllUserData(userId);
     const sb = getSupabase();
     if (!sb) return { error: null }; // offline-only: local deletion is enough
-    const { data } = await sb.auth.getUser();
-    const uid = data.user?.id;
-    if (!uid) return { error: null };
     try {
       const ts = new Date().toISOString();
       for (const table of SYNC_TABLES) {
-        await sb
+        // supabase-js reports failures in `error` instead of throwing.
+        const { error } = await sb
           .from(table)
           .update({ deleted_at: ts, updated_at: ts })
-          .eq('user_id', uid);
+          .eq('user_id', userId);
+        if (error) return { error: error.message };
       }
       return { error: null };
     } catch (e) {

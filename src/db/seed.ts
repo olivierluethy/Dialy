@@ -5,13 +5,11 @@ import { SEED_ARTICLES } from '@/data/seedArticles';
 import BLV_FOODS from '@/data/blvFoods.json';
 import MENUCH from '@/data/menuchPortions.json';
 import { USUAL_PORTION_LABEL } from '@/data/foodCategories';
-import { estimateBgCurve } from '@/utils/sportCurve';
-import { carbsToBe } from '@/utils/format';
-import { nowIso, uuidv4 } from '@/utils/id';
+import { nowIso } from '@/utils/id';
 
 /**
- * Idempotently seed read-mostly content (foods, articles) and — on first run
- * only — a couple of example diary days so every screen looks populated.
+ * Idempotently seed read-mostly content (foods, articles). There is no
+ * example diary content: diary entries always belong to an account.
  *
  * Foods/articles are upserted by their stable seed id, so re-running is safe
  * and mirrors how a real "sync down from the central DB" would behave.
@@ -77,7 +75,6 @@ export async function seedDatabase(): Promise<void> {
 
   await seedBlvFoods();
   foodsRepo.invalidateSearch();
-  await seedExampleDiary();
 }
 
 type BlvFood = [
@@ -138,122 +135,4 @@ async function seedBlvFoods(): Promise<void> {
       [marker]
     );
   });
-}
-
-/** One-time example diary content so the Tagebuch isn't empty on first launch. */
-async function seedExampleDiary(): Promise<void> {
-  const db = await getDb();
-  const existing = await db.getFirstAsync<{ c: number }>(
-    'SELECT COUNT(*) as c FROM meal_entries'
-  );
-  if ((existing?.c ?? 0) > 0) return; // already populated
-
-  const ts = nowIso();
-  const at = (daysAgo: number, h: number, m: number): string => {
-    const d = new Date();
-    d.setDate(d.getDate() - daysAgo);
-    d.setHours(h, m, 0, 0);
-    return d.toISOString();
-  };
-
-  const meals: Array<{
-    name: string;
-    grams: number;
-    carbs: number;
-    sugar: number;
-    fat: number;
-    gi: number;
-    when: string;
-  }> = [
-    {
-      name: 'Haferflocken mit Beeren',
-      grams: 80,
-      carbs: 36,
-      sugar: 8,
-      fat: 6,
-      gi: 55,
-      when: at(0, 7, 45),
-    },
-    {
-      name: 'Vollkornbrot mit Käse',
-      grams: 100,
-      carbs: 41,
-      sugar: 3,
-      fat: 12,
-      gi: 50,
-      when: at(0, 12, 30),
-    },
-    {
-      name: 'Apfel',
-      grams: 150,
-      carbs: 21,
-      sugar: 15,
-      fat: 0.3,
-      gi: 38,
-      when: at(1, 16, 0),
-    },
-    {
-      name: 'Teigwaren mit Gemüse',
-      grams: 250,
-      carbs: 75,
-      sugar: 4,
-      fat: 8,
-      gi: 50,
-      when: at(1, 19, 15),
-    },
-  ];
-
-  for (const meal of meals) {
-    await db.runAsync(
-      `INSERT INTO meal_entries
-         (id, user_id, created_at, updated_at, deleted_at, food_id, name, grams,
-          carbs_g, sugar_g, fat_g, glycemic_index, be, photo_uri, logged_at)
-       VALUES (?,?,?,?,NULL,NULL,?,?,?,?,?,?,?,?,?)`,
-      [
-        uuidv4(),
-        null,
-        ts,
-        ts,
-        meal.name,
-        meal.grams,
-        meal.carbs,
-        meal.sugar,
-        meal.fat,
-        meal.gi,
-        carbsToBe(meal.carbs),
-        null,
-        meal.when,
-      ]
-    );
-  }
-
-  const curve = estimateBgCurve({
-    activity: 'wandern',
-    durationMin: 90,
-    bgBeforeMmol: 7.4,
-  });
-  await db.runAsync(
-    `INSERT INTO sport_entries
-       (id, user_id, created_at, updated_at, deleted_at, activity, duration_min,
-        bg_before_mmol, carbs_before_g, carbs_before_hours, carbs_after_g,
-        carbs_after_hours, pump_reduction_pct, pump_reduction_min, bg_curve, logged_at)
-     VALUES (?,?,?,?,NULL,?,?,?,?,?,?,?,?,?,?,?)`,
-    [
-      uuidv4(),
-      null,
-      ts,
-      ts,
-      'wandern',
-      90,
-      7.4,
-      20,
-      0.5,
-      15,
-      1.5,
-      30,
-      60,
-      JSON.stringify(curve),
-      at(1, 14, 0),
-    ]
-  );
 }

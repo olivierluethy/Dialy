@@ -64,10 +64,12 @@ export const mealsRepo = {
     return entry;
   },
 
-  async listAll(): Promise<MealEntry[]> {
+  /** Entries of one account only — a device can hold several accounts. */
+  async listAll(userId: string): Promise<MealEntry[]> {
     const db = await getDb();
     return db.getAllAsync<MealEntry>(
-      `SELECT * FROM meal_entries WHERE deleted_at IS NULL ORDER BY logged_at DESC`
+      `SELECT * FROM meal_entries WHERE deleted_at IS NULL AND user_id = ? ORDER BY logged_at DESC`,
+      [userId]
     );
   },
 };

@@ -72,12 +72,14 @@ async function pushPending(uid: string): Promise<number> {
       `SELECT * FROM ${item.table_name} WHERE id = ?`,
       [item.row_id]
     );
-    if (!row) {
+    // Rows without an owner never sync; rows of another account on this
+    // device wait in the queue until that account signs in again.
+    if (!row || !row.user_id) {
       await db.runAsync('DELETE FROM sync_queue WHERE id = ?', [item.id]);
       continue;
     }
-    // Stamp ownership so RLS (user_id = auth.uid()) accepts the write.
-    const payload = { ...row, user_id: uid };
+    if (row.user_id !== uid) continue;
+    const payload = row;
     const { error } = await sb
       .from(item.table_name)
       .upsert(payload, { onConflict: 'id' });

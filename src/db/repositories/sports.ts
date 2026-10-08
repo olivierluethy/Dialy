@@ -81,10 +81,12 @@ export const sportsRepo = {
     return entry;
   },
 
-  async listAll(): Promise<SportEntry[]> {
+  /** Entries of one account only — a device can hold several accounts. */
+  async listAll(userId: string): Promise<SportEntry[]> {
     const db = await getDb();
     const rows = await db.getAllAsync<SportRow>(
-      `SELECT * FROM sport_entries WHERE deleted_at IS NULL ORDER BY logged_at DESC`
+      `SELECT * FROM sport_entries WHERE deleted_at IS NULL AND user_id = ? ORDER BY logged_at DESC`,
+      [userId]
     );
     return rows.map(mapRow);
   },

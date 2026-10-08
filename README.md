@@ -410,9 +410,10 @@ Nach Änderungen an `metro.config.js` immer mit `npx expo start -c`
 ## Konfiguration (alles optional)
 
 Ohne Konfiguration läuft die App komplett offline (Auth & Sync deaktiviert).
-Beim ersten Start wird die lokale Datenbank mit Lebensmitteln, Artikeln (Typ 1
-& Typ 2) und ein paar Beispiel-Tagebuchtagen befüllt — alle Screens sehen also
-sofort gefüllt aus.
+Beim ersten Start wird die lokale Datenbank mit Lebensmitteln und Artikeln
+(Typ 1 & Typ 2) befüllt. Das Tagebuch startet leer: Einträge gehören immer zu
+einem Konto, und jedes Konto sieht nur seine eigenen – auch wenn sich mehrere
+Konten auf demselben Gerät anmelden.
 
 Zum Aktivieren von Konto/Sync `.env.example` nach `.env` kopieren und ausfüllen:
 

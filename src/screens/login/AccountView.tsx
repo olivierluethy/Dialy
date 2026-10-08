@@ -39,7 +39,8 @@ export function AccountView() {
           text: 'Löschen',
           style: 'destructive',
           onPress: async () => {
-            const { error } = await authService.deleteAccountData();
+            if (!user) return;
+            const { error } = await authService.deleteAccountData(user.id);
             Alert.alert(
               error ? 'Teilweise gelöscht' : 'Gelöscht',
               error
