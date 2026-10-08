@@ -96,7 +96,6 @@ async function seedExampleDiary(): Promise<void> {
     sugar: number;
     fat: number;
     gi: number;
-    photo: boolean;
     when: string;
   }> = [
     {
@@ -106,7 +105,6 @@ async function seedExampleDiary(): Promise<void> {
       sugar: 8,
       fat: 6,
       gi: 55,
-      photo: true,
       when: at(0, 7, 45),
     },
     {
@@ -116,7 +114,6 @@ async function seedExampleDiary(): Promise<void> {
       sugar: 3,
       fat: 12,
       gi: 50,
-      photo: false,
       when: at(0, 12, 30),
     },
     {
@@ -126,7 +123,6 @@ async function seedExampleDiary(): Promise<void> {
       sugar: 15,
       fat: 0.3,
       gi: 38,
-      photo: false,
       when: at(1, 16, 0),
     },
     {
@@ -136,7 +132,6 @@ async function seedExampleDiary(): Promise<void> {
       sugar: 4,
       fat: 8,
       gi: 50,
-      photo: true,
       when: at(1, 19, 15),
     },
   ];
@@ -159,7 +154,7 @@ async function seedExampleDiary(): Promise<void> {
         meal.fat,
         meal.gi,
         carbsToBe(meal.carbs),
-        meal.photo ? 'seed://photo' : null,
+        null,
         meal.when,
       ]
     );

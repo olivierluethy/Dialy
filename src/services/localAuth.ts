@@ -6,7 +6,7 @@ import type { AuthResult, AuthUser } from '@/services/auth';
 /**
  * Offline, on-device account store — the fallback used when no Supabase backend
  * is configured (see services/auth.ts). It lets a user register and sign in so
- * the account-gated features (Tagebuch, Foto) work out of the box, fully
+ * the account-gated feature (Tagebuch) works out of the box, fully
  * offline. There is NO sync in this mode: data stays local on the device, which
  * matches the app's offline-first design.
  *

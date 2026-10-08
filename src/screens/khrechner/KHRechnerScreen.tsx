@@ -5,11 +5,9 @@ import {
   StyleSheet,
   Pressable,
   ActivityIndicator,
-  Image,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import { Screen } from '@/components/Screen';
 import { ScreenTitle, SectionLabel, Card } from '@/components/primitives';
@@ -37,7 +35,6 @@ interface MealItem {
   key: string;
   food: Food;
   grams: number;
-  photoUri: string | null;
 }
 
 type DialogState =
@@ -66,7 +63,6 @@ export function KHRechnerScreen() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Food | null>(null);
   const [grams, setGrams] = useState(0);
-  const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [meal, setMeal] = useState<MealItem[]>([]);
   const [saving, setSaving] = useState(false);
   const [dialog, setDialog] = useState<DialogState>(null);
@@ -74,7 +70,7 @@ export function KHRechnerScreen() {
   // ── Slider performance (issue #1) ──────────────────────────────────────────
   // The Slider fires onValueChange at a very high rate while dragging. Committing
   // every raw event to state re-rendered the whole screen (search list + card +
-  // four nutrient bars + photo) on every pixel and fed the controlled `value`
+  // four nutrient bars) on every pixel and fed the controlled `value`
   // back into the native slider each time — which is what made it stutter and
   // feel "verbuggt". We now:
   //   1. coalesce drag events to at most one state update per animation frame, and
@@ -127,7 +123,6 @@ export function KHRechnerScreen() {
 
   const selectFood = (food: Food) => {
     setSelected(food);
-    setPhotoUri(null);
     // Default to the first preset portion, or 100 g.
     setGramsExternal(food.portions[0]?.grams ?? 100);
   };
@@ -144,28 +139,12 @@ export function KHRechnerScreen() {
     [meal]
   );
 
-  const pickPhoto = async () => {
-    if (!can('uploadPhoto', ctx)) return;
-    const perm = await ImagePicker.requestCameraPermissionsAsync();
-    let result: ImagePicker.ImagePickerResult;
-    if (perm.granted) {
-      result = await ImagePicker.launchCameraAsync({ quality: 0.6 });
-    } else {
-      // Fall back to the library if camera permission was denied.
-      result = await ImagePicker.launchImageLibraryAsync({ quality: 0.6 });
-    }
-    if (!result.canceled && result.assets[0]) {
-      setPhotoUri(result.assets[0].uri);
-    }
-  };
-
   // Collect the current food + portion into the meal, then clear the editor
   // so the next food can be searched.
   const addToMeal = () => {
     if (!selected || grams <= 0) return;
-    setMeal((m) => [...m, { key: uuidv4(), food: selected, grams, photoUri }]);
+    setMeal((m) => [...m, { key: uuidv4(), food: selected, grams }]);
     setSelected(null);
-    setPhotoUri(null);
   };
 
   const clearMeal = () => setMeal([]);
@@ -196,7 +175,7 @@ export function KHRechnerScreen() {
             fat_g: n.fat,
             glycemic_index: n.gi,
             be: carbsToBe(n.carbs),
-            photo_uri: item.photoUri,
+            photo_uri: null,
             logged_at: loggedAt,
           },
           user?.id ?? null
@@ -407,17 +386,6 @@ export function KHRechnerScreen() {
             </Text>
           </View>
 
-          {/* Photo */}
-          {photoUri && <Image source={{ uri: photoUri }} style={styles.photo} />}
-          <Button
-            title={photoUri ? 'Foto ersetzen' : 'Foto hochladen'}
-            icon="camera"
-            variant="secondary"
-            onPress={pickPhoto}
-            disabled={!can('uploadPhoto', ctx)}
-            style={styles.spacedBtn}
-          />
-
           {/* Collect into the meal (saved to the diary via the title icon). */}
           <Button
             title="Zur Mahlzeit hinzufügen"
@@ -570,6 +538,5 @@ const makeStyles = (colors: Colors) =>
       marginTop: spacing.sm,
     },
     summaryText: { color: colors.textPrimary, fontWeight: '700', fontSize: 16, textAlign: 'center' },
-    photo: { width: '100%', height: 160, borderRadius: radius.card, marginTop: spacing.lg },
     spacedBtn: { marginTop: spacing.md },
   });

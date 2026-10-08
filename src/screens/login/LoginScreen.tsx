@@ -52,7 +52,7 @@ function LoginForm() {
         <Text style={styles.title}>Willkommen</Text>
         <Text style={styles.subtitle}>
           Ratgeber & KH-Rechner ohne Konto verfügbar.{'\n'}
-          Mit Konto: Tagebuch & Foto-Funktion.
+          Mit Konto: Tagebuch.
         </Text>
       </View>
 

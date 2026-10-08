@@ -7,7 +7,6 @@
  * | KH-Rechner (calculate)          | ✅         | ✅   | ✅      |
  * | Sport (plan/preview)            | ✅         | ✅   | ✅      |
  * | Save meal/sport to Tagebuch     | ❌         | ✅   | ✅      |
- * | Photo upload on meals           | ❌         | ✅   | ✅      |
  * | Full Tagebuch / BZ-analytics    | ❌         | 🔒   | ✅      |
  */
 
@@ -21,7 +20,6 @@ export type Capability =
   | 'calculateCarbs'
   | 'planSport'
   | 'saveDiaryEntry'
-  | 'uploadPhoto'
   | 'fullDiary';
 
 export function can(cap: Capability, ctx: GateContext): boolean {
@@ -31,7 +29,6 @@ export function can(cap: Capability, ctx: GateContext): boolean {
     case 'planSport':
       return true; // always free, no account needed
     case 'saveDiaryEntry':
-    case 'uploadPhoto':
       return ctx.isLoggedIn; // any account (free or premium)
     case 'fullDiary':
       return ctx.isLoggedIn && ctx.isPremium; // premium feature

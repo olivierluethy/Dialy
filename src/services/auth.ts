@@ -23,7 +23,7 @@ const SYNC_TABLES = [
  *
  * When Supabase isn't configured, every method transparently falls back to a
  * local, on-device account store (services/localAuth.ts) so registration and
- * login work fully offline — the account-gated features (Tagebuch, Foto) are
+ * login work fully offline — the account-gated feature (Tagebuch) is
  * usable with zero backend setup. Configuring Supabase is preferred and takes
  * over automatically (it enables cross-device sync); until then the local
  * store keeps everything on the device.

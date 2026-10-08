@@ -143,7 +143,6 @@ function FeedRow({ item, last }: { item: FeedItem; last: boolean }) {
         <View style={styles.rowBody}>
           <Text style={styles.rowTitle}>{m.name}</Text>
           <Text style={styles.rowMeta}>{formatCarbs(m.carbs_g)}</Text>
-          {m.photo_uri && <Text style={styles.rowSub}>Foto gespeichert</Text>}
         </View>
       </View>
     );

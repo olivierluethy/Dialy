@@ -48,7 +48,7 @@ export function RegisterScreen() {
         <IconBubble name="person-add" size={26} />
         <Text style={styles.title}>Konto erstellen</Text>
         <Text style={styles.subtitle}>
-          Kostenlos. Schaltet Tagebuch und Foto-Funktion frei.
+          Kostenlos. Schaltet das Tagebuch frei.
         </Text>
       </View>
 

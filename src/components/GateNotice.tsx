@@ -7,7 +7,7 @@ import { gateCopy } from '@/policy/gating';
 
 /**
  * Inline gating note shown when a logged-out user tries a gated action
- * (save to diary, photo). Offers a free-registration call to action.
+ * (save to diary). Offers a free-registration call to action.
  */
 export function GateNotice({
   message,

@@ -31,14 +31,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     supportsTablet: true,
     bundleIdentifier: 'net.dialy.app',
     userInterfaceStyle: 'automatic',
-    infoPlist: {
-      // Manual-entry CGM/health fallback always works; native HealthKit
-      // bridge is a TODO(native) follow-up – see services/health.ts.
-      NSCameraUsageDescription:
-        'Dialy verwendet die Kamera, um ein Foto deiner Mahlzeit zum Tagebuch hinzuzufügen.',
-      NSPhotoLibraryUsageDescription:
-        'Dialy greift auf deine Fotos zu, um ein Mahlzeitenbild auszuwählen.',
-    },
+    // Manual-entry CGM/health fallback always works; native HealthKit
+    // bridge is a TODO(native) follow-up – see services/health.ts.
   },
   android: {
     package: 'net.dialy.app',
@@ -46,13 +40,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     adaptiveIcon: {
       backgroundColor: '#0E1512',
     },
-    permissions: ['CAMERA', 'READ_EXTERNAL_STORAGE'],
+    permissions: [], // no camera / storage access needed
   },
   plugins: [
     'expo-asset',
     'expo-font',
     'expo-secure-store',
-    'expo-image-picker',
     'expo-sqlite',
   ],
   extra: {

@@ -212,7 +212,7 @@ QR code again.
 ## 3C. Enable accounts & sync — local backend with Docker (Windows / macOS / Linux)
 
 The **Ratgeber** and **KH-Rechner** work with no backend. Creating an account
-(needed for the **Tagebuch** / diary + photo sync) needs a Supabase backend. The
+(needed for the **Tagebuch** / diary sync) needs a Supabase backend. The
 easiest, fully cross-platform way is to run Supabase **locally in Docker** — no
 cloud account, no keys to copy. It's the same three commands on every OS.
 

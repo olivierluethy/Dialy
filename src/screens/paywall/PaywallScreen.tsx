@@ -17,7 +17,6 @@ import { useAppStore } from '@/state/store';
 const FEATURES = [
   'Vollständiges Tagebuch mit Verlauf',
   'Blutzucker-Tracking & Auswertung',
-  'Foto-Funktion für Mahlzeiten',
   'Geräteübergreifende Synchronisation',
 ];
 
