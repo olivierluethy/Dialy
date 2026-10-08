@@ -333,6 +333,35 @@ npx expo start
 
 ---
 
+## Lebensmittel-Daten (Schweizer Nährwertdatenbank)
+
+Der KH-Rechner enthält rund 1'200 generische Lebensmittel aus der
+[Schweizer Nährwertdatenbank](https://naehrwertdaten.ch/de/) des BLV
+(Bundesamt für Lebensmittelsicherheit und Veterinärwesen), zusätzlich zu den
+handgepflegten Einträgen in `src/data/seedFoods.ts` (mit Portionsgrössen und
+glykämischem Index).
+
+- Übernommen werden pro 100 g: verfügbare Kohlenhydrate, Zucker, Fett.
+  „Sp.“ (Spuren) und „<x“ werden zu 0; Lebensmittel mit unbekanntem Wert
+  („k.A.“) werden ausgelassen statt geschätzt.
+- Die BLV-Daten enthalten **keinen glykämischen Index** (Anzeige „k.A.“) und
+  **keine Portionsgrössen** (Eingabe in Gramm).
+- Die Nutzung ist laut BLV kostenlos und auch in Ernährungs-Apps erlaubt,
+  **mit Quellenangabe** – sie steht bei jedem BLV-Lebensmittel und in der
+  Datenschutzerklärung.
+
+**Auf eine neue Version aktualisieren:** Excel-Datei von
+<https://naehrwertdaten.ch/de/downloads/> herunterladen, dann
+
+```bash
+npm run import:blv -- pfad/zu/Schweizer_Nahrwertdatenbank.xlsx
+```
+
+Das schreibt `src/data/blvFoods.json`; die App übernimmt die neue Version beim
+nächsten Start automatisch.
+
+---
+
 ## Web-Unterstützung (Browser)
 
 Die App läuft nativ (iOS/Android via Expo Go) **und** im Browser

@@ -32,8 +32,8 @@ export interface Food extends SyncMeta {
   carbs_per_100g: number;
   sugar_per_100g: number;
   fat_per_100g: number;
-  glycemic_index: number;
-  portions: Portion[];
+  glycemic_index: number | null; // unknown for BLV foods
+  portions: Portion[]; // may be empty (BLV foods)
 }
 
 export interface MealEntry extends SyncMeta {
@@ -43,7 +43,7 @@ export interface MealEntry extends SyncMeta {
   carbs_g: number;
   sugar_g: number;
   fat_g: number;
-  glycemic_index: number;
+  glycemic_index: number | null;
   be: number;
   photo_uri: string | null;
   logged_at: string;

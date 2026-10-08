@@ -12,7 +12,8 @@
     "backend:stop": "supabase stop",
     "backend:reset": "supabase db reset",
     "backend:status": "supabase status",
-    "phone:link": "adb reverse tcp:8081 tcp:8081 && adb reverse tcp:54321 tcp:54321"
+    "phone:link": "adb reverse tcp:8081 tcp:8081 && adb reverse tcp:54321 tcp:54321",
+    "import:blv": "node scripts/import-blv.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
@@ -52,6 +53,7 @@
     "@types/react": "~18.3.12",
     "@types/sql.js": "^1.4.11",
     "babel-plugin-module-resolver": "^5.0.2",
+    "exceljs": "^4.4.0",
     "supabase": "^2.109.1",
     "typescript": "~5.3.3"
   },

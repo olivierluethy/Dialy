@@ -31,6 +31,8 @@ import type { Food } from '@/types/models';
 // Reference maxima used only to scale the visual nutrient bars.
 const BAR_MAX = { carbs: 80, sugar: 50, gi: 100, fat: 40 };
 const MAX_GRAMS = 500;
+// Search results shown at once; "Weitere anzeigen" adds another page.
+const PAGE_SIZE = 20;
 
 /** A food + chosen portion collected into the meal being built. */
 interface MealItem {
@@ -62,6 +64,7 @@ export function KHRechnerScreen() {
   const styles = useThemedStyles(makeStyles);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Food[]>([]);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Food | null>(null);
   const [grams, setGrams] = useState(0);
@@ -109,12 +112,14 @@ export function KHRechnerScreen() {
   const isPremium = useAppStore((s) => s.isPremium);
   const ctx = { isLoggedIn: user !== null, isPremium };
 
+  // Search runs in memory, so the spinner only shows on the very first load
+  // (no flicker per keystroke). A new query starts again at the first page.
   useEffect(() => {
     let active = true;
-    setLoading(true);
     foodsRepo.search(query).then((rows) => {
       if (active) {
         setResults(rows);
+        setVisibleCount(PAGE_SIZE);
         setLoading(false);
       }
     });
@@ -141,6 +146,30 @@ export function KHRechnerScreen() {
     // Default to the first preset portion, or 100 g.
     setGramsExternal(food.portions[0]?.grams ?? 100);
   };
+  // Latest handler for the memoised result rows below.
+  const selectFoodRef = useRef(selectFood);
+  selectFoodRef.current = selectFood;
+
+  // The result rows only depend on the results, so slider drags (which
+  // re-render the screen every frame) don't re-render up to ~60 rows.
+  const resultRows = useMemo(
+    () =>
+      results.slice(0, visibleCount).map((food) => (
+        <Pressable
+          key={food.id}
+          style={styles.resultRow}
+          onPress={() => selectFoodRef.current(food)}
+        >
+          <View style={styles.resultBody}>
+            <Text style={styles.resultName}>{food.name}</Text>
+            <Text style={styles.resultGroup}>{food.food_group}</Text>
+          </View>
+          <Text style={styles.resultCarbs}>{food.carbs_per_100g} g / 100 g</Text>
+        </Pressable>
+      )),
+    [results, visibleCount, styles]
+  );
+  const remaining = results.length - visibleCount;
 
   // Live nutrient math for the food currently being edited.
   const nutrients = useMemo(
@@ -282,23 +311,24 @@ export function KHRechnerScreen() {
         />
       </View>
 
-      {/* Search results list (hidden once a food is chosen & query cleared). */}
+      {/* Search results, paged. */}
       {loading ? (
         <ActivityIndicator color={colors.accent} />
       ) : (
-        results.slice(0, 8).map((food) => (
-          <Pressable
-            key={food.id}
-            style={styles.resultRow}
-            onPress={() => selectFood(food)}
-          >
-            <View style={styles.resultBody}>
-              <Text style={styles.resultName}>{food.name}</Text>
-              <Text style={styles.resultGroup}>{food.food_group}</Text>
-            </View>
-            <Text style={styles.resultCarbs}>{food.carbs_per_100g} g / 100 g</Text>
-          </Pressable>
-        ))
+        <>
+          <Text style={styles.resultCount}>
+            {results.length === 0 ? 'Keine Treffer' : `${results.length} Lebensmittel`}
+          </Text>
+          {resultRows}
+          {remaining > 0 && (
+            <Button
+              title={`Weitere anzeigen (${remaining})`}
+              variant="secondary"
+              onPress={() => setVisibleCount((n) => n + PAGE_SIZE)}
+              style={styles.spacedBtn}
+            />
+          )}
+        </>
       )}
 
       {selected && nutrients && (
@@ -318,21 +348,30 @@ export function KHRechnerScreen() {
                 <View>
                   <Text style={styles.foodName}>{selected.name}</Text>
                   <Text style={styles.foodGroup}>{selected.food_group}</Text>
+                  {selected.id.startsWith('blv-') && (
+                    <Text style={styles.foodSource}>
+                      Quelle: Schweizer Nährwertdatenbank (BLV)
+                    </Text>
+                  )}
                 </View>
               </View>
 
-              {/* Portion presets */}
-              <SectionLabel>Portionsgrösse</SectionLabel>
-              <View style={styles.chipRow}>
-                {selected.portions.map((p) => (
-                  <SelectableChip
-                    key={p.label}
-                    label={p.label}
-                    selected={Math.round(grams) === p.grams}
-                    onPress={() => setGramsExternal(p.grams)}
-                  />
-                ))}
-              </View>
+              {/* Portion presets (BLV foods have none: grams only) */}
+              {selected.portions.length > 0 && (
+                <>
+                  <SectionLabel>Portionsgrösse</SectionLabel>
+                  <View style={styles.chipRow}>
+                    {selected.portions.map((p) => (
+                      <SelectableChip
+                        key={p.label}
+                        label={p.label}
+                        selected={Math.round(grams) === p.grams}
+                        onPress={() => setGramsExternal(p.grams)}
+                      />
+                    ))}
+                  </View>
+                </>
+              )}
 
               {/* Gram field + slider, two-way bound */}
               <View style={styles.gramRow}>
@@ -394,8 +433,8 @@ export function KHRechnerScreen() {
               />
               <NutrientBar
                 label="Glyk. Index"
-                value={`${Math.round(nutrients.gi)}`}
-                fraction={nutrients.gi / BAR_MAX.gi}
+                value={nutrients.gi === null ? 'k.A.' : `${Math.round(nutrients.gi)}`}
+                fraction={(nutrients.gi ?? 0) / BAR_MAX.gi}
                 color={colors.dataGlyc}
               />
               <NutrientBar
@@ -551,10 +590,12 @@ const makeStyles = (colors: Colors) =>
     resultName: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
     resultGroup: { fontSize: 13, color: colors.textTertiary },
     resultCarbs: { fontSize: 13, color: colors.textSecondary },
+    resultCount: { fontSize: 12, color: colors.textTertiary, marginBottom: spacing.xs },
     selectedCard: { marginTop: spacing.lg },
     foodHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.lg },
     foodName: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
     foodGroup: { fontSize: 14, color: colors.textTertiary },
+    foodSource: { fontSize: 12, color: colors.textTertiary, marginTop: 2 },
     chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
     gramRow: { flexDirection: 'row', alignItems: 'center' },
     gramField: { flex: 1, marginBottom: spacing.sm },

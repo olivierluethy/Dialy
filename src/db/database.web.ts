@@ -1,5 +1,6 @@
 import initSqlJs, { type Database as SqlJsDatabase } from 'sql.js';
 import { Asset } from 'expo-asset';
+import { migrate } from '@/db/schema';
 
 /**
  * WEB implementation of the local database.
@@ -32,109 +33,6 @@ interface WebDatabase {
   getAllAsync<T>(sql: string, params?: Bind): Promise<T[]>;
   withTransactionAsync(task: () => Promise<void>): Promise<void>;
 }
-
-// Schema mirrors src/db/database.ts (native). Keep the two in sync; both use
-// `IF NOT EXISTS` so re-running is safe.
-const SCHEMA = `
-CREATE TABLE IF NOT EXISTS articles (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT,
-  created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL,
-  deleted_at TEXT,
-  category TEXT NOT NULL,
-  title TEXT NOT NULL,
-  body TEXT NOT NULL,
-  read_minutes INTEGER NOT NULL,
-  published_at TEXT NOT NULL,
-  diabetes_type TEXT NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS foods (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT,
-  created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL,
-  deleted_at TEXT,
-  name TEXT NOT NULL,
-  food_group TEXT NOT NULL,
-  carbs_per_100g REAL NOT NULL,
-  sugar_per_100g REAL NOT NULL,
-  fat_per_100g REAL NOT NULL,
-  glycemic_index REAL NOT NULL,
-  portions TEXT NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS meal_entries (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT,
-  created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL,
-  deleted_at TEXT,
-  food_id TEXT,
-  name TEXT NOT NULL,
-  grams REAL NOT NULL,
-  carbs_g REAL NOT NULL,
-  sugar_g REAL NOT NULL,
-  fat_g REAL NOT NULL,
-  glycemic_index REAL NOT NULL,
-  be REAL NOT NULL,
-  photo_uri TEXT,
-  logged_at TEXT NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS sport_entries (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT,
-  created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL,
-  deleted_at TEXT,
-  activity TEXT NOT NULL,
-  duration_min INTEGER NOT NULL,
-  bg_before_mmol REAL NOT NULL,
-  carbs_before_g REAL NOT NULL,
-  carbs_before_hours REAL NOT NULL,
-  carbs_after_g REAL NOT NULL,
-  carbs_after_hours REAL NOT NULL,
-  pump_reduction_pct REAL,
-  pump_reduction_min REAL,
-  bg_curve TEXT NOT NULL,
-  logged_at TEXT NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS bg_readings (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT,
-  created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL,
-  deleted_at TEXT,
-  value_mmol REAL NOT NULL,
-  source TEXT NOT NULL,
-  logged_at TEXT NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS profile (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT,
-  created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL,
-  deleted_at TEXT,
-  diabetes_type TEXT NOT NULL,
-  is_premium INTEGER NOT NULL DEFAULT 0,
-  settings TEXT NOT NULL DEFAULT '{}'
-);
-
-CREATE TABLE IF NOT EXISTS sync_queue (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  table_name TEXT NOT NULL,
-  row_id TEXT NOT NULL,
-  queued_at TEXT NOT NULL
-);
-
-CREATE INDEX IF NOT EXISTS idx_meal_logged ON meal_entries(logged_at);
-CREATE INDEX IF NOT EXISTS idx_sport_logged ON sport_entries(logged_at);
-CREATE INDEX IF NOT EXISTS idx_bg_logged ON bg_readings(logged_at);
-`;
 
 // --- Tiny IndexedDB blob store (persist the whole SQLite file) --------------
 const IDB_NAME = 'dialy-sqlite';
@@ -196,7 +94,6 @@ async function open(): Promise<WebDatabase> {
   const saved = await idbLoad();
   const sql: SqlJsDatabase = saved ? new SQL.Database(saved) : new SQL.Database();
   sql.run('PRAGMA foreign_keys = ON;');
-  sql.run(SCHEMA);
 
   // Debounced persistence so a burst of writes results in one IndexedDB write.
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
@@ -220,7 +117,7 @@ async function open(): Promise<WebDatabase> {
     }
   };
 
-  return {
+  const db: WebDatabase = {
     async execAsync(s) {
       sql.run(s);
       scheduleSave();
@@ -252,4 +149,8 @@ async function open(): Promise<WebDatabase> {
       scheduleSave();
     },
   };
+
+  // Same schema + migrations as native (src/db/schema.ts).
+  await migrate(db);
+  return db;
 }
