@@ -182,28 +182,30 @@ function MenuOverlay({
               </Animated.View>
             );
           })}
-
-          <Animated.Text style={[styles.moreLabel, rowAnim(sections.length)]}>
-            Weiteres
-          </Animated.Text>
-          {MORE.map((item, i) => (
-            <Animated.View key={item.label} style={rowAnim(sections.length + i)}>
-              <Pressable onPress={() => onSelect(item)} style={styles.item} accessibilityRole="link">
-                {(state) => (
-                  <>
-                    <Text style={styles.moreText}>{item.label}</Text>
-                    {showChevron(state) && (
-                      <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
-                    )}
-                  </>
-                )}
-              </Pressable>
-            </Animated.View>
-          ))}
         </ScrollView>
 
-        {/* Appearance toggle, pinned bottom-right. */}
+        {/* Footer: secondary links bottom-left, appearance toggle bottom-right. */}
         <View style={styles.menuFooter}>
+          <View>
+            {MORE.map((item, i) => (
+              <Animated.View key={item.label} style={rowAnim(sections.length + i)}>
+                <Pressable
+                  onPress={() => onSelect(item)}
+                  style={styles.moreItem}
+                  accessibilityRole="link"
+                >
+                  {(state) => (
+                    <>
+                      <Text style={styles.moreText}>{item.label}</Text>
+                      {showChevron(state) && (
+                        <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+                      )}
+                    </>
+                  )}
+                </Pressable>
+              </Animated.View>
+            ))}
+          </View>
           <Pressable
             onPress={() => setThemeMode(nextScheme)}
             style={({ pressed }) => [styles.themeToggle, pressed && styles.themeTogglePressed]}
@@ -264,18 +266,19 @@ const makeStyles = (colors: Colors) =>
       color: colors.textPrimary,
     },
     itemActive: { color: colors.accent },
-    moreLabel: {
-      fontSize: 12,
-      fontWeight: '700',
-      color: colors.textTertiary,
-      marginTop: spacing.xxl,
-      marginBottom: spacing.xs,
+    moreItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+      paddingVertical: 4,
     },
     moreText: { fontSize: 17, fontWeight: '600', color: colors.textSecondary },
     menuFooter: {
       flexDirection: 'row',
-      justifyContent: 'flex-end',
-      paddingHorizontal: spacing.lg,
+      justifyContent: 'space-between',
+      alignItems: 'flex-end',
+      paddingLeft: spacing.xxl * 2,
+      paddingRight: spacing.lg,
       paddingVertical: spacing.lg,
     },
     themeToggle: {
