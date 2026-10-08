@@ -1,11 +1,12 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
-import { colors, radius, spacing } from '@/theme/theme';
+import { radius, spacing, type Colors } from '@/theme/theme';
+import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import type { BgCurvePoint } from '@/types/models';
 
 /**
- * Dark-themed line chart for the illustrative blood-sugar trend.
+ * Themed line chart for the illustrative blood-sugar trend.
  *
  * Chart library choice: react-native-gifted-charts (built on react-native-svg).
  * It runs cleanly in Expo Go with no extra native setup, unlike Victory Native
@@ -19,6 +20,8 @@ const HYPER_MMOL = 10.0; // above ≈ high
 
 export function BgChart({ curve }: { curve: BgCurvePoint[] }) {
   const { width } = useWindowDimensions();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const chartWidth = width - spacing.lg * 2 - spacing.lg * 2; // screen pad + card pad
 
   const data = useMemo(
@@ -33,7 +36,7 @@ export function BgChart({ curve }: { curve: BgCurvePoint[] }) {
               ? colors.danger
               : colors.accent,
       })),
-    [curve]
+    [curve, colors]
   );
 
   if (curve.length === 0) {
@@ -98,6 +101,7 @@ export function BgChart({ curve }: { curve: BgCurvePoint[] }) {
 }
 
 function Legend({ color, label }: { color: string; label: string }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.legendItem}>
       <View style={[styles.dot, { backgroundColor: color }]} />
@@ -106,29 +110,30 @@ function Legend({ color, label }: { color: string; label: string }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { paddingTop: spacing.sm },
-  empty: {
-    height: 180,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.bgInput,
-    borderRadius: radius.card,
-  },
-  emptyText: { color: colors.textTertiary, fontSize: 14 },
-  axisText: { color: colors.textTertiary, fontSize: 11 },
-  axisCaption: {
-    color: colors.textTertiary,
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: spacing.sm,
-  },
-  legendRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: spacing.md,
-  },
-  legendItem: { flexDirection: 'row', alignItems: 'center' },
-  dot: { width: 10, height: 10, borderRadius: 5, marginRight: spacing.xs },
-  legendText: { color: colors.textSecondary, fontSize: 12 },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    container: { paddingTop: spacing.sm },
+    empty: {
+      height: 180,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.bgInput,
+      borderRadius: radius.card,
+    },
+    emptyText: { color: colors.textTertiary, fontSize: 14 },
+    axisText: { color: colors.textTertiary, fontSize: 11 },
+    axisCaption: {
+      color: colors.textTertiary,
+      fontSize: 12,
+      textAlign: 'center',
+      marginTop: spacing.sm,
+    },
+    legendRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      marginTop: spacing.md,
+    },
+    legendItem: { flexDirection: 'row', alignItems: 'center' },
+    dot: { width: 10, height: 10, borderRadius: 5, marginRight: spacing.xs },
+    legendText: { color: colors.textSecondary, fontSize: 12 },
+  });

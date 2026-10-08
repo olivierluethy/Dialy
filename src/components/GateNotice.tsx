@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, spacing } from '@/theme/theme';
+import { radius, spacing, type Colors } from '@/theme/theme';
+import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import { gateCopy } from '@/policy/gating';
 
 /**
@@ -15,6 +16,8 @@ export function GateNotice({
   message: string;
   onRegister: () => void;
 }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.container}>
       <Ionicons name="lock-closed" size={18} color={colors.warn} style={styles.icon} />
@@ -28,22 +31,23 @@ export function GateNotice({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    backgroundColor: colors.bgSurfaceAlt,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.lg,
-  },
-  icon: { marginRight: spacing.md, marginTop: 2 },
-  flex: { flex: 1 },
-  message: { fontSize: 14, color: colors.textSecondary, lineHeight: 20 },
-  cta: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.accent,
-    marginTop: spacing.sm,
-  },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      backgroundColor: colors.bgSurfaceAlt,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: spacing.lg,
+    },
+    icon: { marginRight: spacing.md, marginTop: 2 },
+    flex: { flex: 1 },
+    message: { fontSize: 14, color: colors.textSecondary, lineHeight: 20 },
+    cta: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: colors.accent,
+      marginTop: spacing.sm,
+    },
+  });

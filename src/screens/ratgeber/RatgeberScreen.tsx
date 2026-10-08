@@ -6,7 +6,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/Screen';
 import { TypeSegmentedControl } from '@/components/SegmentedControl';
 import { ScreenTitle, IconBubble } from '@/components/primitives';
-import { colors, radius, spacing } from '@/theme/theme';
+import { radius, spacing, type Colors } from '@/theme/theme';
+import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import { useAppStore } from '@/state/store';
 import { articlesRepo } from '@/db/repositories/articles';
 import { formatDate } from '@/utils/format';
@@ -26,6 +27,8 @@ const CATEGORY_ICON: Record<string, keyof typeof Ionicons.glyphMap> = {
 };
 
 export function RatgeberScreen() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const type = useAppStore((s) => s.diabetesType);
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,25 +85,26 @@ export function RatgeberScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.bgSurface,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.lg,
-    marginBottom: spacing.md,
-  },
-  cardBody: { flex: 1, marginHorizontal: spacing.md },
-  category: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1,
-    color: colors.accent,
-    marginBottom: 2,
-  },
-  title: { fontSize: 16, fontWeight: '600', color: colors.textPrimary, lineHeight: 21 },
-  meta: { fontSize: 13, color: colors.textTertiary, marginTop: spacing.xs },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    card: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.bgSurface,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: spacing.lg,
+      marginBottom: spacing.md,
+    },
+    cardBody: { flex: 1, marginHorizontal: spacing.md },
+    category: {
+      fontSize: 11,
+      fontWeight: '700',
+      letterSpacing: 1,
+      color: colors.accent,
+      marginBottom: 2,
+    },
+    title: { fontSize: 16, fontWeight: '600', color: colors.textPrimary, lineHeight: 21 },
+    meta: { fontSize: 13, color: colors.textTertiary, marginTop: spacing.xs },
+  });

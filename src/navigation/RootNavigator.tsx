@@ -1,8 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
-import { colors } from '@/theme/theme';
 import { RatgeberNavigator, LoginNavigator } from '@/navigation/stacks';
+import { AppHeader } from '@/navigation/AppHeader';
 import { KHRechnerScreen } from '@/screens/khrechner/KHRechnerScreen';
 import { TagebuchScreen } from '@/screens/tagebuch/TagebuchScreen';
 import { SportScreen } from '@/screens/sport/SportScreen';
@@ -10,31 +9,15 @@ import type { RootTabParamList } from '@/navigation/types';
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
-// Tab order is fixed (§3): Ratgeber, KH-Rechner, Tagebuch, Sport, Login.
-const ICONS: Record<keyof RootTabParamList, keyof typeof Ionicons.glyphMap> = {
-  Ratgeber: 'book',
-  KHRechner: 'calculator',
-  Tagebuch: 'calendar',
-  Sport: 'walk',
-  Login: 'person',
-};
-
+// The sections are still tabs internally (so cross-section links like
+// navigate('Login', { screen: 'Register' }) keep working), but the bottom tab
+// bar is hidden: navigation happens through the Apple-style AppHeader menu.
+// Section order is fixed (§3): Ratgeber, KH-Rechner, Tagebuch, Sport, Login.
 export function RootNavigator() {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: colors.textTertiary,
-        tabBarStyle: {
-          backgroundColor: colors.bgSurface,
-          borderTopColor: colors.border,
-          borderTopWidth: 1,
-        },
-        tabBarIcon: ({ color, size }) => (
-          <Ionicons name={ICONS[route.name]} size={size} color={color} />
-        ),
-      })}
+      tabBar={() => null}
+      screenOptions={{ header: (props) => <AppHeader {...props} /> }}
     >
       <Tab.Screen name="Ratgeber" component={RatgeberNavigator} options={{ title: 'Ratgeber' }} />
       <Tab.Screen name="KHRechner" component={KHRechnerScreen} options={{ title: 'KH-Rechner' }} />

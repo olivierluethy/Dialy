@@ -12,14 +12,14 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import { Screen } from '@/components/Screen';
-import { TypeSegmentedControl } from '@/components/SegmentedControl';
 import { ScreenTitle, SectionLabel, IconBubble, Card } from '@/components/primitives';
 import { Button } from '@/components/Button';
 import { TextField } from '@/components/TextField';
 import { SelectableChip } from '@/components/Chip';
 import { NutrientBar } from '@/components/NutrientBar';
 import { GateNotice } from '@/components/GateNotice';
-import { colors, radius, spacing } from '@/theme/theme';
+import { radius, spacing, type Colors } from '@/theme/theme';
+import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import { foodsRepo } from '@/db/repositories/foods';
 import { mealsRepo } from '@/db/repositories/meals';
 import { useAppStore } from '@/state/store';
@@ -32,6 +32,8 @@ const BAR_MAX = { carbs: 80, sugar: 50, gi: 100, fat: 40 };
 const MAX_GRAMS = 500;
 
 export function KHRechnerScreen() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Food[]>([]);
   const [loading, setLoading] = useState(true);
@@ -153,7 +155,6 @@ export function KHRechnerScreen() {
 
   return (
     <Screen>
-      <TypeSegmentedControl />
       <ScreenTitle>KH-Rechner</ScreenTitle>
 
       <View style={styles.searchRow}>
@@ -322,42 +323,43 @@ export function KHRechnerScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  searchRow: { flexDirection: 'row', alignItems: 'center', position: 'relative' },
-  searchField: { flex: 1, marginBottom: spacing.md, marginLeft: -26 },
-  searchInput: { paddingLeft: 42 },
-  resultRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  resultBody: { flex: 1, marginHorizontal: spacing.md },
-  resultName: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
-  resultGroup: { fontSize: 13, color: colors.textTertiary },
-  resultCarbs: { fontSize: 13, color: colors.textSecondary },
-  selectedCard: { marginTop: spacing.lg },
-  foodHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.lg },
-  foodHeaderText: { marginLeft: spacing.md },
-  foodName: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
-  foodGroup: { fontSize: 14, color: colors.textTertiary },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
-  gramRow: { flexDirection: 'row', alignItems: 'center' },
-  gramField: { flex: 1, marginBottom: spacing.sm },
-  gramInput: { fontSize: 20, fontWeight: '700' },
-  gramUnit: { marginLeft: spacing.md, color: colors.textSecondary, fontSize: 16 },
-  nutrientLabel: { marginTop: spacing.lg },
-  summaryChip: {
-    backgroundColor: colors.accentSubtle,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: colors.accent,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    marginTop: spacing.sm,
-  },
-  summaryText: { color: colors.accent, fontWeight: '700', fontSize: 16, textAlign: 'center' },
-  photo: { width: '100%', height: 160, borderRadius: radius.card, marginTop: spacing.lg },
-  spacedBtn: { marginTop: spacing.md },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    searchRow: { flexDirection: 'row', alignItems: 'center', position: 'relative' },
+    searchField: { flex: 1, marginBottom: spacing.md, marginLeft: -26 },
+    searchInput: { paddingLeft: 42 },
+    resultRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: spacing.sm,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    resultBody: { flex: 1, marginHorizontal: spacing.md },
+    resultName: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
+    resultGroup: { fontSize: 13, color: colors.textTertiary },
+    resultCarbs: { fontSize: 13, color: colors.textSecondary },
+    selectedCard: { marginTop: spacing.lg },
+    foodHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.lg },
+    foodHeaderText: { marginLeft: spacing.md },
+    foodName: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
+    foodGroup: { fontSize: 14, color: colors.textTertiary },
+    chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
+    gramRow: { flexDirection: 'row', alignItems: 'center' },
+    gramField: { flex: 1, marginBottom: spacing.sm },
+    gramInput: { fontSize: 20, fontWeight: '700' },
+    gramUnit: { marginLeft: spacing.md, color: colors.textSecondary, fontSize: 16 },
+    nutrientLabel: { marginTop: spacing.lg },
+    summaryChip: {
+      backgroundColor: colors.accentSubtle,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: colors.accent,
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing.lg,
+      marginTop: spacing.sm,
+    },
+    summaryText: { color: colors.accent, fontWeight: '700', fontSize: 16, textAlign: 'center' },
+    photo: { width: '100%', height: 160, borderRadius: radius.card, marginTop: spacing.lg },
+    spacedBtn: { marginTop: spacing.md },
+  });

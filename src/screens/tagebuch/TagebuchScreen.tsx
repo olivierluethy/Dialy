@@ -3,10 +3,10 @@ import { View, Text, StyleSheet, Pressable, ActivityIndicator } from 'react-nati
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/Screen';
-import { TypeSegmentedControl } from '@/components/SegmentedControl';
 import { ScreenTitle, Card, IconBubble } from '@/components/primitives';
 import { Button } from '@/components/Button';
-import { colors, radius, spacing } from '@/theme/theme';
+import { radius, spacing, type Colors } from '@/theme/theme';
+import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import { useAppStore } from '@/state/store';
 import { mealsRepo } from '@/db/repositories/meals';
 import { sportsRepo } from '@/db/repositories/sports';
@@ -36,6 +36,8 @@ const ACTIVITY_LABEL: Record<string, string> = {
 };
 
 export function TagebuchScreen() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const navigation = useNavigation<any>();
   const user = useAppStore((s) => s.user);
   const isPremium = useAppStore((s) => s.isPremium);
@@ -66,7 +68,6 @@ export function TagebuchScreen() {
 
   return (
     <Screen>
-      <TypeSegmentedControl />
       <ScreenTitle>Tagebuch</ScreenTitle>
 
       {/* Logged-out: account-gated locked state. */}
@@ -131,6 +132,7 @@ export function TagebuchScreen() {
 }
 
 function FeedRow({ item, last }: { item: FeedItem; last: boolean }) {
+  const styles = useThemedStyles(makeStyles);
   const time = formatTime(item.data.logged_at);
   if (item.kind === 'meal') {
     const m = item.data;
@@ -162,6 +164,7 @@ function FeedRow({ item, last }: { item: FeedItem; last: boolean }) {
 }
 
 function SummaryChip({ label, value }: { label: string; value: string }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.chip}>
       <Text style={styles.chipValue}>{value}</Text>
@@ -204,58 +207,59 @@ function buildGroups(meals: MealEntry[], sports: SportEntry[]): DayGroup[] {
   return Array.from(map.values());
 }
 
-const styles = StyleSheet.create({
-  lockedCard: { alignItems: 'center', marginTop: spacing.lg },
-  lockedTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginTop: spacing.md,
-  },
-  lockedText: {
-    fontSize: 15,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginTop: spacing.sm,
-    lineHeight: 21,
-  },
-  premiumBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.accentSubtle,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.md,
-    marginBottom: spacing.lg,
-  },
-  premiumText: { flex: 1, color: colors.textSecondary, fontSize: 13, marginHorizontal: spacing.sm },
-  empty: { color: colors.textTertiary, fontSize: 15, marginTop: spacing.lg, lineHeight: 22 },
-  dayBlock: { marginBottom: spacing.xl },
-  dayHeader: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1,
-    color: colors.textTertiary,
-    marginBottom: spacing.sm,
-  },
-  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.md },
-  rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.border },
-  time: { width: 44, fontSize: 13, color: colors.textTertiary },
-  rowBody: { flex: 1, marginLeft: spacing.md },
-  rowTitle: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
-  rowMeta: { fontSize: 14, color: colors.textSecondary, marginTop: 2 },
-  rowSub: { fontSize: 13, color: colors.textTertiary, marginTop: 2 },
-  summaryRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
-  chip: {
-    flex: 1,
-    backgroundColor: colors.bgSurfaceAlt,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-  },
-  chipValue: { fontSize: 18, fontWeight: '700', color: colors.accent },
-  chipLabel: { fontSize: 12, color: colors.textTertiary, marginTop: 2 },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    lockedCard: { alignItems: 'center', marginTop: spacing.lg },
+    lockedTitle: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors.textPrimary,
+      marginTop: spacing.md,
+    },
+    lockedText: {
+      fontSize: 15,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      marginTop: spacing.sm,
+      lineHeight: 21,
+    },
+    premiumBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.accentSubtle,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: spacing.md,
+      marginBottom: spacing.lg,
+    },
+    premiumText: { flex: 1, color: colors.textSecondary, fontSize: 13, marginHorizontal: spacing.sm },
+    empty: { color: colors.textTertiary, fontSize: 15, marginTop: spacing.lg, lineHeight: 22 },
+    dayBlock: { marginBottom: spacing.xl },
+    dayHeader: {
+      fontSize: 12,
+      fontWeight: '700',
+      letterSpacing: 1,
+      color: colors.textTertiary,
+      marginBottom: spacing.sm,
+    },
+    row: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.md },
+    rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.border },
+    time: { width: 44, fontSize: 13, color: colors.textTertiary },
+    rowBody: { flex: 1, marginLeft: spacing.md },
+    rowTitle: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
+    rowMeta: { fontSize: 14, color: colors.textSecondary, marginTop: 2 },
+    rowSub: { fontSize: 13, color: colors.textTertiary, marginTop: 2 },
+    summaryRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
+    chip: {
+      flex: 1,
+      backgroundColor: colors.bgSurfaceAlt,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingVertical: spacing.md,
+      alignItems: 'center',
+    },
+    chipValue: { fontSize: 18, fontWeight: '700', color: colors.accent },
+    chipLabel: { fontSize: 12, color: colors.textTertiary, marginTop: 2 },
+  });

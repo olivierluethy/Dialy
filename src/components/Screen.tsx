@@ -2,7 +2,8 @@ import React from 'react';
 import { View, ScrollView, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { colors, spacing } from '@/theme/theme';
+import { spacing, type Colors } from '@/theme/theme';
+import { useTheme, useThemedStyles } from '@/theme/useTheme';
 
 interface ScreenProps {
   children: React.ReactNode;
@@ -11,13 +12,15 @@ interface ScreenProps {
 }
 
 /**
- * Base screen wrapper. Dark background everywhere + light status-bar content.
- * There is no light variant — the app is dark-only by design.
+ * Base screen wrapper. Themed background + matching status-bar content.
+ * The top safe-area inset is handled by the AppHeader above every screen.
  */
 export function Screen({ children, scroll = true, contentStyle }: ScreenProps) {
+  const { scheme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
-      <StatusBar style="light" />
+    <SafeAreaView style={styles.safe} edges={['left', 'right']}>
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       {scroll ? (
         <ScrollView
           contentContainerStyle={[styles.content, contentStyle]}
@@ -33,12 +36,13 @@ export function Screen({ children, scroll = true, contentStyle }: ScreenProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bgBase },
-  content: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.xxl * 2,
-  },
-  flex: { flex: 1 },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.bgBase },
+    content: {
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.lg,
+      paddingBottom: spacing.xxl * 2,
+    },
+    flex: { flex: 1 },
+  });

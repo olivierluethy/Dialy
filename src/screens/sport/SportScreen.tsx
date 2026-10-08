@@ -3,14 +3,14 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/Screen';
-import { TypeSegmentedControl } from '@/components/SegmentedControl';
 import { ScreenTitle, SectionLabel, Card } from '@/components/primitives';
 import { Button } from '@/components/Button';
 import { TextField } from '@/components/TextField';
 import { SelectableChip } from '@/components/Chip';
 import { BgChart } from '@/components/BgChart';
 import { GateNotice } from '@/components/GateNotice';
-import { colors, radius, spacing } from '@/theme/theme';
+import { radius, spacing, type Colors } from '@/theme/theme';
+import { useThemedStyles } from '@/theme/useTheme';
 import { useAppStore } from '@/state/store';
 import { sportsRepo } from '@/db/repositories/sports';
 import { can, gateCopy } from '@/policy/gating';
@@ -32,6 +32,7 @@ const num = (s: string, fallback = 0): number => {
 };
 
 export function SportScreen() {
+  const styles = useThemedStyles(makeStyles);
   const navigation = useNavigation<any>();
   const user = useAppStore((s) => s.user);
   const isPremium = useAppStore((s) => s.isPremium);
@@ -87,7 +88,6 @@ export function SportScreen() {
 
   return (
     <Screen>
-      <TypeSegmentedControl />
       <ScreenTitle>Sport planen</ScreenTitle>
 
       {/* Activity */}
@@ -206,6 +206,7 @@ function InlineInput({
   onChange: (v: string) => void;
   width: number;
 }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <TextField
       value={value}
@@ -217,27 +218,28 @@ function InlineInput({
   );
 }
 
-const styles = StyleSheet.create({
-  activityRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
-  twoCol: { flexDirection: 'row', gap: spacing.md },
-  col: { flex: 1 },
-  disclaimer: {
-    fontSize: 13,
-    color: colors.warn,
-    marginTop: spacing.md,
-    lineHeight: 18,
-  },
-  spacedLabel: { marginTop: spacing.lg },
-  sentence: { fontSize: 16, color: colors.textPrimary, lineHeight: 40 },
-  hint: { fontSize: 13, color: colors.textTertiary, marginTop: spacing.sm, lineHeight: 18 },
-  inlineContainer: { marginBottom: 0, marginHorizontal: 2 },
-  inlineInput: {
-    minHeight: 40,
-    paddingVertical: 4,
-    paddingHorizontal: spacing.sm,
-    textAlign: 'center',
-    fontWeight: '700',
-    color: colors.accent,
-  },
-  saveBtn: { marginTop: spacing.xl },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    activityRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
+    twoCol: { flexDirection: 'row', gap: spacing.md },
+    col: { flex: 1 },
+    disclaimer: {
+      fontSize: 13,
+      color: colors.warn,
+      marginTop: spacing.md,
+      lineHeight: 18,
+    },
+    spacedLabel: { marginTop: spacing.lg },
+    sentence: { fontSize: 16, color: colors.textPrimary, lineHeight: 40 },
+    hint: { fontSize: 13, color: colors.textTertiary, marginTop: spacing.sm, lineHeight: 18 },
+    inlineContainer: { marginBottom: 0, marginHorizontal: 2 },
+    inlineInput: {
+      minHeight: 40,
+      paddingVertical: 4,
+      paddingHorizontal: spacing.sm,
+      textAlign: 'center',
+      fontWeight: '700',
+      color: colors.accent,
+    },
+    saveBtn: { marginTop: spacing.xl },
+  });

@@ -1,7 +1,7 @@
 import { ExpoConfig, ConfigContext } from 'expo/config';
 
 /**
- * Dialy – Diabetes-Begleiter (dark-mode only, offline-first).
+ * Dialy – Diabetes-Begleiter (dark by default, optional light mode; offline-first).
  *
  * Secrets are NEVER hard-coded here. Public, client-safe values
  * (Supabase project URL + anon key) come from environment variables
@@ -18,7 +18,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   version: '1.0.0',
   orientation: 'portrait',
   scheme: 'dialy',
-  userInterfaceStyle: 'dark', // Dark-mode only. No light theme, ever.
+  // 'automatic' so the OS appearance is reported to the app; the in-app
+  // setting (Dunkel / Hell / System, default Dunkel) decides what is shown.
+  userInterfaceStyle: 'automatic',
   backgroundColor: '#0E1512',
   splash: {
     backgroundColor: '#0E1512',
@@ -28,7 +30,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'net.dialy.app',
-    userInterfaceStyle: 'dark',
+    userInterfaceStyle: 'automatic',
     infoPlist: {
       // Manual-entry CGM/health fallback always works; native HealthKit
       // bridge is a TODO(native) follow-up – see services/health.ts.
@@ -40,7 +42,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   android: {
     package: 'net.dialy.app',
-    userInterfaceStyle: 'dark',
+    userInterfaceStyle: 'automatic',
     adaptiveIcon: {
       backgroundColor: '#0E1512',
     },

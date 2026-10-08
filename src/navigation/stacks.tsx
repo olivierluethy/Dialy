@@ -1,6 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { colors } from '@/theme/theme';
+import { useTheme } from '@/theme/useTheme';
 import { RatgeberScreen } from '@/screens/ratgeber/RatgeberScreen';
 import { ArticleDetailScreen } from '@/screens/ratgeber/ArticleDetailScreen';
 import { LoginScreen } from '@/screens/login/LoginScreen';
@@ -10,17 +10,21 @@ import { PaywallScreen } from '@/screens/paywall/PaywallScreen';
 import { PrivacyScreen } from '@/screens/privacy/PrivacyScreen';
 import type { LoginStackParamList, RatgeberStackParamList } from '@/navigation/types';
 
-// Shared dark header styling for all stacks.
-const screenOptions = {
-  headerStyle: { backgroundColor: colors.bgBase },
-  headerTintColor: colors.textPrimary,
-  headerTitleStyle: { color: colors.textPrimary },
-  headerShadowVisible: false,
-  contentStyle: { backgroundColor: colors.bgBase },
-} as const;
+// Shared themed header styling for all stacks.
+function useScreenOptions() {
+  const { colors } = useTheme();
+  return {
+    headerStyle: { backgroundColor: colors.bgBase },
+    headerTintColor: colors.textPrimary,
+    headerTitleStyle: { color: colors.textPrimary },
+    headerShadowVisible: false,
+    contentStyle: { backgroundColor: colors.bgBase },
+  } as const;
+}
 
 const RatgeberStack = createNativeStackNavigator<RatgeberStackParamList>();
 export function RatgeberNavigator() {
+  const screenOptions = useScreenOptions();
   return (
     <RatgeberStack.Navigator screenOptions={screenOptions}>
       <RatgeberStack.Screen
@@ -39,6 +43,7 @@ export function RatgeberNavigator() {
 
 const LoginStack = createNativeStackNavigator<LoginStackParamList>();
 export function LoginNavigator() {
+  const screenOptions = useScreenOptions();
   return (
     <LoginStack.Navigator screenOptions={screenOptions}>
       <LoginStack.Screen

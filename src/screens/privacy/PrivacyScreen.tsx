@@ -1,7 +1,8 @@
 import React from 'react';
 import { Text, StyleSheet } from 'react-native';
 import { Screen } from '@/components/Screen';
-import { colors, spacing } from '@/theme/theme';
+import { spacing, type Colors } from '@/theme/theme';
+import { useThemedStyles } from '@/theme/useTheme';
 
 /** Placeholder privacy policy (German). Replace with the final legal text. */
 const SECTIONS: Array<{ h: string; b: string }> = [
@@ -32,6 +33,7 @@ const SECTIONS: Array<{ h: string; b: string }> = [
 ];
 
 export function PrivacyScreen() {
+  const styles = useThemedStyles(makeStyles);
   return (
     <Screen>
       <Text style={styles.title}>Datenschutzerklärung</Text>
@@ -45,8 +47,9 @@ export function PrivacyScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  title: { fontSize: 26, fontWeight: '700', color: colors.textPrimary, marginBottom: spacing.lg },
-  h: { fontSize: 17, fontWeight: '700', color: colors.textPrimary, marginTop: spacing.lg },
-  b: { fontSize: 15, color: colors.textSecondary, lineHeight: 22, marginTop: spacing.sm },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    title: { fontSize: 26, fontWeight: '700', color: colors.textPrimary, marginBottom: spacing.lg },
+    h: { fontSize: 17, fontWeight: '700', color: colors.textPrimary, marginTop: spacing.lg },
+    b: { fontSize: 15, color: colors.textSecondary, lineHeight: 22, marginTop: spacing.sm },
+  });

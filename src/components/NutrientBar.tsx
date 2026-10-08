@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, radius, spacing } from '@/theme/theme';
+import { radius, spacing, type Colors } from '@/theme/theme';
+import { useThemedStyles } from '@/theme/useTheme';
 
 interface NutrientBarProps {
   label: string;
@@ -15,6 +16,7 @@ interface NutrientBarProps {
  * Colours come from the data.* tokens.
  */
 export function NutrientBar({ label, value, fraction, color }: NutrientBarProps) {
+  const styles = useThemedStyles(makeStyles);
   const pct = Math.max(0, Math.min(1, fraction)) * 100;
   return (
     <View style={styles.row}>
@@ -29,20 +31,21 @@ export function NutrientBar({ label, value, fraction, color }: NutrientBarProps)
   );
 }
 
-const styles = StyleSheet.create({
-  row: { marginBottom: spacing.md },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.xs,
-  },
-  label: { fontSize: 14, color: colors.textSecondary },
-  value: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
-  track: {
-    height: 8,
-    borderRadius: radius.pill,
-    backgroundColor: colors.bgInput,
-    overflow: 'hidden',
-  },
-  fill: { height: '100%', borderRadius: radius.pill },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    row: { marginBottom: spacing.md },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: spacing.xs,
+    },
+    label: { fontSize: 14, color: colors.textSecondary },
+    value: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+    track: {
+      height: 8,
+      borderRadius: radius.pill,
+      backgroundColor: colors.bgInput,
+      overflow: 'hidden',
+    },
+    fill: { height: '100%', borderRadius: radius.pill },
+  });

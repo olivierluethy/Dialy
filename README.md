@@ -15,7 +15,7 @@ Blutzuckerwerten führen.
 > Blutzucker‑Trend.
 
 Built with **React Native + TypeScript** on **Expo (managed workflow)**. Runs on
-**iOS** and **Android**, fully **offline-first**, **dark-mode only**.
+**iOS** and **Android**, fully **offline-first**, **dark mode by default** (optional light mode).
 
 ---
 
@@ -438,8 +438,11 @@ ohne externe Konfiguration läuft. Im Code als `TODO(native)` markiert.
 
 ## Bewusste Entscheidungen
 
-- **Dark-Mode only.** Es gibt kein helles Theme, keinen Umschalter und kein
-  Folgen der System-Darstellung.
+- **Dark-Mode als Standard.** Im Login-Tab unter „Darstellung“ lässt sich auf
+  **Hell** oder **System** (folgt der Geräte-Einstellung) umschalten. Die Wahl
+  wird gespeichert. Farben kommen ausschliesslich aus `src/theme/theme.ts`
+  (`darkColors` / `lightColors`) und werden über `useTheme()` /
+  `useThemedStyles()` gelesen.
 - **Kein Medizinprodukt.** Keine Insulindosis-Berechnung, keine
   Therapieempfehlung — eine bewusste rechtliche Grenze (hält Dialy ausserhalb
   EU‑MDR / Schweizer Medizinprodukte-Regulierung). Das „Insulinrate reduzieren
@@ -455,10 +458,10 @@ ohne externe Konfiguration läuft. Im Code als `TODO(native)` markiert.
 
 ```
 Dialy/
-├─ App.tsx                      # Root: Navigation + Bootstrap, Dark-Theme
-├─ app.config.ts                # Expo-Konfig (dark-only, extra/env, Flags)
+├─ App.tsx                      # Root: Navigation + Bootstrap, Theme
+├─ app.config.ts                # Expo-Konfig (Darstellung, extra/env, Flags)
 ├─ src/
-│  ├─ theme/theme.ts            # Design-Tokens (Dark, authoritativ)
+│  ├─ theme/theme.ts            # Design-Tokens (Dark + Light, authoritativ)
 │  ├─ state/                    # Zustand-Store + Bootstrap-Hook
 │  ├─ policy/gating.ts          # Konto/Premium-Gating (Single Source of Truth)
 │  ├─ db/                       # expo-sqlite, Repositories, Seed

@@ -3,10 +3,12 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '@/components/Screen';
-import { IconBubble } from '@/components/primitives';
+import { IconBubble, SectionLabel } from '@/components/primitives';
+import { ThemeModeControl } from '@/components/SegmentedControl';
 import { Button } from '@/components/Button';
 import { TextField } from '@/components/TextField';
-import { colors, spacing } from '@/theme/theme';
+import { spacing, type Colors } from '@/theme/theme';
+import { useThemedStyles } from '@/theme/useTheme';
 import { useAppStore } from '@/state/store';
 import { authService } from '@/services/auth';
 import { syncEngine } from '@/sync/syncEngine';
@@ -21,6 +23,7 @@ export function LoginScreen() {
 }
 
 function LoginForm() {
+  const styles = useThemedStyles(makeStyles);
   const navigation = useNavigation<NativeStackNavigationProp<LoginStackParamList>>();
   const setUser = useAppStore((s) => s.setUser);
   const [email, setEmail] = useState('');
@@ -92,34 +95,39 @@ function LoginForm() {
       >
         Datenschutzerklärung
       </Text>
+
+      <SectionLabel style={styles.appearanceLabel}>Darstellung</SectionLabel>
+      <ThemeModeControl />
     </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  header: { alignItems: 'center', marginVertical: spacing.xl },
-  title: {
-    fontSize: 30,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginTop: spacing.md,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginTop: spacing.sm,
-    lineHeight: 21,
-  },
-  error: { color: colors.danger, fontSize: 14, marginBottom: spacing.md },
-  btn: { marginTop: spacing.sm },
-  dividerRow: { flexDirection: 'row', alignItems: 'center', marginVertical: spacing.xl },
-  divider: { flex: 1, height: 1, backgroundColor: colors.border },
-  dividerText: { color: colors.textTertiary, marginHorizontal: spacing.md },
-  privacyLink: {
-    color: colors.textTertiary,
-    textAlign: 'center',
-    marginTop: spacing.xl,
-    textDecorationLine: 'underline',
-  },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    header: { alignItems: 'center', marginVertical: spacing.xl },
+    title: {
+      fontSize: 30,
+      fontWeight: '700',
+      color: colors.textPrimary,
+      marginTop: spacing.md,
+    },
+    subtitle: {
+      fontSize: 15,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      marginTop: spacing.sm,
+      lineHeight: 21,
+    },
+    error: { color: colors.danger, fontSize: 14, marginBottom: spacing.md },
+    btn: { marginTop: spacing.sm },
+    dividerRow: { flexDirection: 'row', alignItems: 'center', marginVertical: spacing.xl },
+    divider: { flex: 1, height: 1, backgroundColor: colors.border },
+    dividerText: { color: colors.textTertiary, marginHorizontal: spacing.md },
+    privacyLink: {
+      color: colors.textTertiary,
+      textAlign: 'center',
+      marginTop: spacing.xl,
+      textDecorationLine: 'underline',
+    },
+    appearanceLabel: { marginTop: spacing.xxl },
+  });

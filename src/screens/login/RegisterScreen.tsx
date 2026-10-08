@@ -5,11 +5,13 @@ import { Screen } from '@/components/Screen';
 import { IconBubble } from '@/components/primitives';
 import { Button } from '@/components/Button';
 import { TextField } from '@/components/TextField';
-import { colors, spacing } from '@/theme/theme';
+import { spacing, type Colors } from '@/theme/theme';
+import { useThemedStyles } from '@/theme/useTheme';
 import { useAppStore } from '@/state/store';
 import { authService } from '@/services/auth';
 
 export function RegisterScreen() {
+  const styles = useThemedStyles(makeStyles);
   const navigation = useNavigation<any>();
   const setUser = useAppStore((s) => s.setUser);
   const [email, setEmail] = useState('');
@@ -91,23 +93,24 @@ export function RegisterScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  header: { alignItems: 'center', marginVertical: spacing.lg },
-  title: { fontSize: 26, fontWeight: '700', color: colors.textPrimary, marginTop: spacing.md },
-  subtitle: {
-    fontSize: 15,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginTop: spacing.sm,
-    lineHeight: 21,
-  },
-  consent: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    lineHeight: 20,
-    marginBottom: spacing.md,
-  },
-  consentActive: { color: colors.textPrimary },
-  error: { color: colors.danger, fontSize: 14, marginBottom: spacing.md },
-  btn: { marginTop: spacing.sm },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    header: { alignItems: 'center', marginVertical: spacing.lg },
+    title: { fontSize: 26, fontWeight: '700', color: colors.textPrimary, marginTop: spacing.md },
+    subtitle: {
+      fontSize: 15,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      marginTop: spacing.sm,
+      lineHeight: 21,
+    },
+    consent: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      lineHeight: 20,
+      marginBottom: spacing.md,
+    },
+    consentActive: { color: colors.textPrimary },
+    error: { color: colors.danger, fontSize: 14, marginBottom: spacing.md },
+    btn: { marginTop: spacing.sm },
+  });

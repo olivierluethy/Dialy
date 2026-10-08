@@ -3,7 +3,8 @@ import { Text, StyleSheet, ActivityIndicator } from 'react-native';
 import type { RouteProp } from '@react-navigation/native';
 import { Screen } from '@/components/Screen';
 import { IconBubble } from '@/components/primitives';
-import { colors, spacing } from '@/theme/theme';
+import { spacing, type Colors } from '@/theme/theme';
+import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import { articlesRepo } from '@/db/repositories/articles';
 import { formatDate } from '@/utils/format';
 import type { Article } from '@/types/models';
@@ -14,6 +15,8 @@ export function ArticleDetailScreen({
 }: {
   route: RouteProp<RatgeberStackParamList, 'ArticleDetail'>;
 }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { id } = route.params;
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
@@ -59,22 +62,23 @@ export function ArticleDetailScreen({
   );
 }
 
-const styles = StyleSheet.create({
-  category: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1,
-    color: colors.accent,
-    marginTop: spacing.md,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginTop: spacing.sm,
-    lineHeight: 32,
-  },
-  meta: { fontSize: 13, color: colors.textTertiary, marginVertical: spacing.md },
-  body: { fontSize: 16, color: colors.textSecondary, lineHeight: 24 },
-  spacer: { height: spacing.md },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    category: {
+      fontSize: 12,
+      fontWeight: '700',
+      letterSpacing: 1,
+      color: colors.accent,
+      marginTop: spacing.md,
+    },
+    title: {
+      fontSize: 26,
+      fontWeight: '700',
+      color: colors.textPrimary,
+      marginTop: spacing.sm,
+      lineHeight: 32,
+    },
+    meta: { fontSize: 13, color: colors.textTertiary, marginVertical: spacing.md },
+    body: { fontSize: 16, color: colors.textSecondary, lineHeight: 24 },
+    spacer: { height: spacing.md },
+  });

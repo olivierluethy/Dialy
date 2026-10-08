@@ -9,7 +9,8 @@ import {
   ViewStyle,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, spacing } from '@/theme/theme';
+import { radius, spacing, type Colors } from '@/theme/theme';
+import { useTheme, useThemedStyles } from '@/theme/useTheme';
 
 interface ButtonProps {
   title: string;
@@ -30,6 +31,8 @@ export function Button({
   loading = false,
   style,
 }: ButtonProps) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const isPrimary = variant === 'primary';
   return (
     <Pressable
@@ -65,22 +68,23 @@ export function Button({
   );
 }
 
-const styles = StyleSheet.create({
-  base: {
-    minHeight: 48,
-    borderRadius: radius.button,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.lg,
-  },
-  row: { flexDirection: 'row', alignItems: 'center' },
-  icon: { marginRight: spacing.sm },
-  primary: { backgroundColor: colors.accent },
-  primaryPressed: { backgroundColor: colors.accentPressed },
-  secondary: { backgroundColor: colors.bgSurfaceAlt },
-  secondaryPressed: { backgroundColor: colors.bgInput },
-  disabled: { opacity: 0.5 },
-  label: { fontSize: 16, fontWeight: '700' },
-  labelPrimary: { color: colors.textOnAccent },
-  labelSecondary: { color: colors.accent },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    base: {
+      minHeight: 48,
+      borderRadius: radius.button,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: spacing.lg,
+    },
+    row: { flexDirection: 'row', alignItems: 'center' },
+    icon: { marginRight: spacing.sm },
+    primary: { backgroundColor: colors.accent },
+    primaryPressed: { backgroundColor: colors.accentPressed },
+    secondary: { backgroundColor: colors.bgSurfaceAlt },
+    secondaryPressed: { backgroundColor: colors.bgInput },
+    disabled: { opacity: 0.5 },
+    label: { fontSize: 16, fontWeight: '700' },
+    labelPrimary: { color: colors.textOnAccent },
+    labelSecondary: { color: colors.accent },
+  });

@@ -4,8 +4,10 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/Screen';
 import { IconBubble, Card, SectionLabel } from '@/components/primitives';
+import { ThemeModeControl } from '@/components/SegmentedControl';
 import { Button } from '@/components/Button';
-import { colors, radius, spacing } from '@/theme/theme';
+import { radius, spacing, type Colors } from '@/theme/theme';
+import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import { useAppStore } from '@/state/store';
 import { authService } from '@/services/auth';
 import { syncEngine } from '@/sync/syncEngine';
@@ -13,6 +15,8 @@ import { isSupabaseConfigured } from '@/config';
 
 /** Account state shown on the Login tab once signed in. */
 export function AccountView() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const navigation = useNavigation<any>();
   const user = useAppStore((s) => s.user);
   const setUser = useAppStore((s) => s.setUser);
@@ -110,6 +114,9 @@ export function AccountView() {
         </Card>
       </Pressable>
 
+      <SectionLabel style={styles.spaced}>Darstellung</SectionLabel>
+      <ThemeModeControl />
+
       <SectionLabel style={styles.spaced}>Datenschutz</SectionLabel>
       <Card>
         <Pressable style={styles.linkRow} onPress={() => navigation.navigate('Privacy')}>
@@ -133,32 +140,33 @@ export function AccountView() {
   );
 }
 
-const styles = StyleSheet.create({
-  header: { alignItems: 'center', marginVertical: spacing.lg },
-  email: { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginTop: spacing.md },
-  badge: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: 4,
-    borderRadius: radius.pill,
-    marginTop: spacing.sm,
-  },
-  badgeFree: { backgroundColor: colors.bgSurfaceAlt },
-  badgePremium: { backgroundColor: colors.accentSubtle, borderWidth: 1, borderColor: colors.accent },
-  badgeText: { fontSize: 13, color: colors.textSecondary, fontWeight: '600' },
-  badgeTextPremium: { color: colors.accent },
-  spaced: { marginTop: spacing.xl },
-  syncMsg: { color: colors.textSecondary, fontSize: 13, marginTop: spacing.md },
-  offlineNote: { color: colors.textTertiary, fontSize: 13, marginTop: spacing.md, lineHeight: 18 },
-  row: { flexDirection: 'row', alignItems: 'center' },
-  rowBody: { flex: 1, marginLeft: spacing.md },
-  rowTitle: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
-  rowSub: { fontSize: 13, color: colors.textTertiary, marginTop: 2 },
-  devHint: { fontSize: 12, color: colors.textTertiary, marginTop: spacing.md, fontStyle: 'italic' },
-  linkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.md,
-  },
-  linkText: { fontSize: 16, color: colors.textPrimary },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    header: { alignItems: 'center', marginVertical: spacing.lg },
+    email: { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginTop: spacing.md },
+    badge: {
+      paddingHorizontal: spacing.md,
+      paddingVertical: 4,
+      borderRadius: radius.pill,
+      marginTop: spacing.sm,
+    },
+    badgeFree: { backgroundColor: colors.bgSurfaceAlt },
+    badgePremium: { backgroundColor: colors.accentSubtle, borderWidth: 1, borderColor: colors.accent },
+    badgeText: { fontSize: 13, color: colors.textSecondary, fontWeight: '600' },
+    badgeTextPremium: { color: colors.accent },
+    spaced: { marginTop: spacing.xl },
+    syncMsg: { color: colors.textSecondary, fontSize: 13, marginTop: spacing.md },
+    offlineNote: { color: colors.textTertiary, fontSize: 13, marginTop: spacing.md, lineHeight: 18 },
+    row: { flexDirection: 'row', alignItems: 'center' },
+    rowBody: { flex: 1, marginLeft: spacing.md },
+    rowTitle: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
+    rowSub: { fontSize: 13, color: colors.textTertiary, marginTop: 2 },
+    devHint: { fontSize: 12, color: colors.textTertiary, marginTop: spacing.md, fontStyle: 'italic' },
+    linkRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: spacing.md,
+    },
+    linkText: { fontSize: 16, color: colors.textPrimary },
+  });

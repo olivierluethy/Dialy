@@ -1,7 +1,8 @@
 import React from 'react';
 import { Text, Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, spacing } from '@/theme/theme';
+import { radius, spacing, type Colors } from '@/theme/theme';
+import { useTheme, useThemedStyles } from '@/theme/useTheme';
 
 interface SelectableChipProps {
   label: string;
@@ -12,6 +13,8 @@ interface SelectableChipProps {
 
 /** Pill-shaped selectable chip (portion presets, activities). */
 export function SelectableChip({ label, selected, onPress, icon }: SelectableChipProps) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <Pressable
       onPress={onPress}
@@ -36,18 +39,19 @@ export function SelectableChip({ label, selected, onPress, icon }: SelectableChi
   );
 }
 
-const styles = StyleSheet.create({
-  chip: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: 10,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-  },
-  row: { flexDirection: 'row', alignItems: 'center' },
-  icon: { marginRight: spacing.xs },
-  selected: { backgroundColor: colors.accent, borderColor: colors.accent },
-  unselected: { backgroundColor: colors.bgSurfaceAlt, borderColor: colors.border },
-  label: { fontSize: 14, fontWeight: '600' },
-  labelSelected: { color: colors.textOnAccent },
-  labelUnselected: { color: colors.textSecondary },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    chip: {
+      paddingHorizontal: spacing.lg,
+      paddingVertical: 10,
+      borderRadius: radius.pill,
+      borderWidth: 1,
+    },
+    row: { flexDirection: 'row', alignItems: 'center' },
+    icon: { marginRight: spacing.xs },
+    selected: { backgroundColor: colors.accent, borderColor: colors.accent },
+    unselected: { backgroundColor: colors.bgSurfaceAlt, borderColor: colors.border },
+    label: { fontSize: 14, fontWeight: '600' },
+    labelSelected: { color: colors.textOnAccent },
+    labelUnselected: { color: colors.textSecondary },
+  });
