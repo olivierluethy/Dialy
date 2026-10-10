@@ -54,6 +54,7 @@ type DialogState =
  * portion come from. Null for the curated foods.
  */
 function foodSourceText(food: Food): string | null {
+  if (food.id.startsWith('brand-')) return 'Quelle: Herstellerangaben (Stand Oktober 2026)';
   const nutrients = food.id.startsWith('blv-')
     ? 'BLV'
     : food.id.startsWith('bls-')

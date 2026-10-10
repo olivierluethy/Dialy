@@ -1,6 +1,7 @@
 import { getDb } from '@/db/database';
 import { foodsRepo } from '@/db/repositories/foods';
 import { SEED_FOODS } from '@/data/seedFoods';
+import { BRAND_DRINKS } from '@/data/brandDrinks';
 import BLV_FOODS from '@/data/blvFoods.json';
 import BLS_FOODS from '@/data/blsFoods.json';
 import MENUCH from '@/data/menuchPortions.json';
@@ -19,7 +20,7 @@ export async function seedDatabase(): Promise<void> {
   const ts = nowIso();
 
   await db.withTransactionAsync(async () => {
-    for (const f of SEED_FOODS) {
+    for (const f of [...SEED_FOODS, ...BRAND_DRINKS]) {
       await db.runAsync(
         `INSERT INTO foods
            (id, user_id, created_at, updated_at, deleted_at, name, food_group, categories,
