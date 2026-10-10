@@ -31,3 +31,27 @@ export async function softDelete(
   );
   await enqueueSync(db, tableName, rowId);
 }
+
+/**
+ * Moves diary entries to another point in time (date/time edit). Only rows of
+ * `userId` are touched; each changed row is queued for sync.
+ */
+export async function setLoggedAt(
+  tableName: string,
+  rowIds: string[],
+  userId: string,
+  loggedAt: string
+): Promise<void> {
+  if (rowIds.length === 0) return;
+  const db = await getDb();
+  const ts = nowIso();
+  await db.withTransactionAsync(async () => {
+    for (const id of rowIds) {
+      const result = await db.runAsync(
+        `UPDATE ${tableName} SET logged_at = ?, updated_at = ? WHERE id = ? AND user_id = ?`,
+        [loggedAt, ts, id, userId]
+      );
+      if (result.changes > 0) await enqueueSync(db, tableName, id);
+    }
+  });
+}

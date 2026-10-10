@@ -1,5 +1,5 @@
 import { getDb } from '@/db/database';
-import { enqueueSync } from '@/db/repositories/base';
+import { enqueueSync, setLoggedAt } from '@/db/repositories/base';
 import { nowIso, uuidv4 } from '@/utils/id';
 import type { BgCurvePoint, SportEntry } from '@/types/models';
 
@@ -79,6 +79,11 @@ export const sportsRepo = {
     );
     await enqueueSync(db, 'sport_entries', entry.id);
     return entry;
+  },
+
+  /** Moves entries (of `userId`) to a new date/time. */
+  setLoggedAt(ids: string[], userId: string, loggedAt: string): Promise<void> {
+    return setLoggedAt('sport_entries', ids, userId, loggedAt);
   },
 
   /** Entries of one account only — a device can hold several accounts. */

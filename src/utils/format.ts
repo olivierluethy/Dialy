@@ -68,3 +68,27 @@ export const dayKey = (iso: string): string => {
   const day = d.getDate().toString().padStart(2, '0');
   return `${y}-${m}-${day}`;
 };
+
+const pad2 = (n: number): string => n.toString().padStart(2, '0');
+
+/** "16.05.2026" (local date), for editable date fields. */
+export const formatDateInput = (iso: string): string => {
+  const d = new Date(iso);
+  return `${pad2(d.getDate())}.${pad2(d.getMonth() + 1)}.${d.getFullYear()}`;
+};
+
+/**
+ * "16.05.2026" + "07:45" (local time) -> ISO timestamp, or null if either
+ * part is malformed or not a real date/time (e.g. 31.02. or 25:00).
+ */
+export function parseLocalDateTime(date: string, time: string): string | null {
+  const dm = date.trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  const tm = time.trim().match(/^(\d{1,2})[:.](\d{2})$/);
+  if (!dm || !tm) return null;
+  const [d, m, y] = [Number(dm[1]), Number(dm[2]), Number(dm[3])];
+  const [hh, mm] = [Number(tm[1]), Number(tm[2])];
+  if (hh > 23 || mm > 59) return null;
+  const dt = new Date(y, m - 1, d, hh, mm, 0, 0);
+  if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+  return dt.toISOString();
+}
