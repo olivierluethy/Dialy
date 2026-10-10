@@ -19,10 +19,12 @@ export function RegisterScreen() {
   const [confirm, setConfirm] = useState('');
   const [consent, setConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const register = async () => {
     setError(null);
+    setNotice(null);
     if (password !== confirm) {
       setError('Die Passwörter stimmen nicht überein.');
       return;
@@ -32,10 +34,15 @@ export function RegisterScreen() {
       return;
     }
     setLoading(true);
-    const { user, error } = await authService.signUp(email.trim(), password);
+    const { user, error, notice } = await authService.signUp(email.trim(), password);
     setLoading(false);
     if (error) {
       setError(error);
+      return;
+    }
+    // Account created but not active yet (e-mail confirmation pending).
+    if (notice) {
+      setNotice(notice);
       return;
     }
     setUser(user);
@@ -87,6 +94,7 @@ export function RegisterScreen() {
       </Text>
 
       {error && <Text style={styles.error}>{error}</Text>}
+      {notice && <Text style={styles.notice}>{notice}</Text>}
 
       <Button title="Registrieren" onPress={register} loading={loading} style={styles.btn} />
     </Screen>
@@ -112,5 +120,6 @@ const makeStyles = (colors: Colors) =>
     },
     consentActive: { color: colors.textPrimary },
     error: { color: colors.danger, fontSize: 14, marginBottom: spacing.md },
+    notice: { color: colors.textPrimary, fontSize: 14, lineHeight: 20, marginBottom: spacing.md },
     btn: { marginTop: spacing.sm },
   });

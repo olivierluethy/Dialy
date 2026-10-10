@@ -10,6 +10,8 @@ export interface AuthUser {
 export interface AuthResult {
   user: AuthUser | null;
   error: string | null;
+  /** Non-error hint, e.g. "check your inbox" after a sign-up needing confirmation. */
+  notice?: string;
 }
 
 const SYNC_TABLES = [
@@ -46,6 +48,21 @@ export const authService = {
     if (!sb) return localAuth.signUp(email, password);
     const { data, error } = await sb.auth.signUp({ email, password });
     if (error) return { user: null, error: translateAuthError(error.message) };
+    // An already registered address gets a user without identities and no
+    // error (Supabase doesn't reveal existing accounts that way).
+    if (data.user && data.user.identities?.length === 0) {
+      return { user: null, error: 'Diese E-Mail ist bereits registriert. Bitte melde dich an.' };
+    }
+    // With "Confirm email" enabled there's no session until the link is clicked.
+    if (!data.session) {
+      return {
+        user: null,
+        error: null,
+        notice:
+          `Fast geschafft! Wir haben dir eine E-Mail an ${email} geschickt. Bitte ` +
+          'bestätige deine Adresse über den Link darin und melde dich danach an.',
+      };
+    }
     return { user: toUser(data.user), error: null };
   },
 
@@ -98,6 +115,10 @@ function translateAuthError(msg: string): string {
   const m = msg.toLowerCase();
   if (m.includes('invalid login')) return 'E-Mail oder Passwort ist falsch.';
   if (m.includes('already registered')) return 'Diese E-Mail ist bereits registriert.';
+  if (m.includes('email not confirmed')) {
+    return 'Bitte bestätige zuerst deine E-Mail-Adresse (Link in der Bestätigungs-Mail) und melde dich dann an.';
+  }
+  if (m.includes('rate limit')) return 'Zu viele Versuche. Bitte warte einen Moment und versuche es erneut.';
   if (m.includes('password')) return 'Das Passwort erfüllt die Anforderungen nicht (mind. 6 Zeichen).';
   if (m.includes('email')) return 'Bitte gib eine gültige E-Mail-Adresse ein.';
   return 'Es ist ein Fehler aufgetreten. Bitte versuche es erneut.';

@@ -444,10 +444,28 @@ cp .env.example .env
 ```bash
 # Schema + RLS anwenden (Supabase CLI)
 supabase db push
-# bzw. die SQL-Dateien manuell im SQL-Editor ausführen:
-#   supabase/migrations/0001_init.sql
-#   supabase/migrations/0002_rls.sql
+# bzw. die SQL-Dateien der Reihe nach im SQL-Editor ausführen:
+#   supabase/migrations/0001_init.sql … 0005_food_categories.sql
 ```
+
+#### Testkonten
+
+Supabase erlaubt jede E-Mail-Adresse nur **einmal**. Für Tests:
+
+- **Mehrere Konten mit einem Postfach (Plus-Adressen):** Gmail stellt alles
+  nach einem `+` ins selbe Postfach zu. Für Supabase sind das verschiedene
+  Adressen, die Mails landen aber alle bei dir:
+  - `deinname+test1@gmail.com`
+  - `deinname+test2@gmail.com`
+- **Gleiche Adresse nochmals registrieren:** das Konto vorher im Dashboard
+  unter *Authentication → Users* löschen (*Delete user*).
+- **Einschränkung:** Der eingebaute Mailversand von Supabase schickt
+  Bestätigungs-Mails nur an Adressen der Projekt-Mitglieder und nur wenige pro
+  Stunde. Für Plus-Adressen die Konten deshalb direkt im Dashboard anlegen:
+  *Authentication → Users → Add user → Create new user* mit **„Auto Confirm
+  User“** – oder einen eigenen SMTP-Dienst einrichten.
+- Damit der Bestätigungslink in der App landet, unter *Authentication → URL
+  Configuration* die **Site URL** auf `http://localhost:8081` setzen (Web).
 
 ---
 
