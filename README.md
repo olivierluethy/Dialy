@@ -409,9 +409,9 @@ Nach Änderungen an `metro.config.js` immer mit `npx expo start -c`
 
 ## Konfiguration (alles optional)
 
-Ohne Konfiguration läuft die App komplett offline (Auth & Sync deaktiviert).
-Beim ersten Start wird die lokale Datenbank mit Lebensmitteln und Artikeln
-(Typ 1 & Typ 2) befüllt. Das Tagebuch startet leer: Einträge gehören immer zu
+Ohne Konfiguration läuft die App komplett offline (Auth & Sync deaktiviert;
+der Ratgeber bleibt leer, siehe unten). Beim ersten Start wird die lokale
+Datenbank mit den Lebensmitteln befüllt. Das Tagebuch startet leer: Einträge gehören immer zu
 einem Konto, und jedes Konto sieht nur seine eigenen – auch wenn sich mehrere
 Konten auf demselben Gerät anmelden.
 
@@ -466,6 +466,19 @@ Supabase erlaubt jede E-Mail-Adresse nur **einmal**. Für Tests:
   User“** – oder einen eigenen SMTP-Dienst einrichten.
 - Damit der Bestätigungslink in der App landet, unter *Authentication → URL
   Configuration* die **Site URL** auf `http://localhost:8081` setzen (Web).
+
+#### Ratgeber-Artikel pflegen
+
+Die Artikel werden **zentral in Supabase** gepflegt (*Table Editor →
+articles*) und von der App live geladen – Änderungen erscheinen ohne
+App-Update. Sie werden nicht auf dem Gerät gespeichert: **offline zeigt der
+Ratgeber keine Artikel**, sondern einen Hinweis mit „Erneut versuchen“.
+
+- Felder: `category` (z. B. Sport, Ernährung), `title`, `body` (Absätze durch
+  Leerzeilen getrennt), `read_minutes`, `published_at` (Datum),
+  `diabetes_type` (`t1`, `t2` oder `both`). Ausblenden: `deleted_at` setzen.
+- Startbestand (11 Artikel mit Platzhaltertext): `data-sources/supabase-articles.sql`
+  einmal im SQL Editor ausführen.
 
 #### Passwort zurücksetzen
 
@@ -566,7 +579,7 @@ Dialy/
 │  ├─ components/               # UI-Bausteine (Screen, Button, Chart, …)
 │  ├─ navigation/               # Tabs + Stacks
 │  ├─ screens/                  # Ratgeber, KH-Rechner, Tagebuch, Sport, Login
-│  ├─ data/                     # Seed: Lebensmittel + Artikel
+│  ├─ data/                     # Lebensmittel (BLV, menuCH, kuratiert)
 │  └─ utils/                    # Format, IDs, Sport-Kurven-Heuristik
 └─ supabase/
    ├─ migrations/               # Schema + RLS (SQL)

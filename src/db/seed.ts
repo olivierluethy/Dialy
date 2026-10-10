@@ -1,18 +1,17 @@
 import { getDb } from '@/db/database';
 import { foodsRepo } from '@/db/repositories/foods';
 import { SEED_FOODS } from '@/data/seedFoods';
-import { SEED_ARTICLES } from '@/data/seedArticles';
 import BLV_FOODS from '@/data/blvFoods.json';
 import MENUCH from '@/data/menuchPortions.json';
 import { USUAL_PORTION_LABEL } from '@/data/foodCategories';
 import { nowIso } from '@/utils/id';
 
 /**
- * Idempotently seed read-mostly content (foods, articles). There is no
- * example diary content: diary entries always belong to an account.
+ * Idempotently seed the food database. Ratgeber articles are not seeded: they
+ * are read live from Supabase (services/articles.ts). There is no example
+ * diary content: diary entries always belong to an account.
  *
- * Foods/articles are upserted by their stable seed id, so re-running is safe
- * and mirrors how a real "sync down from the central DB" would behave.
+ * Foods are upserted by their stable seed id, so re-running is safe.
  */
 export async function seedDatabase(): Promise<void> {
   const db = await getDb();
@@ -43,31 +42,6 @@ export async function seedDatabase(): Promise<void> {
           f.fat_per_100g,
           f.glycemic_index,
           JSON.stringify(f.portions),
-        ]
-      );
-    }
-
-    for (const a of SEED_ARTICLES) {
-      await db.runAsync(
-        `INSERT INTO articles
-           (id, user_id, created_at, updated_at, deleted_at, category, title, body,
-            read_minutes, published_at, diabetes_type)
-         VALUES (?,?,?,?,NULL,?,?,?,?,?,?)
-         ON CONFLICT(id) DO UPDATE SET
-           category=excluded.category, title=excluded.title, body=excluded.body,
-           read_minutes=excluded.read_minutes, published_at=excluded.published_at,
-           diabetes_type=excluded.diabetes_type, updated_at=excluded.updated_at`,
-        [
-          a.id,
-          null,
-          ts,
-          ts,
-          a.category,
-          a.title,
-          a.body,
-          a.read_minutes,
-          a.published_at,
-          a.diabetes_type,
         ]
       );
     }

@@ -5,7 +5,8 @@ import { Screen } from '@/components/Screen';
 import { IconBubble } from '@/components/primitives';
 import { spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
-import { articlesRepo } from '@/db/repositories/articles';
+import { OfflineNotice } from '@/components/OfflineNotice';
+import { articlesErrorText, articlesService, type ArticlesError } from '@/services/articles';
 import { formatDate } from '@/utils/format';
 import type { Article } from '@/types/models';
 import type { RatgeberStackParamList } from '@/navigation/types';
@@ -19,19 +20,44 @@ export function ArticleDetailScreen({
   const styles = useThemedStyles(makeStyles);
   const { id } = route.params;
   const [article, setArticle] = useState<Article | null>(null);
+  const [error, setError] = useState<ArticlesError | null>(null);
   const [loading, setLoading] = useState(true);
+  const [reloadTick, setReloadTick] = useState(0);
 
   useEffect(() => {
-    articlesRepo.byId(id).then((a) => {
-      setArticle(a);
+    let active = true;
+    setLoading(true);
+    articlesService.byId(id).then((result) => {
+      if (!active) return;
+      if ('data' in result) {
+        setArticle(result.data);
+        setError(null);
+      } else {
+        setArticle(null);
+        setError(result.error);
+      }
       setLoading(false);
     });
-  }, [id]);
+    return () => {
+      active = false;
+    };
+  }, [id, reloadTick]);
 
   if (loading) {
     return (
       <Screen>
         <ActivityIndicator color={colors.accent} style={{ marginTop: spacing.xxl }} />
+      </Screen>
+    );
+  }
+
+  if (error && error !== 'unavailable') {
+    return (
+      <Screen>
+        <OfflineNotice
+          message={articlesErrorText(error)}
+          onRetry={error === 'offline' ? () => setReloadTick((t) => t + 1) : undefined}
+        />
       </Screen>
     );
   }

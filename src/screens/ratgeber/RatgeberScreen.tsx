@@ -10,7 +10,8 @@ import { FadeIn, staggerDelay } from '@/components/FadeIn';
 import { radius, spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import { useAppStore } from '@/state/store';
-import { articlesRepo } from '@/db/repositories/articles';
+import { OfflineNotice } from '@/components/OfflineNotice';
+import { articlesErrorText, articlesService, type ArticlesError } from '@/services/articles';
 import { formatDate } from '@/utils/format';
 import type { Article } from '@/types/models';
 import type { RatgeberStackParamList } from '@/navigation/types';
@@ -32,25 +33,33 @@ export function RatgeberScreen() {
   const styles = useThemedStyles(makeStyles);
   const type = useAppStore((s) => s.diabetesType);
   const [articles, setArticles] = useState<Article[]>([]);
+  const [error, setError] = useState<ArticlesError | null>(null);
   const [loading, setLoading] = useState(true);
+  const [reloadTick, setReloadTick] = useState(0);
   const navigation =
     useNavigation<NativeStackNavigationProp<RatgeberStackParamList>>();
 
-  // Reload whenever the screen refocuses or the diabetes type changes.
+  // Loaded live from Supabase whenever the screen refocuses or the diabetes
+  // type changes; offline there are simply no articles.
   useFocusEffect(
     useCallback(() => {
       let active = true;
       setLoading(true);
-      articlesRepo.forType(type).then((rows) => {
-        if (active) {
-          setArticles(rows);
-          setLoading(false);
+      articlesService.forType(type).then((result) => {
+        if (!active) return;
+        if ('data' in result) {
+          setArticles(result.data);
+          setError(null);
+        } else {
+          setArticles([]);
+          setError(result.error);
         }
+        setLoading(false);
       });
       return () => {
         active = false;
       };
-    }, [type])
+    }, [type, reloadTick])
   );
 
   return (
@@ -60,6 +69,13 @@ export function RatgeberScreen() {
 
       {loading ? (
         <ActivityIndicator color={colors.accent} style={{ marginTop: spacing.xl }} />
+      ) : error ? (
+        <OfflineNotice
+          message={articlesErrorText(error)}
+          onRetry={error === 'not-configured' ? undefined : () => setReloadTick((t) => t + 1)}
+        />
+      ) : articles.length === 0 ? (
+        <Text style={styles.empty}>Noch keine Artikel vorhanden.</Text>
       ) : (
         articles.map((a, i) => (
           <FadeIn key={a.id} delay={staggerDelay(i)}>
@@ -100,6 +116,7 @@ const makeStyles = (colors: Colors) =>
       marginBottom: spacing.md,
     },
     cardBody: { flex: 1, marginHorizontal: spacing.md },
+    empty: { color: colors.textTertiary, fontSize: 15, marginTop: spacing.lg },
     category: {
       fontSize: 11,
       fontWeight: '700',
