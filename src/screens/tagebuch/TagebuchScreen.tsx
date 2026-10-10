@@ -14,6 +14,7 @@ import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import { useAppStore } from '@/state/store';
 import { mealsRepo } from '@/db/repositories/meals';
 import { sportsRepo } from '@/db/repositories/sports';
+import type { EntryChanges } from '@/db/repositories/base';
 import { can, gateCopy } from '@/policy/gating';
 import {
   dayKey,
@@ -72,7 +73,7 @@ export function TagebuchScreen() {
   // Selection mode: tap marks entries, the bar changes date/time of all.
   const [selecting, setSelecting] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  // Entries whose date/time is being edited (one or several).
+  // Entries being edited: date/time of one or several, comment of one.
   const [editKeys, setEditKeys] = useState<string[] | null>(null);
 
   useFocusEffect(
@@ -127,13 +128,13 @@ export function TagebuchScreen() {
     setSelected((cur) => new Set(cur).add(itemKey(item)));
   };
 
-  const saveDateTime = async (loggedAt: string) => {
+  const saveEntry = async (changes: EntryChanges) => {
     if (!userId || !editKeys) return;
     const ids = (kind: FeedItem['kind']) =>
       editKeys.filter((k) => k.startsWith(`${kind}:`)).map((k) => k.slice(kind.length + 1));
     // One after the other: both use a DB transaction.
-    await mealsRepo.setLoggedAt(ids('meal'), userId, loggedAt);
-    await sportsRepo.setLoggedAt(ids('sport'), userId, loggedAt);
+    await mealsRepo.update(ids('meal'), userId, changes);
+    await sportsRepo.update(ids('sport'), userId, changes);
     setEditKeys(null);
     exitSelection();
     setReloadTick((t) => t + 1);
@@ -237,8 +238,9 @@ export function TagebuchScreen() {
         </>
       )}
 
-      <EditDateTimeDialog
+      <EditEntryDialog
         visible={editKeys !== null}
+        multiple={(editKeys?.length ?? 0) > 1}
         subtitle={
           editKeys && editKeys.length > 1
             ? `${editKeys.length} Einträge erhalten dasselbe Datum und dieselbe Uhrzeit.`
@@ -247,8 +249,9 @@ export function TagebuchScreen() {
               : ''
         }
         initialIso={firstEdited?.data.logged_at ?? new Date().toISOString()}
+        initialNote={firstEdited?.data.note ?? ''}
         onCancel={() => setEditKeys(null)}
-        onSave={saveDateTime}
+        onSave={saveEntry}
       />
     </Screen>
   );
@@ -285,7 +288,7 @@ function FeedRow({
       ]}
       accessibilityRole="button"
       accessibilityState={selecting ? { selected } : undefined}
-      accessibilityHint={selecting ? 'Markieren' : 'Datum und Uhrzeit ändern'}
+      accessibilityHint={selecting ? 'Markieren' : 'Eintrag bearbeiten'}
     >
       {selecting && (
         <Ionicons
@@ -304,28 +307,43 @@ function FeedRow({
         ) : (
           <Text style={styles.rowSub}>BZ-Verlauf gespeichert</Text>
         )}
+        {item.data.note ? (
+          <Text style={styles.rowNote} numberOfLines={3}>
+            {item.data.note}
+          </Text>
+        ) : null}
       </View>
     </Pressable>
   );
 }
 
-/** Popup to set date + time of one or several entries. */
-function EditDateTimeDialog({
+const NOTE_MAX = 500;
+
+/**
+ * Popup to edit an entry: date + time and a comment. With several entries
+ * selected only date + time (they all get the same); comments are per entry.
+ */
+function EditEntryDialog({
   visible,
+  multiple,
   subtitle,
   initialIso,
+  initialNote,
   onCancel,
   onSave,
 }: {
   visible: boolean;
+  multiple: boolean;
   subtitle: string;
   initialIso: string;
+  initialNote: string;
   onCancel: () => void;
-  onSave: (loggedAt: string) => Promise<void>;
+  onSave: (changes: EntryChanges) => Promise<void>;
 }) {
   const styles = useThemedStyles(makeStyles);
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
+  const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   // Prefill each time the dialog opens.
@@ -333,8 +351,9 @@ function EditDateTimeDialog({
     if (!visible) return;
     setDate(formatDateInput(initialIso));
     setTime(formatTime(initialIso));
+    setNote(initialNote);
     setError(null);
-  }, [visible, initialIso]);
+  }, [visible, initialIso, initialNote]);
 
   const shiftDays = (days: number) => {
     const d = new Date();
@@ -348,13 +367,18 @@ function EditDateTimeDialog({
       setError('Bitte Datum als TT.MM.JJJJ und Uhrzeit als HH:MM eingeben.');
       return;
     }
-    await onSave(loggedAt);
+    if (multiple) {
+      await onSave({ logged_at: loggedAt });
+    } else {
+      const trimmed = note.trim();
+      await onSave({ logged_at: loggedAt, note: trimmed ? trimmed : null });
+    }
   };
 
   return (
     <Dialog
       visible={visible}
-      title="Datum & Uhrzeit ändern"
+      title={multiple ? 'Datum & Uhrzeit ändern' : 'Eintrag bearbeiten'}
       message={subtitle}
       onClose={onCancel}
       actions={[
@@ -391,6 +415,18 @@ function EditDateTimeDialog({
         <SelectableChip label="Gestern" selected={false} onPress={() => shiftDays(1)} />
       </View>
       {error && <Text style={styles.editError}>{error}</Text>}
+      {!multiple && (
+        <TextField
+          label="Kommentar"
+          value={note}
+          onChangeText={setNote}
+          placeholder="z. B. vor dem Sport, Hypo danach …"
+          multiline
+          maxLength={NOTE_MAX}
+          style={styles.noteInput}
+          containerStyle={styles.noteField}
+        />
+      )}
     </Dialog>
   );
 }
@@ -503,6 +539,7 @@ const makeStyles = (colors: Colors) =>
     rowTitle: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
     rowMeta: { fontSize: 14, color: colors.textSecondary, marginTop: 2 },
     rowSub: { fontSize: 13, color: colors.textTertiary, marginTop: 2 },
+    rowNote: { fontSize: 13, color: colors.textSecondary, fontStyle: 'italic', marginTop: 4 },
     summaryRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
     chip: {
       flex: 1,
@@ -520,4 +557,6 @@ const makeStyles = (colors: Colors) =>
     timeField: { flex: 2, marginBottom: 0 },
     quickRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
     editError: { color: colors.danger, fontSize: 14, marginTop: spacing.md },
+    noteField: { marginTop: spacing.lg, marginBottom: 0 },
+    noteInput: { minHeight: 80, paddingTop: spacing.md, textAlignVertical: 'top' },
   });

@@ -11,6 +11,7 @@
  *   2 — glycemic_index nullable in foods + meal_entries (the Swiss Food
  *       Composition Database has no GI values)
  *   3 — foods.categories (top-level categories, ";"-separated)
+ *   4 — note (free-text comment) on meal_entries + sport_entries
  */
 
 /** Minimal DB surface needed to migrate; both implementations provide it. */
@@ -19,7 +20,7 @@ export interface MigratableDb {
   getFirstAsync<T>(sql: string): Promise<T | null>;
 }
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 const FOODS_TABLE = `
 CREATE TABLE IF NOT EXISTS foods (
@@ -164,6 +165,20 @@ ${FOODS_TABLE}
 DELETE FROM app_meta WHERE key = 'blv_foods';
 `;
 
+/**
+ * v3 -> v4: comment per diary entry. The CREATE TABLE statements above stay
+ * without the column (MIGRATE_TO_2 rebuilds meal_entries from them), so it's
+ * added here - only where missing, as ADD COLUMN can't be repeated.
+ */
+async function migrateTo4(db: MigratableDb): Promise<void> {
+  for (const table of ['meal_entries', 'sport_entries']) {
+    const has = await db.getFirstAsync<{ n: number }>(
+      `SELECT COUNT(*) AS n FROM pragma_table_info('${table}') WHERE name = 'note'`
+    );
+    if (!has?.n) await db.execAsync(`ALTER TABLE ${table} ADD COLUMN note TEXT;`);
+  }
+}
+
 async function inTransaction(db: MigratableDb, sql: string): Promise<void> {
   await db.execAsync('BEGIN;');
   try {
@@ -183,6 +198,7 @@ export async function migrate(db: MigratableDb): Promise<void> {
   // user_version was tracked (0) — rebuilding is harmless there.
   if (current < 2) await inTransaction(db, MIGRATE_TO_2);
   if (current < 3) await inTransaction(db, MIGRATE_TO_3);
+  if (current < 4) await migrateTo4(db);
   if (current < SCHEMA_VERSION) {
     await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION};`);
   }

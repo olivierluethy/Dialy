@@ -1,5 +1,5 @@
 import { getDb } from '@/db/database';
-import { enqueueSync, setLoggedAt } from '@/db/repositories/base';
+import { enqueueSync, updateEntries, type EntryChanges } from '@/db/repositories/base';
 import { nowIso, uuidv4 } from '@/utils/id';
 import type { MealEntry } from '@/types/models';
 
@@ -36,6 +36,7 @@ export const mealsRepo = {
       be: input.be,
       photo_uri: input.photo_uri,
       logged_at: input.logged_at ?? ts,
+      note: null,
     };
     await db.runAsync(
       `INSERT INTO meal_entries
@@ -64,9 +65,9 @@ export const mealsRepo = {
     return entry;
   },
 
-  /** Moves entries (of `userId`) to a new date/time. */
-  setLoggedAt(ids: string[], userId: string, loggedAt: string): Promise<void> {
-    return setLoggedAt('meal_entries', ids, userId, loggedAt);
+  /** Changes date/time and/or comment of entries (of `userId`). */
+  update(ids: string[], userId: string, changes: EntryChanges): Promise<void> {
+    return updateEntries('meal_entries', ids, userId, changes);
   },
 
   /** Entries of one account only — a device can hold several accounts. */

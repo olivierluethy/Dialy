@@ -48,6 +48,7 @@ export interface MealEntry extends SyncMeta {
   be: number;
   photo_uri: string | null;
   logged_at: string;
+  note: string | null; // user's comment (Tagebuch)
 }
 
 export type Activity = 'wandern' | 'laufen' | 'rad' | 'schwimmen' | 'kraft';
@@ -69,6 +70,7 @@ export interface SportEntry extends SyncMeta {
   pump_reduction_min: number | null;
   bg_curve: BgCurvePoint[];
   logged_at: string;
+  note: string | null; // user's comment (Tagebuch)
 }
 
 export interface BgReading extends SyncMeta {

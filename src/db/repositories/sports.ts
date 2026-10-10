@@ -1,5 +1,5 @@
 import { getDb } from '@/db/database';
-import { enqueueSync, setLoggedAt } from '@/db/repositories/base';
+import { enqueueSync, updateEntries, type EntryChanges } from '@/db/repositories/base';
 import { nowIso, uuidv4 } from '@/utils/id';
 import type { BgCurvePoint, SportEntry } from '@/types/models';
 
@@ -51,6 +51,7 @@ export const sportsRepo = {
       pump_reduction_min: input.pump_reduction_min,
       bg_curve: input.bg_curve,
       logged_at: input.logged_at ?? ts,
+      note: null,
     };
     await db.runAsync(
       `INSERT INTO sport_entries
@@ -81,9 +82,9 @@ export const sportsRepo = {
     return entry;
   },
 
-  /** Moves entries (of `userId`) to a new date/time. */
-  setLoggedAt(ids: string[], userId: string, loggedAt: string): Promise<void> {
-    return setLoggedAt('sport_entries', ids, userId, loggedAt);
+  /** Changes date/time and/or comment of entries (of `userId`). */
+  update(ids: string[], userId: string, changes: EntryChanges): Promise<void> {
+    return updateEntries('sport_entries', ids, userId, changes);
   },
 
   /** Entries of one account only — a device can hold several accounts. */

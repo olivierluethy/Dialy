@@ -34,24 +34,35 @@ export async function softDelete(
   await enqueueSync(db, tableName, rowId);
 }
 
+/** What the Tagebuch edit popup can change on a diary entry. */
+export interface EntryChanges {
+  logged_at?: string;
+  note?: string | null;
+}
+
 /**
- * Moves diary entries to another point in time (date/time edit). Only rows of
- * `userId` are touched; each changed row is queued for sync.
+ * Edits diary entries: date/time and/or comment. Only rows of `userId` are
+ * touched; each changed row is queued for sync.
  */
-export async function setLoggedAt(
+export async function updateEntries(
   tableName: string,
   rowIds: string[],
   userId: string,
-  loggedAt: string
+  changes: EntryChanges
 ): Promise<void> {
-  if (rowIds.length === 0) return;
+  const fields = (Object.keys(changes) as Array<keyof EntryChanges>).filter(
+    (k) => changes[k] !== undefined
+  );
+  if (rowIds.length === 0 || fields.length === 0) return;
   const db = await getDb();
   const ts = nowIso();
+  const set = fields.map((f) => `${f} = ?`).join(', ');
+  const values = fields.map((f) => changes[f] ?? null);
   await db.withTransactionAsync(async () => {
     for (const id of rowIds) {
       const result = await db.runAsync(
-        `UPDATE ${tableName} SET logged_at = ?, updated_at = ? WHERE id = ? AND user_id = ?`,
-        [loggedAt, ts, id, userId]
+        `UPDATE ${tableName} SET ${set}, updated_at = ? WHERE id = ? AND user_id = ?`,
+        [...values, ts, id, userId]
       );
       if (result.changes > 0) await enqueueSync(db, tableName, id);
     }
