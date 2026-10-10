@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ratgeber-Editor</title>
+<!--
+  Dialy Ratgeber-Editor: create, edit and remove the articles in Supabase
+  (table public.articles). Start with `npm run editor`; editing needs an
+  account in public.article_editors (supabase/migrations/0006_article_editors.sql).
+-->
+<style>
+  :root {
+    --bg: #F6F8F7; --surface: #FFFFFF; --surface-alt: #EEF3F0; --input: #F0F4F2;
+    --accent: #3A8562; --accent-pressed: #327354; --accent-subtle: #E1F0E8; --on-accent: #FFFFFF;
+    --text: #1C2622; --text-2: #55635C; --text-3: #6F7D76;
+    --danger: #B65A4B; --warn: #A8653A; --border: #DCE4DF; --shadow: rgba(30, 50, 40, 0.08);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #131A17; --surface: #1A221F; --surface-alt: #222B27; --input: #1F2824;
+      --accent: #8FD3B0; --accent-pressed: #7CC3A0; --accent-subtle: #1E2F28; --on-accent: #13201A;
+      --text: #EEF2EF; --text-2: #A9B6AF; --text-3: #7A877F;
+      --danger: #F0998A; --warn: #F2B48C; --border: #2C3631; --shadow: rgba(0, 0, 0, 0.30);
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Roboto, sans-serif;
+  }
+  [hidden] { display: none !important; }
+  h1, h2 { margin: 0; letter-spacing: -0.01em; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  input, select, textarea {
+    width: 100%; padding: 9px 11px; border: 1px solid var(--border); border-radius: 10px;
+    background: var(--input); outline: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 320px; line-height: 1.55; }
+  label { display: block; font-size: 13px; font-weight: 600; color: var(--text-2); margin-bottom: 5px; }
+  .btn {
+    border: 0; border-radius: 10px; padding: 9px 16px; cursor: pointer; font-weight: 600;
+    background: var(--surface-alt); color: var(--text);
+  }
+  .btn:hover { filter: brightness(0.97); }
+  .btn:disabled { opacity: 0.5; cursor: default; }
+  .btn.primary { background: var(--accent); color: var(--on-accent); }
+  .btn.primary:hover { background: var(--accent-pressed); }
+  .btn.danger { background: transparent; color: var(--danger); border: 1px solid var(--border); }
+  .btn.link { background: none; padding: 0; color: var(--accent); font-weight: 600; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    box-shadow: 0 2px 10px var(--shadow);
+  }
+  .muted { color: var(--text-3); font-size: 13px; }
+  .error { color: var(--danger); font-size: 14px; }
+  code, pre { font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
+  pre { background: var(--input); padding: 10px 12px; border-radius: 10px; white-space: pre-wrap; word-break: break-all; }
+
+  /* Sign-in / notices */
+  .center { min-height: 100vh; display: grid; place-items: center; padding: 16px; }
+  .center .card { width: 100%; max-width: 420px; padding: 28px; }
+  .center h1 { font-size: 24px; margin-bottom: 4px; }
+  .stack > * + * { margin-top: 14px; }
+
+  /* Editor layout */
+  header {
+    display: flex; align-items: center; gap: 12px; padding: 12px 20px;
+    background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 2;
+  }
+  header h1 { font-size: 17px; flex: 1; }
+  header h1 span { color: var(--text-3); font-weight: 500; }
+  .layout { display: grid; grid-template-columns: 320px 1fr; gap: 20px; padding: 20px; max-width: 1500px; margin: 0 auto; }
+  aside { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .filters { display: flex; gap: 8px; }
+  .filters select { width: auto; }
+  .check { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-2); font-weight: 500; margin: 0; }
+  .check input { width: auto; }
+  #list { list-style: none; margin: 0; padding: 6px; overflow-y: auto; max-height: calc(100vh - 250px); }
+  #list li {
+    padding: 10px 12px; border-radius: 10px; cursor: pointer; border: 1px solid transparent;
+  }
+  #list li:hover { background: var(--surface-alt); }
+  #list li.active { background: var(--accent-subtle); border-color: var(--accent); }
+  #list li.deleted .t { text-decoration: line-through; color: var(--text-3); }
+  #list .t { font-weight: 600; font-size: 14px; }
+  #list .m { font-size: 12px; color: var(--text-3); }
+  .badge {
+    display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px;
+    background: var(--surface-alt); color: var(--text-2); margin-right: 4px;
+  }
+  .badge.del { color: var(--danger); }
+
+  main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); gap: 20px; align-items: start; }
+  #form { padding: 22px; }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .grid .full { grid-column: 1 / -1; }
+  .row { display: flex; gap: 8px; align-items: center; }
+  .actions { display: flex; gap: 10px; align-items: center; margin-top: 18px; flex-wrap: wrap; }
+  .actions .spacer { flex: 1; }
+  #status { font-size: 13px; color: var(--text-3); }
+  #status.ok { color: var(--accent); }
+  #status.err { color: var(--danger); }
+
+  /* Preview: mirrors the app's article screen */
+  .preview { padding: 24px; position: sticky; top: 76px; max-height: calc(100vh - 96px); overflow-y: auto; }
+  .preview .label { font-size: 12px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px; }
+  .p-cat { font-size: 12px; font-weight: 700; color: var(--accent); letter-spacing: 0.08em; }
+  .p-title { font-size: 24px; font-weight: 700; margin: 4px 0 6px; line-height: 1.25; }
+  .p-meta { font-size: 13px; color: var(--text-3); margin-bottom: 16px; }
+  .p-body p { margin: 0; color: var(--text-2); font-size: 16px; line-height: 24px; min-height: 12px; }
+
+  @media (max-width: 1100px) { main { grid-template-columns: 1fr; } .preview { position: static; max-height: none; } }
+  @media (max-width: 760px) {
+    .layout { grid-template-columns: 1fr; padding: 16px; }
+    #list { max-height: 260px; }
+    .grid { grid-template-columns: 1fr; }
+    header { padding: 12px 16px; }
+    #user-email { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Supabase connection (only when the start script couldn't provide it) -->
+<section id="view-config" class="center" hidden>
+  <form class="card stack" id="config-form">
+    <div><h1>Ratgeber-Editor</h1><div class="muted">Verbindung zum Dialy-Server</div></div>
+    <div><label for="cfg-url">Supabase Project URL</label><input id="cfg-url" required placeholder="https://….supabase.co"></div>
+    <div><label for="cfg-key">Publishable Key</label><input id="cfg-key" required placeholder="sb_publishable_…"></div>
+    <button class="btn primary" type="submit">Weiter</button>
+  </form>
+</section>
+
+<section id="view-login" class="center" hidden>
+  <form class="card stack" id="login-form">
+    <div><h1>Ratgeber-Editor</h1><div class="muted">Mit deinem Dialy-Konto anmelden</div></div>
+    <div><label for="email">E-Mail</label><input id="email" type="email" autocomplete="username" required></div>
+    <div><label for="password">Passwort</label><input id="password" type="password" autocomplete="current-password" required></div>
+    <div id="login-error" class="error" hidden></div>
+    <button class="btn primary" type="submit" id="login-btn">Anmelden</button>
+  </form>
+</section>
+
+<section id="view-denied" class="center" hidden>
+  <div class="card stack">
+    <h1>Keine Berechtigung</h1>
+    <div id="denied-text"></div>
+    <button class="btn" id="denied-logout">Abmelden</button>
+  </div>
+</section>
+
+<section id="view-editor" hidden>
+  <header>
+    <h1>Dialy <span>· Ratgeber-Editor</span></h1>
+    <span class="muted" id="user-email"></span>
+    <button class="btn" id="logout">Abmelden</button>
+  </header>
+  <div class="layout">
+    <aside>
+      <button class="btn primary" id="new">+ Neuer Beitrag</button>
+      <input id="search" type="search" placeholder="Suchen …">
+      <div class="filters">
+        <select id="filter-type" aria-label="Zielgruppe">
+          <option value="">Alle</option>
+          <option value="t1">Typ 1</option>
+          <option value="t2">Typ 2</option>
+          <option value="both">Beide</option>
+        </select>
+        <label class="check"><input type="checkbox" id="show-deleted"> Gelöschte</label>
+      </div>
+      <ul id="list" class="card"></ul>
+      <div class="muted" id="count"></div>
+    </aside>
+
+    <main>
+      <form id="form" class="card" novalidate>
+        <div class="grid">
+          <div class="full"><label for="f-title">Titel</label><input id="f-title" required maxlength="200"></div>
+          <div>
+            <label for="f-category">Kategorie</label>
+            <input id="f-category" list="categories" required maxlength="40">
+            <datalist id="categories"></datalist>
+          </div>
+          <div>
+            <label for="f-type">Zielgruppe</label>
+            <select id="f-type">
+              <option value="both">Beide (Typ 1 und Typ 2)</option>
+              <option value="t1">Typ 1</option>
+              <option value="t2">Typ 2</option>
+            </select>
+          </div>
+          <div><label for="f-date">Veröffentlicht am</label><input id="f-date" type="date" required></div>
+          <div>
+            <label for="f-minutes">Lesezeit (Minuten)</label>
+            <div class="row">
+              <input id="f-minutes" type="number" min="1" max="120" required>
+              <label class="check" title="Aus der Wortzahl berechnen (200 Wörter pro Minute)"><input type="checkbox" id="f-auto"> automatisch</label>
+            </div>
+          </div>
+          <div class="full">
+            <label for="f-body">Text</label>
+            <textarea id="f-body" required placeholder="Absätze mit einer Leerzeile trennen."></textarea>
+            <div class="muted" id="words"></div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn primary" type="submit" id="save">Speichern</button>
+          <button class="btn" type="button" id="revert">Verwerfen</button>
+          <span id="status"></span>
+          <span class="spacer"></span>
+          <button class="btn danger" type="button" id="delete">Löschen</button>
+          <button class="btn" type="button" id="restore" hidden>Wiederherstellen</button>
+        </div>
+      </form>
+
+      <div class="card preview" aria-label="Vorschau">
+        <div class="label">Vorschau in der App</div>
+        <div class="p-cat" id="p-cat"></div>
+        <div class="p-title" id="p-title"></div>
+        <div class="p-meta" id="p-meta"></div>
+        <div class="p-body" id="p-body"></div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<script>window.DIALY_CONFIG = /*CONFIG*/null;</script>
+<script src="supabase.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  // Categories the app has an icon for (src/screens/ratgeber/RatgeberScreen.tsx).
+  const KNOWN_CATEGORIES = ['Alltag', 'Ernährung', 'Insulin', 'Medikamente', 'Nacht', 'Sicherheit', 'Sport', 'Technologie'];
+  const TYPE_LABEL = { t1: 'Typ 1', t2: 'Typ 2', both: 'Beide' };
+  const WORDS_PER_MINUTE = 200;
+  const CONFIG_KEY = 'dialy-editor-config';
+
+  const $ = (id) => document.getElementById(id);
+  const views = ['config', 'login', 'denied', 'editor'];
+  const show = (name) => views.forEach((v) => { $('view-' + v).hidden = v !== name; });
+
+  let sb = null;
+  let articles = [];
+  let current = null; // article being edited; null = new
+  let dirty = false;
+
+  // ---------------------------------------------------------------- storage
+  const store = {
+    get(key) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } },
+    set(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* private mode */ } },
+  };
+
+  // ---------------------------------------------------------------- helpers
+  const today = () => new Date().toISOString().slice(0, 10);
+  const wordCount = (text) => (text.trim().match(/\S+/g) || []).length;
+  const minutesFor = (text) => Math.max(1, Math.round(wordCount(text) / WORDS_PER_MINUTE));
+  const formatDate = (iso) => {
+    if (!iso) return '';
+    const [y, m, d] = iso.slice(0, 10).split('-');
+    return `${d}.${m}.${y}`;
+  };
+  const fold = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+  function errorText(error) {
+    const msg = (error && (error.message || String(error))) || '';
+    if (/fetch|network/i.test(msg)) return 'Keine Verbindung zum Server.';
+    if (/row-level security|permission denied/i.test(msg)) return 'Keine Berechtigung zum Speichern.';
+    if (/invalid login credentials/i.test(msg)) return 'E-Mail oder Passwort ist falsch.';
+    if (/email not confirmed/i.test(msg)) return 'Die E-Mail-Adresse ist noch nicht bestätigt.';
+    return msg || 'Unbekannter Fehler.';
+  }
+
+  function setStatus(text, kind) {
+    $('status').textContent = text;
+    $('status').className = kind || '';
+  }
+
+  // ---------------------------------------------------------------- startup
+  function start() {
+    const config = (window.DIALY_CONFIG && window.DIALY_CONFIG.url && window.DIALY_CONFIG.key)
+      ? window.DIALY_CONFIG
+      : store.get(CONFIG_KEY);
+    if (!config || !config.url || !config.key) {
+      show('config');
+      return;
+    }
+    if (!window.supabase) {
+      document.body.textContent = 'supabase.js konnte nicht geladen werden. Editor mit "npm run editor" starten.';
+      return;
+    }
+    sb = window.supabase.createClient(config.url, config.key, {
+      auth: { persistSession: true, storageKey: 'dialy-editor-auth', detectSessionInUrl: false },
+    });
+    sb.auth.getSession().then(({ data }) => {
+      if (data.session) enter(data.session.user);
+      else show('login');
+    });
+  }
+
+  $('config-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    store.set(CONFIG_KEY, { url: $('cfg-url').value.trim().replace(/\/+$/, ''), key: $('cfg-key').value.trim() });
+    start();
+  });
+
+  $('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    $('login-error').hidden = true;
+    $('login-btn').disabled = true;
+    const { data, error } = await sb.auth.signInWithPassword({
+      email: $('email').value.trim(),
+      password: $('password').value,
+    });
+    $('login-btn').disabled = false;
+    if (error) {
+      $('login-error').textContent = errorText(error);
+      $('login-error').hidden = false;
+      return;
+    }
+    $('password').value = '';
+    enter(data.user);
+  });
+
+  async function logout() {
+    if (dirty && !confirm('Ungespeicherte Änderungen verwerfen?')) return;
+    dirty = false;
+    await sb.auth.signOut();
+    show('login');
+  }
+  $('logout').addEventListener('click', logout);
+  $('denied-logout').addEventListener('click', logout);
+
+  // Only accounts in public.article_editors may edit.
+  async function enter(user) {
+    const { data, error } = await sb.from('article_editors').select('user_id').eq('user_id', user.id).maybeSingle();
+    if (error || !data) {
+      const denied = $('denied-text');
+      denied.textContent = '';
+      const p = document.createElement('p');
+      const pre = document.createElement('pre');
+      if (error && /article_editors|schema cache|does not exist/i.test(error.message)) {
+        p.textContent = 'Die Editor-Berechtigungen sind in Supabase noch nicht eingerichtet. Führe im SQL Editor supabase/migrations/0006_article_editors.sql aus.';
+      } else if (error) {
+        p.textContent = errorText(error);
+      } else {
+        p.textContent = `Das Konto ${user.email} ist nicht als Editor freigeschaltet. Freischalten im Supabase SQL Editor:`;
+        pre.textContent = `insert into public.article_editors (user_id)\nselect id from auth.users where email = '${user.email}';`;
+      }
+      denied.append(p);
+      if (pre.textContent) denied.append(pre);
+      show('denied');
+      return;
+    }
+    $('user-email').textContent = user.email;
+    show('editor');
+    await loadArticles();
+    if (!current) newArticle();
+  }
+
+  // ---------------------------------------------------------------- list
+  async function loadArticles() {
+    const { data, error } = await sb.from('articles').select('*')
+      .order('published_at', { ascending: false })
+      .order('created_at', { ascending: false });
+    if (error) {
+      setStatus('Beiträge konnten nicht geladen werden: ' + errorText(error), 'err');
+      return;
+    }
+    articles = data;
+    const categories = new Set([...KNOWN_CATEGORIES, ...articles.map((a) => a.category)]);
+    $('categories').replaceChildren(...[...categories].sort((a, b) => a.localeCompare(b, 'de')).map((c) => {
+      const o = document.createElement('option');
+      o.value = c;
+      return o;
+    }));
+    renderList();
+  }
+
+  function renderList() {
+    const q = fold($('search').value.trim());
+    const type = $('filter-type').value;
+    const showDeleted = $('show-deleted').checked;
+    const visible = articles.filter((a) =>
+      (showDeleted || !a.deleted_at) &&
+      (!type || a.diabetes_type === type) &&
+      (!q || fold(`${a.title} ${a.category} ${a.body}`).includes(q)));
+
+    $('list').replaceChildren(...visible.map((a) => {
+      const li = document.createElement('li');
+      li.className = (current && current.id === a.id ? 'active ' : '') + (a.deleted_at ? 'deleted' : '');
+      const t = document.createElement('div');
+      t.className = 't';
+      t.textContent = a.title;
+      const m = document.createElement('div');
+      m.className = 'm';
+      const badge = (text, cls) => {
+        const b = document.createElement('span');
+        b.className = 'badge' + (cls ? ' ' + cls : '');
+        b.textContent = text;
+        return b;
+      };
+      if (a.deleted_at) m.append(badge('gelöscht', 'del'));
+      m.append(badge(TYPE_LABEL[a.diabetes_type] || a.diabetes_type), `${a.category} · ${formatDate(a.published_at)}`);
+      li.append(t, m);
+      li.addEventListener('click', () => select(a));
+      return li;
+    }));
+    const active = articles.filter((a) => !a.deleted_at).length;
+    $('count').textContent = `${active} veröffentlicht` +
+      (articles.length > active ? ` · ${articles.length - active} gelöscht` : '');
+  }
+
+  ['search', 'filter-type', 'show-deleted'].forEach((id) => $(id).addEventListener('input', renderList));
+
+  // ---------------------------------------------------------------- form
+  const field = {
+    title: $('f-title'), category: $('f-category'), type: $('f-type'),
+    date: $('f-date'), minutes: $('f-minutes'), auto: $('f-auto'), body: $('f-body'),
+  };
+
+  function fill(a) {
+    field.title.value = a ? a.title : '';
+    field.category.value = a ? a.category : '';
+    field.type.value = a ? a.diabetes_type : 'both';
+    field.date.value = a ? a.published_at.slice(0, 10) : today();
+    field.body.value = a ? a.body : '';
+    field.minutes.value = a ? a.read_minutes : 1;
+    // New articles and ones whose time matches the estimate keep it automatic.
+    field.auto.checked = !a || a.read_minutes === minutesFor(a.body);
+    field.minutes.disabled = field.auto.checked;
+    $('delete').hidden = !a || !!a.deleted_at;
+    $('restore').hidden = !a || !a.deleted_at;
+    dirty = false;
+    setStatus(a ? `Zuletzt geändert: ${new Date(a.updated_at).toLocaleString('de-CH')}` : 'Neuer Beitrag');
+    updatePreview();
+    renderList();
+  }
+
+  function confirmDiscard() {
+    return !dirty || confirm('Ungespeicherte Änderungen verwerfen?');
+  }
+
+  function select(a) {
+    if (current && a.id === current.id) return;
+    if (!confirmDiscard()) return;
+    current = a;
+    fill(a);
+  }
+
+  function newArticle() {
+    if (!confirmDiscard()) return;
+    current = null;
+    fill(null);
+    field.title.focus();
+  }
+  $('new').addEventListener('click', newArticle);
+  $('revert').addEventListener('click', () => { if (confirmDiscard()) fill(current); });
+
+  function updatePreview() {
+    if (field.auto.checked) field.minutes.value = minutesFor(field.body.value);
+    $('p-cat').textContent = (field.category.value || 'Kategorie').toUpperCase();
+    $('p-title').textContent = field.title.value || 'Titel';
+    $('p-meta').textContent = `${field.minutes.value || '?'} min · ${formatDate(field.date.value)}`;
+    $('p-body').replaceChildren(...field.body.value.split('\n').map((line) => {
+      const p = document.createElement('p');
+      p.textContent = line;
+      return p;
+    }));
+    const words = wordCount(field.body.value);
+    $('words').textContent = `${words} ${words === 1 ? 'Wort' : 'Wörter'}`;
+  }
+
+  $('form').addEventListener('input', () => {
+    dirty = true;
+    field.minutes.disabled = field.auto.checked;
+    setStatus('Ungespeicherte Änderungen');
+    updatePreview();
+  });
+
+  $('form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const row = {
+      title: field.title.value.trim(),
+      category: field.category.value.trim(),
+      diabetes_type: field.type.value,
+      published_at: field.date.value,
+      read_minutes: Number(field.minutes.value),
+      body: field.body.value.replace(/\s+$/, ''),
+    };
+    const missing = [
+      !row.title && 'Titel', !row.category && 'Kategorie', !row.published_at && 'Datum',
+      !(row.read_minutes >= 1) && 'Lesezeit', !row.body && 'Text',
+    ].filter(Boolean);
+    if (missing.length) {
+      setStatus('Bitte ausfüllen: ' + missing.join(', '), 'err');
+      return;
+    }
+
+    $('save').disabled = true;
+    setStatus('Speichern …');
+    const request = current
+      ? sb.from('articles').update(row).eq('id', current.id).select().single()
+      : sb.from('articles').insert(row).select().single();
+    const { data, error } = await request;
+    $('save').disabled = false;
+    if (error) {
+      setStatus(errorText(error), 'err');
+      return;
+    }
+    current = data;
+    await loadArticles();
+    fill(data);
+    setStatus('Gespeichert ✓', 'ok');
+  });
+
+  async function setDeleted(deleted) {
+    if (!current) return;
+    if (deleted && !confirm(`«${current.title}» löschen? Der Beitrag verschwindet aus der App und kann unter «Gelöschte» wiederhergestellt werden.`)) return;
+    const { data, error } = await sb.from('articles')
+      .update({ deleted_at: deleted ? new Date().toISOString() : null })
+      .eq('id', current.id).select().single();
+    if (error) {
+      setStatus(errorText(error), 'err');
+      return;
+    }
+    if (deleted) $('show-deleted').checked = true;
+    current = data;
+    await loadArticles();
+    fill(data);
+    setStatus(deleted ? 'Gelöscht' : 'Wiederhergestellt ✓', deleted ? '' : 'ok');
+  }
+  $('delete').addEventListener('click', () => setDeleted(true));
+  $('restore').addEventListener('click', () => setDeleted(false));
+
+  window.addEventListener('beforeunload', (e) => {
+    if (dirty) { e.preventDefault(); e.returnValue = ''; }
+  });
+
+  start();
+})();
+</script>
+</body>
+</html>

@@ -504,6 +504,20 @@ Ratgeber keine Artikel**, sondern einen Hinweis mit „Erneut versuchen“.
 - Startbestand (11 Artikel mit Platzhaltertext): `data-sources/supabase-articles.sql`
   einmal im SQL Editor ausführen.
 
+**Ratgeber-Editor** (einfacher als der Table Editor): `npm run editor` startet
+ihn auf <http://localhost:8095> (`tools/article-editor/`), mit Supabase-URL
+und Publishable Key aus `.env`. Anmelden mit einem Dialy-Konto; Beiträge
+anlegen, bearbeiten, löschen und wiederherstellen, mit Vorschau wie in der
+App. Schreiben dürfen nur freigeschaltete Konten:
+
+1. Einmalig `supabase/migrations/0006_article_editors.sql` im SQL Editor
+   ausführen.
+2. Konto freischalten:
+   ```sql
+   insert into public.article_editors (user_id)
+   select id from auth.users where email = '<deine E-Mail>';
+   ```
+
 #### Passwort zurücksetzen
 
 „Passwort vergessen?“ auf der Anmeldeseite schickt einen Link per E-Mail; der
@@ -620,6 +634,7 @@ npm run android      # start + open Android
 npm run ios          # start + open iOS (macOS only)
 npm run web          # start + open in the browser
 npm run typecheck    # TypeScript type check (tsc --noEmit)
+npm run editor       # Ratgeber-Editor on http://localhost:8095
 
 # Local backend (Supabase in Docker) — see section 3C
 npm run backend:start   # boot local Supabase + auto-write .env
