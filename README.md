@@ -450,7 +450,7 @@ cp .env.example .env
 | `EXPO_PUBLIC_SUPABASE_URL` | Supabase Projekt-URL (Settings → API) |
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Supabase **anon**-Key (öffentlich, client-sicher) |
 | `EXPO_PUBLIC_SENTRY_DSN` | Sentry DSN (leer = No-op) |
-| `EXPO_PUBLIC_CONTACT_EMAIL` | Empfänger des Kontaktformulars (Lebensmittel vorschlagen / Fehler melden); leer = Platzhalter `kontakt@dialy.example` |
+| `EXPO_PUBLIC_CONTACT_EMAIL` | Ausweich-Adresse, die das Kontaktformular nennt, wenn eine Nachricht nicht gesendet werden kann (offline); leer = Platzhalter `kontakt@dialy.example` |
 | `EXPO_PUBLIC_FEATURE_FCM` | `true` aktiviert FCM-Sync-Trigger (sonst Sync-on-Foreground) |
 | `EXPO_PUBLIC_FEATURE_HEALTH` | `true` aktiviert die Health-Import-Schnittstelle |
 
@@ -504,11 +504,12 @@ Ratgeber keine Artikel**, sondern einen Hinweis mit „Erneut versuchen“.
 - Startbestand (11 Artikel mit Platzhaltertext): `data-sources/supabase-articles.sql`
   einmal im SQL Editor ausführen.
 
-**Ratgeber-Editor** (einfacher als der Table Editor): `npm run editor` startet
+**Dialy-Editor** (einfacher als der Table Editor): `npm run editor` startet
 ihn auf <http://localhost:8095> (`tools/article-editor/`), mit Supabase-URL
-und Publishable Key aus `.env`. Anmelden mit einem Dialy-Konto; Beiträge
-anlegen, bearbeiten, löschen und wiederherstellen, mit Vorschau wie in der
-App. Schreiben dürfen nur freigeschaltete Konten:
+und Publishable Key aus `.env`. Anmelden mit einem Dialy-Konto. Tab
+*Artikel*: Beiträge anlegen, bearbeiten, löschen und wiederherstellen, mit
+Vorschau wie in der App. Tab *Nachrichten*: siehe Kontaktformular unten.
+Nur freigeschaltete Konten haben Zugriff:
 
 1. Einmalig `supabase/migrations/0006_article_editors.sql` im SQL Editor
    ausführen.
@@ -517,6 +518,19 @@ App. Schreiben dürfen nur freigeschaltete Konten:
    insert into public.article_editors (user_id)
    select id from auth.users where email = '<deine E-Mail>';
    ```
+
+#### Kontaktformular
+
+Nachrichten aus *Kontakt* (neues Lebensmittel / Fehler melden) landen in der
+Tabelle `contact_messages` – ohne Mail-App. Einmalig
+`supabase/migrations/0007_contact_messages.sql` im SQL Editor ausführen.
+Senden darf jeder (auch ohne Konto); die App selbst kann nichts zurücklesen.
+
+Lesen im **Dialy-Editor**, Tab *Nachrichten* (`npm run editor`, siehe oben):
+offene / erledigte Nachrichten, Absender-E-Mail mit «Per E-Mail antworten»,
+«Als erledigt markieren». Dafür einmalig zusätzlich
+`supabase/migrations/0008_contact_messages_editors.sql` ausführen; Zugriff
+haben dieselben freigeschalteten Konten wie für die Artikel.
 
 #### Passwort zurücksetzen
 
@@ -634,7 +648,7 @@ npm run android      # start + open Android
 npm run ios          # start + open iOS (macOS only)
 npm run web          # start + open in the browser
 npm run typecheck    # TypeScript type check (tsc --noEmit)
-npm run editor       # Ratgeber-Editor on http://localhost:8095
+npm run editor       # Dialy-Editor (articles, contact messages) on http://localhost:8095
 
 # Local backend (Supabase in Docker) — see section 3C
 npm run backend:start   # boot local Supabase + auto-write .env

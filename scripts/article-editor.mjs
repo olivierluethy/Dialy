@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Serves the Ratgeber article editor (tools/article-editor/index.html) on
- * http://localhost:8095, with the Supabase URL and publishable key from .env.
+ * Serves the Dialy editor - Ratgeber articles and Kontakt messages
+ * (tools/article-editor/index.html) - on http://localhost:8095, with the
+ * Supabase URL and publishable key from .env.
  *
  * Editing needs an account listed in public.article_editors
  * (supabase/migrations/0006_article_editors.sql).
@@ -58,5 +59,5 @@ createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': file.type, 'Cache-Control': 'no-store' });
   res.end(file.transform ? file.transform(body) : body);
 }).listen(PORT, '127.0.0.1', () => {
-  console.log(`✔ Ratgeber-Editor: http://localhost:${PORT}  (Ctrl+C beendet)`);
+  console.log(`✔ Dialy-Editor: http://localhost:${PORT}  (Ctrl+C beendet)`);
 });

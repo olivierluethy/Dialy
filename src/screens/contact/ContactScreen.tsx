@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Linking } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import Constants from 'expo-constants';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/Screen';
@@ -12,17 +12,25 @@ import { spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import { foodsRepo } from '@/db/repositories/foods';
 import { config } from '@/config';
+import { contactErrorText, sendContactMessage, type ContactError } from '@/services/contact';
 import type { Food } from '@/types/models';
 
 type Kind = 'new' | 'fix';
-type DialogState = null | 'opened' | 'failed';
+type DialogState = null | 'sent' | ContactError;
 
 const PICKER_RESULTS = 6;
 
+/** "12,5" → 12.5; empty → null; not a number or outside 0–100 g → NaN. */
+function parseGrams(v: string): number | null {
+  const t = v.trim().replace(',', '.');
+  if (!t) return null;
+  const n = Number(t);
+  return Number.isFinite(n) && n >= 0 && n <= 100 ? n : NaN;
+}
+
 /**
- * Kontakt: suggest a new food or report a wrong one. Deliberately simple —
- * "Senden" opens the user's mail app with recipient, subject and body
- * prefilled (mailto:), so no backend is needed.
+ * Kontakt: suggest a new food or report a wrong one. "Senden" writes the
+ * message to Supabase (services/contact.ts); it needs an internet connection.
  */
 export function ContactScreen() {
   const { colors } = useTheme();
@@ -42,6 +50,7 @@ export function ContactScreen() {
 
   const [message, setMessage] = useState('');
   const [dialog, setDialog] = useState<DialogState>(null);
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -57,8 +66,12 @@ export function ContactScreen() {
     };
   }, [query]);
 
+  const values = { carbs: parseGrams(carbs), sugar: parseGrams(sugar), fat: parseGrams(fat) };
+  const valuesValid = Object.values(values).every((v) => !Number.isNaN(v));
   const canSend =
-    kind === 'new' ? name.trim().length > 0 : food !== null && message.trim().length > 0;
+    kind === 'new'
+      ? name.trim().length > 0 && valuesValid
+      : food !== null && message.trim().length > 0;
 
   const reset = () => {
     setName('');
@@ -70,54 +83,43 @@ export function ContactScreen() {
     setMessage('');
   };
 
-  const buildMail = (): { subject: string; body: string } => {
-    const value = (v: string) => (v.trim() ? `${v.trim()} g` : '–');
-    const footer = `\n\n—\nGesendet aus Dialy ${Constants.expoConfig?.version ?? ''}`;
-    if (kind === 'new') {
-      return {
-        subject: `Dialy: Neues Lebensmittel – ${name.trim()}`,
-        body:
-          `Neues Lebensmittel vorschlagen\n\n` +
-          `Name: ${name.trim()}\n` +
-          `Kohlenhydrate pro 100 g: ${value(carbs)}\n` +
-          `Zucker pro 100 g: ${value(sugar)}\n` +
-          `Fett pro 100 g: ${value(fat)}\n\n` +
-          `Bemerkung / Quelle:\n${message.trim() || '–'}` +
-          footer,
-      };
-    }
-    const f = food!;
-    return {
-      subject: `Dialy: Korrektur – ${f.name}`,
-      body:
-        `Fehler bei einem Lebensmittel melden\n\n` +
-        `Lebensmittel: ${f.name} (ID ${f.id})\n` +
-        `Aktuelle Werte pro 100 g: ${f.carbs_per_100g} g KH, ${f.sugar_per_100g} g Zucker, ` +
-        `${f.fat_per_100g} g Fett\n\n` +
-        `Korrekturvorschlag:\n${message.trim()}` +
-        footer,
-    };
-  };
-
   const send = async () => {
-    if (!canSend) return;
-    const { subject, body } = buildMail();
-    const url =
-      `mailto:${config.contactEmail}` +
-      `?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    try {
-      await Linking.openURL(url);
-      setDialog('opened');
-    } catch {
-      setDialog('failed');
+    if (!canSend || sending) return;
+    const app_version = Constants.expoConfig?.version ?? null;
+    setSending(true);
+    const result = await sendContactMessage(
+      kind === 'new'
+        ? {
+            kind: 'new_food',
+            food_name: name.trim(),
+            carbs_per_100g: values.carbs,
+            sugar_per_100g: values.sugar,
+            fat_per_100g: values.fat,
+            message: message.trim(),
+            app_version,
+          }
+        : {
+            kind: 'food_fix',
+            food_name: food!.name,
+            food_id: food!.id,
+            message: message.trim(),
+            app_version,
+          }
+    );
+    setSending(false);
+    if ('ok' in result) {
+      reset();
+      setDialog('sent');
+    } else {
+      setDialog(result.error);
     }
   };
 
   return (
     <Screen contentStyle={styles.content}>
       <Text style={styles.intro}>
-        Fehlt ein Lebensmittel oder stimmt ein Wert nicht? Schreib uns – das Formular
-        öffnet deine Mail-App mit einer vorbereiteten Nachricht.
+        Fehlt ein Lebensmittel oder stimmt ein Wert nicht? Schreib uns – wir prüfen jeden
+        Hinweis.
       </Text>
 
       <View style={styles.kindRow}>
@@ -165,6 +167,9 @@ export function ContactScreen() {
               containerStyle={styles.valueField}
             />
           </View>
+          {!valuesValid && (
+            <Text style={styles.error}>Nährwerte bitte als Zahl zwischen 0 und 100 angeben.</Text>
+          )}
           <TextField
             label="Bemerkung / Quelle"
             value={message}
@@ -237,31 +242,26 @@ export function ContactScreen() {
         icon="send"
         onPress={send}
         disabled={!canSend}
+        loading={sending}
         style={styles.spaced}
       />
-      <Text style={styles.hint}>* Pflichtfeld · Empfänger: {config.contactEmail}</Text>
+      <Text style={styles.hint}>* Pflichtfeld</Text>
 
       <Dialog
-        visible={dialog === 'opened'}
-        title="Fast geschafft"
-        message="Deine Mail-App wurde mit der vorbereiteten Nachricht geöffnet. Bitte sende sie dort ab. Danke für deine Hilfe!"
+        visible={dialog === 'sent'}
+        title="Danke!"
+        message="Deine Nachricht ist bei uns angekommen. Danke für deine Hilfe!"
         onClose={() => setDialog(null)}
-        actions={[
-          { label: 'Formular behalten', onPress: () => setDialog(null) },
-          {
-            label: 'Leeren',
-            variant: 'primary',
-            onPress: () => {
-              reset();
-              setDialog(null);
-            },
-          },
-        ]}
+        actions={[{ label: 'OK', variant: 'primary', onPress: () => setDialog(null) }]}
       />
       <Dialog
-        visible={dialog === 'failed'}
-        title="Mail-App nicht gefunden"
-        message={`Auf diesem Gerät liess sich keine Mail-App öffnen. Du kannst uns direkt an ${config.contactEmail} schreiben.`}
+        visible={dialog !== null && dialog !== 'sent'}
+        title="Nicht gesendet"
+        message={
+          dialog !== null && dialog !== 'sent'
+            ? `${contactErrorText(dialog)} Du kannst uns auch an ${config.contactEmail} schreiben.`
+            : undefined
+        }
         onClose={() => setDialog(null)}
         actions={[{ label: 'OK', variant: 'primary', onPress: () => setDialog(null) }]}
       />
@@ -307,6 +307,7 @@ const makeStyles = (colors: Colors) =>
     resultName: { flex: 1, fontSize: 15, fontWeight: '600', color: colors.textPrimary },
     resultCarbs: { fontSize: 13, color: colors.textSecondary },
     spaced: { marginTop: spacing.md },
+    error: { fontSize: 13, color: colors.danger, marginTop: -spacing.xs, marginBottom: spacing.sm },
     hint: {
       fontSize: 12,
       color: colors.textTertiary,

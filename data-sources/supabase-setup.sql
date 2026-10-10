@@ -1,4 +1,4 @@
--- Dialy: all Supabase migrations (0001-0006) in order, for the SQL Editor.
+-- Dialy: all Supabase migrations (0001-0008) in order, for the SQL Editor.
 -- Generated from supabase/migrations - edit those files, not this one.
 
 -- ===== 0001_init.sql =====
@@ -308,4 +308,78 @@ drop trigger if exists articles_touch_updated_at on public.articles;
 create trigger articles_touch_updated_at
   before update on public.articles
   for each row execute function public.touch_updated_at();
+
+
+-- ===== 0007_contact_messages.sql =====
+-- Dialy: messages from the Kontakt form (suggest a new food / report a wrong
+-- one). Anyone may send, nobody can read them through the API - read them in
+-- the Table Editor or SQL Editor:
+--
+--   select m.created_at, m.kind, m.food_name, m.message, u.email
+--   from public.contact_messages m left join auth.users u on u.id = m.user_id
+--   order by m.created_at desc;
+
+create table if not exists public.contact_messages (
+  id             uuid primary key default gen_random_uuid(),
+  created_at     timestamptz not null default now(),
+  -- Sender's account when signed in (filled from the JWT), else null.
+  user_id        uuid default auth.uid() references auth.users (id) on delete set null,
+  kind           text not null check (kind in ('new_food', 'food_fix')),
+  food_name      text not null check (char_length(food_name) between 1 and 200),
+  food_id        text check (char_length(food_id) <= 100), -- food_fix only
+  carbs_per_100g numeric check (carbs_per_100g between 0 and 100),
+  sugar_per_100g numeric check (sugar_per_100g between 0 and 100),
+  fat_per_100g   numeric check (fat_per_100g between 0 and 100),
+  message        text not null default '' check (char_length(message) <= 4000),
+  app_version    text check (char_length(app_version) <= 40),
+  -- For you: set once a message is dealt with.
+  handled_at     timestamptz
+);
+
+alter table public.contact_messages enable row level security;
+
+-- Insert only, and only as yourself (or anonymously).
+drop policy if exists "contact_messages_insert" on public.contact_messages;
+create policy "contact_messages_insert" on public.contact_messages
+  for insert to anon, authenticated
+  with check (handled_at is null and (user_id is null or user_id = auth.uid()));
+
+grant insert on public.contact_messages to anon, authenticated;
+
+
+-- ===== 0008_contact_messages_editors.sql =====
+-- Dialy: editors (public.article_editors, 0006) read the Kontakt messages in
+-- the editor (`npm run editor`, tab "Nachrichten") and mark them as handled.
+-- Senders still can't read anything back.
+
+drop policy if exists "contact_messages_editor_read" on public.contact_messages;
+create policy "contact_messages_editor_read" on public.contact_messages
+  for select to authenticated using (public.is_article_editor());
+
+drop policy if exists "contact_messages_editor_update" on public.contact_messages;
+create policy "contact_messages_editor_update" on public.contact_messages
+  for update to authenticated
+  using (public.is_article_editor()) with check (public.is_article_editor());
+
+grant select on public.contact_messages to authenticated;
+-- Editors may only toggle "handled", not change what was sent.
+grant update (handled_at) on public.contact_messages to authenticated;
+
+-- E-mail addresses of the senders, for replying. auth.users isn't reachable
+-- through the API, hence security definer - and editors only.
+create or replace function public.contact_message_senders()
+returns table (user_id uuid, email text)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select u.id, u.email::text
+  from auth.users u
+  where public.is_article_editor()
+    and u.id in (select m.user_id from public.contact_messages m);
+$$;
+
+revoke execute on function public.contact_message_senders() from public, anon;
+grant execute on function public.contact_message_senders() to authenticated;
 

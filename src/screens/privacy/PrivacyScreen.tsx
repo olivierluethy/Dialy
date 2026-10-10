@@ -23,6 +23,10 @@ const SECTIONS: Array<{ h: string; b: string }> = [
     b: 'Deine Daten werden lokal auf deinem Gerät gespeichert. Mit einem Konto werden sie verschlüsselt mit unserem Server synchronisiert, damit sie auf mehreren Geräten verfügbar sind. Der Zugriff ist durch Row-Level-Security auf dein Konto beschränkt.',
   },
   {
+    h: 'Kontaktformular',
+    b: 'Nachrichten aus dem Kontaktformular (Lebensmittel vorschlagen oder Fehler melden) werden auf unserem Server gespeichert, um die Lebensmitteldaten zu verbessern. Bist du angemeldet, wird die Nachricht mit deinem Konto verknüpft, damit wir bei Rückfragen antworten können.',
+  },
+  {
     h: 'Deine Rechte',
     b: 'Du kannst deine Daten jederzeit in den Kontoeinstellungen unter «Daten löschen» vollständig entfernen. Die Löschung wird auch auf den Server übertragen.',
   },

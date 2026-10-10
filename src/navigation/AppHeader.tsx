@@ -48,14 +48,14 @@ export function AppHeader({ navigation, route }: BottomTabHeaderProps) {
   const [open, setOpen] = useState(false);
 
   // Section order is fixed (§3): Ratgeber, KH-Rechner, Tagebuch, Sport,
-  // then Kontakt and Login (both screens of the Login stack).
+  // then Login and Kontakt (both screens of the Login stack).
   const sections: MenuItem[] = [
     { label: 'Ratgeber', tab: 'Ratgeber' },
     { label: 'KH-Rechner', tab: 'KHRechner' },
     { label: 'Tagebuch', tab: 'Tagebuch' },
     { label: 'Sport', tab: 'Sport' },
-    { label: 'Kontakt', tab: 'Login', screen: 'Contact' },
     { label: user ? 'Konto' : 'Anmelden', tab: 'Login', screen: 'LoginHome' },
+    { label: 'Kontakt', tab: 'Login', screen: 'Contact' },
   ];
 
   // Highlight the section matching the focused screen; within the Login stack

@@ -3,11 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ratgeber-Editor</title>
+<title>Dialy-Editor</title>
 <!--
-  Dialy Ratgeber-Editor: create, edit and remove the articles in Supabase
-  (table public.articles). Start with `npm run editor`; editing needs an
-  account in public.article_editors (supabase/migrations/0006_article_editors.sql).
+  Dialy-Editor: create, edit and remove the Ratgeber articles in Supabase
+  (table public.articles) and read the Kontakt messages (contact_messages).
+  Start with `npm run editor`; needs an account in public.article_editors
+  (supabase/migrations/0006_article_editors.sql, 0008_contact_messages_editors.sql).
 -->
 <style>
   :root {
@@ -71,28 +72,55 @@
     display: flex; align-items: center; gap: 12px; padding: 12px 20px;
     background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 2;
   }
-  header h1 { font-size: 17px; flex: 1; }
+  header h1 { font-size: 17px; }
   header h1 span { color: var(--text-3); font-weight: 500; }
+  header .spacer { flex: 1; }
+  .tabs { display: flex; gap: 2px; background: var(--surface-alt); padding: 3px; border-radius: 10px; margin-left: 12px; }
+  .tab {
+    border: 0; background: none; padding: 6px 14px; border-radius: 8px; cursor: pointer;
+    font-weight: 600; color: var(--text-2);
+  }
+  .tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px var(--shadow); }
+  .tab .count {
+    display: inline-block; min-width: 20px; padding: 0 6px; margin-left: 4px; border-radius: 999px;
+    background: var(--accent); color: var(--on-accent); font-size: 12px; line-height: 20px; text-align: center;
+  }
   .layout { display: grid; grid-template-columns: 320px 1fr; gap: 20px; padding: 20px; max-width: 1500px; margin: 0 auto; }
   aside { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
   .filters { display: flex; gap: 8px; }
   .filters select { width: auto; }
   .check { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-2); font-weight: 500; margin: 0; }
   .check input { width: auto; }
-  #list { list-style: none; margin: 0; padding: 6px; overflow-y: auto; max-height: calc(100vh - 250px); }
-  #list li {
+  .list { list-style: none; margin: 0; padding: 6px; overflow-y: auto; max-height: calc(100vh - 250px); }
+  .list li {
     padding: 10px 12px; border-radius: 10px; cursor: pointer; border: 1px solid transparent;
   }
-  #list li:hover { background: var(--surface-alt); }
-  #list li.active { background: var(--accent-subtle); border-color: var(--accent); }
-  #list li.deleted .t { text-decoration: line-through; color: var(--text-3); }
-  #list .t { font-weight: 600; font-size: 14px; }
-  #list .m { font-size: 12px; color: var(--text-3); }
+  .list li:hover { background: var(--surface-alt); }
+  .list li.active { background: var(--accent-subtle); border-color: var(--accent); }
+  .list li.deleted .t { text-decoration: line-through; color: var(--text-3); }
+  .list .t { font-weight: 600; font-size: 14px; }
+  .list .m { font-size: 12px; color: var(--text-3); }
   .badge {
     display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px;
     background: var(--surface-alt); color: var(--text-2); margin-right: 4px;
   }
   .badge.del { color: var(--danger); }
+  .badge.open { color: var(--warn); }
+  .badge.done { color: var(--accent); }
+  .list li.handled .t { color: var(--text-3); font-weight: 500; }
+
+  /* Kontakt messages */
+  #msg-detail { padding: 24px; min-width: 0; }
+  #msg-detail h2 { font-size: 22px; line-height: 1.25; margin: 4px 0 8px; overflow-wrap: anywhere; }
+  .facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 18px 0; font-size: 14px; }
+  .facts dt { color: var(--text-3); font-weight: 600; }
+  .facts dd { margin: 0; overflow-wrap: anywhere; }
+  .facts a { color: var(--accent); }
+  .msg-text {
+    white-space: pre-wrap; overflow-wrap: anywhere; background: var(--input); padding: 14px 16px;
+    border-radius: 12px; font-size: 15px; line-height: 1.55;
+  }
+  a.btn { text-decoration: none; display: inline-block; }
 
   main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); gap: 20px; align-items: start; }
   #form { padding: 22px; }
@@ -116,10 +144,12 @@
   @media (max-width: 1100px) { main { grid-template-columns: 1fr; } .preview { position: static; max-height: none; } }
   @media (max-width: 760px) {
     .layout { grid-template-columns: 1fr; padding: 16px; }
-    #list { max-height: 260px; }
+    .list { max-height: 260px; }
     .grid { grid-template-columns: 1fr; }
-    header { padding: 12px 16px; }
-    #user-email { display: none; }
+    header { padding: 12px 16px; gap: 8px; }
+    header h1 span, #user-email { display: none; }
+    .tabs { margin-left: 0; }
+    .tab { padding: 6px 10px; }
   }
 </style>
 </head>
@@ -155,11 +185,16 @@
 
 <section id="view-editor" hidden>
   <header>
-    <h1>Dialy <span>· Ratgeber-Editor</span></h1>
+    <h1>Dialy <span>· Editor</span></h1>
+    <nav class="tabs" role="tablist">
+      <button class="tab active" role="tab" data-tab="articles">Artikel</button>
+      <button class="tab" role="tab" data-tab="messages">Nachrichten<span class="count" id="msg-badge" hidden></span></button>
+    </nav>
+    <span class="spacer"></span>
     <span class="muted" id="user-email"></span>
     <button class="btn" id="logout">Abmelden</button>
   </header>
-  <div class="layout">
+  <div class="layout" id="panel-articles">
     <aside>
       <button class="btn primary" id="new">+ Neuer Beitrag</button>
       <input id="search" type="search" placeholder="Suchen …">
@@ -172,7 +207,7 @@
         </select>
         <label class="check"><input type="checkbox" id="show-deleted"> Gelöschte</label>
       </div>
-      <ul id="list" class="card"></ul>
+      <ul id="list" class="list card"></ul>
       <div class="muted" id="count"></div>
     </aside>
 
@@ -226,6 +261,28 @@
       </div>
     </main>
   </div>
+
+  <div class="layout" id="panel-messages" hidden>
+    <aside>
+      <div class="filters">
+        <select id="msg-filter" aria-label="Status">
+          <option value="open">Offen</option>
+          <option value="done">Erledigt</option>
+          <option value="">Alle</option>
+        </select>
+        <select id="msg-kind" aria-label="Art">
+          <option value="">Alle Arten</option>
+          <option value="new_food">Neues Lebensmittel</option>
+          <option value="food_fix">Fehler gemeldet</option>
+        </select>
+        <button class="btn" id="msg-reload" title="Neu laden">↻</button>
+      </div>
+      <input id="msg-search" type="search" placeholder="Suchen …">
+      <ul id="msg-list" class="list card"></ul>
+      <div class="muted" id="msg-count"></div>
+    </aside>
+    <section id="msg-detail" class="card" aria-live="polite"></section>
+  </div>
 </section>
 
 <script>window.DIALY_CONFIG = /*CONFIG*/null;</script>
@@ -239,6 +296,8 @@
   const TYPE_LABEL = { t1: 'Typ 1', t2: 'Typ 2', both: 'Beide' };
   const WORDS_PER_MINUTE = 200;
   const CONFIG_KEY = 'dialy-editor-config';
+  const TAB_KEY = 'dialy-editor-tab';
+  const KIND_LABEL = { new_food: 'Neues Lebensmittel', food_fix: 'Fehler gemeldet' };
 
   const $ = (id) => document.getElementById(id);
   const views = ['config', 'login', 'denied', 'editor'];
@@ -358,8 +417,173 @@
     }
     $('user-email').textContent = user.email;
     show('editor');
+    showTab(store.get(TAB_KEY) === 'messages' ? 'messages' : 'articles');
+    loadMessages();
     await loadArticles();
     if (!current) newArticle();
+  }
+
+  // ---------------------------------------------------------------- tabs
+  function showTab(tab) {
+    $('panel-articles').hidden = tab !== 'articles';
+    $('panel-messages').hidden = tab !== 'messages';
+    document.querySelectorAll('.tab').forEach((b) => {
+      b.classList.toggle('active', b.dataset.tab === tab);
+      b.setAttribute('aria-selected', String(b.dataset.tab === tab));
+    });
+    store.set(TAB_KEY, tab);
+  }
+  document.querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.tab)));
+
+  // ---------------------------------------------------------------- messages
+  let messages = [];
+  let senders = new Map(); // user_id -> email
+  let currentMsg = null;
+  let messagesError = null;
+
+  const formatDateTime = (iso) => new Date(iso).toLocaleString('de-CH', {
+    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+  });
+  const el = (tag, props, ...children) => {
+    const node = document.createElement(tag);
+    Object.assign(node, props || {});
+    node.append(...children.filter((c) => c !== null && c !== undefined));
+    return node;
+  };
+  const badge = (text, cls) => el('span', { className: 'badge' + (cls ? ' ' + cls : ''), textContent: text });
+
+  async function loadMessages() {
+    $('msg-reload').disabled = true;
+    const [list, who] = await Promise.all([
+      sb.from('contact_messages').select('*').order('created_at', { ascending: false }),
+      sb.rpc('contact_message_senders'),
+    ]);
+    $('msg-reload').disabled = false;
+    messagesError = list.error;
+    messages = list.error ? [] : list.data;
+    senders = new Map((who.data || []).map((r) => [r.user_id, r.email]));
+    if (currentMsg) currentMsg = messages.find((m) => m.id === currentMsg.id) || null;
+    const open = messages.filter((m) => !m.handled_at).length;
+    $('msg-badge').textContent = String(open);
+    $('msg-badge').hidden = open === 0;
+    renderMessages();
+  }
+  $('msg-reload').addEventListener('click', loadMessages);
+
+  function visibleMessages() {
+    const q = fold($('msg-search').value.trim());
+    const status = $('msg-filter').value;
+    const kind = $('msg-kind').value;
+    return messages.filter((m) =>
+      (!status || (status === 'open' ? !m.handled_at : !!m.handled_at)) &&
+      (!kind || m.kind === kind) &&
+      (!q || fold(`${m.food_name} ${m.message} ${senders.get(m.user_id) || ''}`).includes(q)));
+  }
+
+  function renderMessages() {
+    const visible = visibleMessages();
+    if (!currentMsg || !messages.includes(currentMsg)) currentMsg = visible[0] || null;
+    $('msg-list').replaceChildren(...visible.map((m) => {
+      const li = el('li', {
+        className: (currentMsg === m ? 'active ' : '') + (m.handled_at ? 'handled' : ''),
+      },
+        el('div', { className: 't', textContent: m.food_name }),
+        el('div', { className: 'm' },
+          badge(m.kind === 'new_food' ? 'Neu' : 'Fehler'),
+          m.handled_at ? badge('erledigt', 'done') : null,
+          `${formatDateTime(m.created_at)} · ${senders.get(m.user_id) || 'ohne Konto'}`));
+      li.addEventListener('click', () => { currentMsg = m; renderMessages(); });
+      return li;
+    }));
+    if (visible.length === 0 && !messagesError) {
+      $('msg-list').append(el('li', { className: 'muted', textContent: 'Keine Nachrichten.' }));
+    }
+    const open = messages.filter((m) => !m.handled_at).length;
+    $('msg-count').textContent = messagesError ? '' : `${open} offen · ${messages.length - open} erledigt`;
+    renderMessageDetail();
+  }
+  ['msg-filter', 'msg-kind', 'msg-search'].forEach((id) => $(id).addEventListener('input', () => {
+    currentMsg = null;
+    renderMessages();
+  }));
+
+  function renderMessageDetail() {
+    const box = $('msg-detail');
+    if (messagesError) {
+      const missingTable = /contact_messages.*(does not exist|schema cache)|relation .* does not exist/i.test(messagesError.message);
+      box.replaceChildren(
+        el('h2', { textContent: 'Nachrichten nicht verfügbar' }),
+        el('p', {
+          textContent: missingTable
+            ? 'Die Tabelle für Kontakt-Nachrichten fehlt noch. Führe im Supabase SQL Editor supabase/migrations/0007_contact_messages.sql und danach 0008_contact_messages_editors.sql aus.'
+            : /permission denied/i.test(messagesError.message)
+              ? 'Editoren dürfen die Nachrichten noch nicht lesen. Führe im Supabase SQL Editor supabase/migrations/0008_contact_messages_editors.sql aus.'
+              : errorText(messagesError),
+        }));
+      return;
+    }
+    const m = currentMsg;
+    if (!m) {
+      box.replaceChildren(el('p', { className: 'muted', textContent: 'Keine Nachricht ausgewählt.' }));
+      return;
+    }
+    const email = senders.get(m.user_id);
+    const grams = (v) => (v === null || v === undefined ? '–' : `${String(v).replace('.', ',')} g`);
+    const facts = el('dl', { className: 'facts' });
+    const fact = (label, value) => facts.append(el('dt', { textContent: label }), el('dd', {}, value));
+    fact('Absender', email
+      ? el('a', { href: `mailto:${email}`, textContent: email })
+      : m.user_id ? 'Konto (E-Mail nicht verfügbar)' : 'ohne Konto gesendet');
+    if (m.kind === 'new_food') {
+      fact('Pro 100 g', `${grams(m.carbs_per_100g)} KH · ${grams(m.sugar_per_100g)} Zucker · ${grams(m.fat_per_100g)} Fett`);
+    } else {
+      fact('Lebensmittel-ID', m.food_id || '–');
+    }
+    fact('App-Version', m.app_version || '–');
+    if (m.handled_at) fact('Erledigt am', formatDateTime(m.handled_at));
+
+    const toggle = el('button', {
+      className: 'btn' + (m.handled_at ? '' : ' primary'),
+      textContent: m.handled_at ? 'Wieder öffnen' : 'Als erledigt markieren',
+    });
+    toggle.addEventListener('click', () => setHandled(m, !m.handled_at, toggle));
+    const reply = email
+      ? el('a', {
+          className: 'btn',
+          textContent: 'Per E-Mail antworten',
+          href: `mailto:${email}?subject=${encodeURIComponent('Dialy: ' + m.food_name)}`,
+        })
+      : null;
+
+    box.replaceChildren(
+      el('div', { className: 'p-cat', textContent: KIND_LABEL[m.kind] || m.kind }),
+      el('h2', { textContent: m.food_name }),
+      el('div', { className: 'muted' }, m.handled_at ? badge('erledigt', 'done') : badge('offen', 'open'),
+        `Eingegangen am ${formatDateTime(m.created_at)}`),
+      facts,
+      m.message
+        ? el('div', { className: 'msg-text', textContent: m.message })
+        : el('p', { className: 'muted', textContent: 'Keine Bemerkung.' }),
+      el('div', { className: 'actions' }, toggle, reply, el('span', { id: 'msg-status' })));
+  }
+
+  async function setHandled(m, handled, button) {
+    button.disabled = true;
+    const { data, error } = await sb.from('contact_messages')
+      .update({ handled_at: handled ? new Date().toISOString() : null })
+      .eq('id', m.id).select().single();
+    if (error) {
+      button.disabled = false;
+      $('msg-status').textContent = errorText(error);
+      $('msg-status').className = 'error';
+      return;
+    }
+    messages = messages.map((x) => (x.id === m.id ? data : x));
+    currentMsg = data;
+    const open = messages.filter((x) => !x.handled_at).length;
+    $('msg-badge').textContent = String(open);
+    $('msg-badge').hidden = open === 0;
+    renderMessages();
   }
 
   // ---------------------------------------------------------------- list
