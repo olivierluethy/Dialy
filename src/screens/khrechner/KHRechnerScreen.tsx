@@ -21,7 +21,7 @@ import { FadeIn } from '@/components/FadeIn';
 import { radius, spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import { foodsRepo } from '@/db/repositories/foods';
-import { FOOD_CATEGORIES } from '@/data/foodCategories';
+import { FOOD_CATEGORIES, USUAL_PORTION_LABEL } from '@/data/foodCategories';
 import { mealsRepo } from '@/db/repositories/meals';
 import { useAppStore } from '@/state/store';
 import { can, gateCopy } from '@/policy/gating';
@@ -48,6 +48,21 @@ type DialogState =
   | { kind: 'meal' }
   | { kind: 'saved'; count: number }
   | { kind: 'error' };
+
+/**
+ * "Quelle: BLV | menuCH" — where the nutrients and (after "|") the usual
+ * portion come from. Null for the curated foods.
+ */
+function foodSourceText(food: Food): string | null {
+  const nutrients = food.id.startsWith('blv-')
+    ? 'BLV'
+    : food.id.startsWith('bls-')
+      ? 'BLS 4.0 (Max Rubner-Institut)'
+      : null;
+  if (!nutrients) return null;
+  const fromMenuch = food.portions[0]?.label.startsWith(USUAL_PORTION_LABEL);
+  return `Quelle: ${nutrients}${fromMenuch ? ' | menuCH' : ''}`;
+}
 
 // GI is a property of the food, not scaled by portion.
 function portionNutrients(food: Food, grams: number) {
@@ -381,10 +396,10 @@ export function KHRechnerScreen() {
               <View style={styles.foodHeader}>
                 <View style={styles.foodHeaderText}>
                   <Text style={styles.foodName}>{selected.name}</Text>
-                  {/* Nutrients (and usual portion, if any) come from BLV datasets;
-                      the full source names are listed in the privacy screen. */}
-                  {selected.id.startsWith('blv-') && (
-                    <Text style={styles.foodSource}>Quelle: BLV</Text>
+                  {/* "Quelle: <nutrients> | <usual portion>"; the full source
+                      names are listed in the privacy screen. */}
+                  {foodSourceText(selected) && (
+                    <Text style={styles.foodSource}>{foodSourceText(selected)}</Text>
                   )}
                 </View>
               </View>

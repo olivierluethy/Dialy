@@ -57,24 +57,28 @@ async function loadIndex(): Promise<IndexedFood[]> {
 
 export const foodsRepo = {
   /**
-   * Foods whose name contains the query (umlaut/accent/case-insensitive).
-   * Exact spellings rank before folded ones ("öl": "… im Öl" before "Olive"),
-   * then matches at the start of the name, at the start of a word ("Reis"
-   * before "Milchreis"), anywhere; alphabetical within. Optionally limited
-   * to one top-level category.
+   * Foods whose name contains every word of the query, in any order and
+   * regardless of punctuation ("apfel roh" finds "Apfel, roh"); umlaut-,
+   * accent- and case-insensitive. Exact spellings rank before folded ones
+   * ("öl": "… im Öl" before "Olive"), then by where the first word matches:
+   * start of the name, start of a word ("Reis" before "Milchreis"),
+   * anywhere; alphabetical within. Optionally limited to one top-level
+   * category.
    */
   async search(query: string, category: string | null = null): Promise<Food[]> {
     const all = await loadIndex();
     const foods = category ? all.filter((f) => f.food.categories.includes(category)) : all;
-    const q = foldText(query.trim());
-    if (!q) return foods.map((f) => f.food);
-    const exact = query.trim().toLowerCase();
+    const terms = foldText(query).split(/[\s,;/]+/).filter(Boolean);
+    if (terms.length === 0) return foods.map((f) => f.food);
+    const exactTerms = query.toLowerCase().split(/[\s,;/]+/).filter(Boolean);
+    const first = terms[0]!;
     const ranked: Array<{ food: Food; rank: number }> = [];
     for (const { food, key, lower } of foods) {
-      const i = key.indexOf(q);
-      if (i < 0) continue;
+      if (!terms.every((t) => key.includes(t))) continue;
+      const i = key.indexOf(first);
       const position = i === 0 ? 0 : /[a-z0-9]/.test(key[i - 1] ?? '') ? 2 : 1;
-      ranked.push({ food, rank: (lower.includes(exact) ? 0 : 3) + position });
+      const exact = exactTerms.every((t) => lower.includes(t));
+      ranked.push({ food, rank: (exact ? 0 : 3) + position });
     }
     // Array sort is stable, so the alphabetical order holds within a rank.
     return ranked.sort((a, b) => a.rank - b.rank).map((r) => r.food);

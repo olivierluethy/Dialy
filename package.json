@@ -14,7 +14,8 @@
     "backend:status": "supabase status",
     "phone:link": "adb reverse tcp:8081 tcp:8081 && adb reverse tcp:54321 tcp:54321",
     "import:blv": "node scripts/import-blv.mjs",
-    "import:menuch": "node scripts/import-menuch.mjs"
+    "import:menuch": "node scripts/import-menuch.mjs",
+    "import:bls": "node scripts/import-bls.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",

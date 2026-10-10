@@ -12,7 +12,12 @@
  * fewer than MIN_N observations are skipped. The rules below map BLV foods to
  * categories. They only cover foods in their eaten state (e.g. "Teigwaren …
  * gekocht", never "… trocken"), so a portion never gets attached to a raw or
- * dry ingredient. Run `npm run import:blv` first.
+ * dry ingredient. Run `npm run import:blv` (and `import:bls`) first.
+ *
+ * The same applies to the German BLS foods (src/data/blsFoods.json) with a
+ * second rule set (BLS_RULES), guarded by the BLS food group (first letter
+ * of the BLS code). "tiefgefroren" alone means raw/frozen, so it never
+ * matches without a cooking step.
  *
  * Source attribution (BLV, menuCH 2014-15) is shown in the app.
  */
@@ -26,6 +31,7 @@ const MIN_N = 15;
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const blvPath = join(root, 'src', 'data', 'blvFoods.json');
+const blsPath = join(root, 'src', 'data', 'blsFoods.json');
 const outPath = join(root, 'src', 'data', 'menuchPortions.json');
 
 /**
@@ -149,6 +155,117 @@ const RULES = [
   ['Frischgemüse, total', /^(?!Basilikum|Petersilie|Schnittlauch|Thymian|Salbei|Pfefferminze|Rosmarin|Knoblauch|Schalotte|Zwiebel|Ingwer).*, roh$/, VEG],
 ];
 
+// Cooking steps that make a BLS food "as eaten".
+const COOKED = '(gekocht|gegart|gedünstet|gedämpft|druckgedämpft|gebraten|gebacken|gegrillt|geschmort|frittiert|pochiert|gargezogen|gebrüht|überbacken)';
+const cooked = (re) => new RegExp(`${re}.*${COOKED}`, 'i');
+const HERBS = /^(Basilikum|Petersilie|Schnittlauch|Dill|Koriander|Kresse|Gartenkresse|Knoblauch|Zwiebel|Schalotte|Ingwer|Meerrettich|Chili|Peperoni|Thymian|Rosmarin|Salbei|Minze|Pfefferminze|Oregano|Majoran|Liebstöckel|Estragon|Kerbel|Bärlauch|Suppengrün|Lorbeer|Zitronengras|Wasabi)/;
+
+/**
+ * BLS rules: [menuCH category, BLS name pattern, BLS food groups (letters)].
+ * First match wins. Only eaten-state foods; dishes only where menuCH has a
+ * category (soups, broth, potato salad, mashed potatoes).
+ */
+const BLS_RULES = [
+  // Obst (F)
+  ['Apfel', /^Apfel (geschält, )?roh$/, 'F'],
+  ['Birne', /^Birne (geschält, )?roh$/, 'F'],
+  ['Orange', /^Orange roh$/, 'F'],
+  ['Mandarine und Klementine', /^(Clementine|Mandarine|Tangerine) roh$/, 'F'],
+  ['Traube', /^Weintraube.*roh$/, 'F'],
+  ['Beeren', /beere.*roh$/i, 'F'],
+  ['Getrocknete Früchte', /getrocknet/, 'F'],
+  ['Gekochte Früchte in Dosen, total', /Konserve/, 'F'],
+  ['Gekochte Früchte (nicht aus der Dose), total', /(gedünstet|gekocht|Kompott)/, 'F'],
+  ['Fruchtsaft', /^(?!Zitron|Limett).*(saft|nektar)$/i, 'F'],
+  ['Frischobst, total', /^(?!Zitron|Limett|Rhabarber|Hagebutte|Eberesche|Holunder|Quitte).* roh$/, 'F'],
+
+  // Brot (B), Getreide (C), Teigwaren & Eier (E)
+  ['Knäckebrot und Crackers', /(knäckebrot|zwieback|knusperbrot|reiswaffel|cracker)/i, 'B'],
+  ['Brot', /^(?!Paniermehl)/, 'B'],
+  ['Reis', cooked('^Reis'), 'C'],
+  ['Couscous', cooked('^(Couscous|Bulgur)'), 'C'],
+  ['Maisgriess, Polenta', cooked('^(Mais Grieß|Polenta)'), 'C'],
+  ['Essfertiges Müesli', /^[A-Za-zä]+ Flocken, gekocht$/, 'C'],
+  ['Gesüsste Frühstücksflocken', /(müsli|flakes|crisp|pops|gepufft|cornflakes).*gesüßt|gesüßt.*(müsli|flakes)/i, 'C'],
+  ['Ungesüsste Getreide- und Müesliflocken (inkl. Frühstücksflocken)', /(Flocken$|ungesüßt.*(müsli|flocken)|Müsli.*ungesüßt)/i, 'C'],
+  ['Gefüllte Teigwaren', /(Ravioli|Tortellini|Tortelloni).*gekocht$/, 'E'],
+  ['Spätzli', cooked('Spätzle'), 'EX'],
+  ['Teigwaren, total', /teigwaren.*gekocht$/i, 'E'],
+  ['Vollei', /^Hühnerei (roh|gekocht|weich gekocht|gebraten|gebacken|pochiert)/, 'E'],
+
+  // Kartoffeln (K)
+  ['Pommes frites', /^Pommes frites.*(frittiert|gebacken)/, 'K'],
+  ['Rösti', /rösti.*(frittiert|gebacken|gebraten)/i, 'K'],
+  ['Chips', /chips/i, 'K'],
+  ['Kartoffeln', /^Kartoffel (geschält|ungeschält), (gekocht|druckgedämpft|gebacken|gebraten ohne Fett \(Pfanne\)|geschmort ohne Fett)$/, 'K'],
+
+  // Milch (M)
+  ['Milchmischgetränke', /(drink|getränk|kakao|shake).*(gesüßt|frucht|schoko)/i, 'M'],
+  ['Milch', /^(H-)?(Voll)?[Mm]ilch .*(Fett|entrahmt)/, 'M'],
+  ['Joghurt, nature', /^(?!.*(Frucht|gesüßt|Vanille|Schoko|Zucker)).*[Jj]oghurt.*Fett/, 'M'],
+  ['Gesüsster oder aromatisierter Joghurt', /[Jj]oghurt/, 'M'],
+  ['Quark, nature', /^(Speise)?[Qq]uark(?!.*(Frucht|gesüßt|Vanille)).*Fett/, 'M'],
+  ['Gesüsster oder aromatisierter Quark', /quark.*(Frucht|gesüßt|Vanille)/i, 'M'],
+  ['Mozzarella', /^Mozzarella/, 'M'],
+  ['Feta', /^(Feta|Schafskäse|Hirtenkäse)/, 'M'],
+  ['Streich- oder Frischkäse', /(Frischkäse|Schmelzkäse|Streichkäse)/, 'M'],
+  ['Weichkäse', /^(Camembert|Brie|Weichkäse|Romadur|Limburger|Münster)/, 'M'],
+  ['Halbhart- oder Hartkäse (ohne Fondue und Raclette)', /^(Hartkäse|Schnittkäse|Halbfester Schnittkäse|Bergkäse|Emmentaler|Gouda|Edamer|Tilsiter|Butterkäse|Appenzeller|Parmesan|Edelpilzkäse|Gorgonzola|Leerdammer)/, 'M'],
+
+  // Getränke (N, P)
+  ['Künstlich gesüsste Getränke', /Süßungsmittel/, 'N'],
+  ['Zuckerhaltige Getränke', /(Cola|Limonade|Brause|Eistee|Energy|Ginger Ale|Erfrischungsgetränk|Fruchtsaftgetränk|Schorle)/, 'N'],
+  ['Kaffee mit Milch', /(Cappuccino|Latte|Milchkaffee).*Getränk|Kaffee \(Getränk\) mit Milch/, 'N'],
+  ['Kaffee, schwarz', /^(Kaffee|Espresso) \(Getränk\)/, 'N'],
+  ['Tee', /tee \(Getränk\)/i, 'N'],
+  ['Wasser', /wasser/i, 'N'],
+  ['Bier', /(bier|pils|weizen|radler)/i, 'P'],
+  ['Wein', /^(?!.*(brand|Branntwein)).*wein/i, 'P'],
+
+  // Fisch, Fleisch, Wurst (T, U, V, W) — only cooked / ready to eat
+  ['Fischprodukte', /(Fischstäbchen|Surimi|Rollmops|Bismarckhering|Matjes)/, 'T'],
+  ['Meeresfrüchte', cooked('^(Garnele|Krabbe|Shrimp|Muschel|Miesmuschel|Tintenfisch|Kalmar|Hummer|Languste|Scampi)'), 'T'],
+  ['Fisch', new RegExp(`(${COOKED.slice(1, -1)}|geräuchert|Konserve)`), 'T'],
+  ['Hühnerfleisch', cooked('^(Hähnchen|Huhn|Hühner|Pute|Baby-Pute|Truthahn)'), 'V'],
+  ['Fleisch', cooked(''), 'UV'],
+  ['Salami', /(Salami|Cervelatwurst|Landjäger|Mettwurst)/, 'W'],
+  ['Schinken (gekocht)', /(Kochschinken|Schinken gekocht|Bierschinken|Vorderschinken|Hinterschinken)/, 'W'],
+  ['Wurst (gekocht)', /(Würstchen|Wurst|Knacker|Bockwurst|Lyoner|Fleischwurst|Mortadella)/, 'W'],
+  ['Wurstwaren', /./, 'W'],
+
+  // Fette, Nüsse, Süsses (Q, H, S, D)
+  ['Butter', /butter$/i, 'Q'],
+  ['Margarine', /margarine/i, 'Q'],
+  ['Pflanzliche Öle', /öl$/i, 'Q'],
+  ['Rahm', /(sahne|rahm)/i, 'QM'],
+  ['Nüsse', /^(?!.*(mus|öl|mehl|butter|creme)).*(nuss|nüsse|mandel|pistazie|cashew|macadamia|pekan)/i, 'H'],
+  ['Samen', /^(?!.*(mus|öl|mehl)).*(kern|samen|leinsaat|chia|sesam)/i, 'H'],
+  ['Eiscreme und Sorbet', /(speiseeis|sorbet|eiscreme)/i, 'S'],
+  ['Konfitüre', /(konfitüre|marmelade|fruchtaufstrich|gelee)/i, 'S'],
+  ['Honig', /^Honig/, 'S'],
+  ['Süsswaren mit Schokolade', /(riegel|pralin|schokolinsen|überzogen mit Schokolade)/i, 'S'],
+  ['Schokolade', /schokolade/i, 'S'],
+  ['Kekse', /^(?!.*(torte|kuchen|schnitte)).*(keks|plätzchen|cookie|löffelbiskuit|spekulatius|makrone|lebkuchen)/i, 'D'],
+  ['Apérogebäck', /(salzstange|salzbrezel|knabbergebäck|cracker|popcorn|erdnussflips)/i, 'DSH'],
+
+  // Gemüse (G) — herbs, spices and aromatics excluded
+  ['Gurke', /^(Salat)?[Gg]urke.*roh$/, 'G'],
+  ['Karotte', /^(Karotte|Möhre|Möhre\/Karotte)/, 'G'],
+  ['Tomate', /^Tomate.*(roh|gedünstet)$/, 'G'],
+  ['Zucchini', /^Zucchini/, 'G'],
+  ['Salat (Blattgemüse)', /(salat|Rucola|Feldsalat|Chicorée|Endivie|Radicchio|Lollo|Eisberg).*roh$/i, 'G'],
+  ['Eingelegtes Gemüse', /(eingelegt|sauer eingelegt|Essig)/i, 'G'],
+  ['Gekochtes Dosengemüse, total', /Konserve/, 'G'],
+  ['Gekochtes Gemüse (nicht aus der Dose), total', new RegExp(COOKED, 'i'), 'G'],
+  ['Frischgemüse, total', / roh$/, 'G'],
+
+  // Gerichte (X, Y) — only categories menuCH has
+  ['Bouillon', /^(Bouillon|Fleischbrühe|Hühnerbrühe|Gemüsebrühe|Rinderkraftbrühe|Geflügelkraftbrühe|Fischbrühe|Kalbsbrühe|Wildbrühe)/, 'XY'],
+  ['Suppe', /(suppe|eintopf)/i, 'XY'],
+  ['Kartoffelsalat', /^Kartoffelsalat/, 'XY'],
+  ['Kartoffelstock', /^(Kartoffelpüree|Kartoffelbrei)/, 'XY'],
+];
+
 const input = process.argv[2];
 if (!input) {
   console.error('Usage: npm run import:menuch -- path/to/menuCH_portion_sizes_2014_2015_per_meal.xlsx');
@@ -212,15 +329,47 @@ for (const [id, name, , categoryIdx] of blv.foods) {
   }
 }
 
+const blvCount = Object.keys(out).length;
+
+// German BLS foods (optional: only if imported).
+let blsCount = 0;
+let blsTotal = 0;
+try {
+  const bls = JSON.parse(readFileSync(blsPath, 'utf8'));
+  blsTotal = bls.foods.length;
+  for (const [id, name] of bls.foods) {
+    const group = id.slice('bls-'.length, 'bls-'.length + 1);
+    if (HERBS.test(name)) continue;
+    // Powders aren't eaten as such (unless prepared: "Getränk", "zubereitet").
+    if (/pulver/i.test(name) && !/(zubereitet|Getränk|zusatz)/i.test(name)) continue;
+    // Raw sausages and doughs in the sausage group are cooked first.
+    if (group === 'W' && /(\broh\b|teig, roh)/i.test(name)) continue;
+    for (const [category, pattern, groups] of BLS_RULES) {
+      if (!groups.includes(group) || !pattern.test(name)) continue;
+      // "tiefgefroren" alone is raw/frozen — never "as eaten".
+      if (/tiefgefroren/.test(name) && !new RegExp(COOKED).test(name)) break;
+      const grams = portions.get(category);
+      if (grams !== undefined) {
+        out[id] = grams;
+        blsCount += 1;
+      }
+      break;
+    }
+  }
+} catch {
+  // No BLS import yet — BLV only.
+}
+
 writeFileSync(
   outPath,
   JSON.stringify({
     source: 'BLV, Nationale Ernährungserhebung menuCH 2014-15',
-    // BLV food id -> usual portion in grams (as eaten).
+    // Food id (blv-… / bls-…) -> usual portion in grams (as eaten).
     portions: out,
   }) + '\n'
 );
-console.log(`✔ ${Object.keys(out).length} of ${blv.foods.length} BLV foods got a usual portion.`);
+console.log(`✔ ${blvCount} of ${blv.foods.length} BLV foods got a usual portion.`);
+if (blsTotal) console.log(`✔ ${blsCount} of ${blsTotal} BLS foods got a usual portion.`);
 if (missingCategories.length) {
   console.log(`  Skipped (too few observations or not in file): ${[...new Set(missingCategories)].join(', ')}`);
 }

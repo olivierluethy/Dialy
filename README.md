@@ -362,6 +362,30 @@ npm run import:blv -- pfad/zu/Schweizer_Nahrwertdatenbank.xlsx
 Das schreibt `src/data/blvFoods.json`; die App übernimmt die neue Version beim
 nächsten Start automatisch.
 
+### Weitere Lebensmittel & Gerichte (BLS, Deutschland)
+
+Zusätzlich rund 6'900 Lebensmittel aus dem **Bundeslebensmittelschlüssel
+(BLS) 4.0** des Max Rubner-Instituts (Lizenz **CC BY 4.0**, Quellenangabe in
+der App), darunter ~2'000 Gerichte wie Döner Kebab, Falafel oder
+Frühlingsrollen. Werte pro 100 g; kein GI, keine Portionsgrössen.
+
+**Keine Duplikate:** `scripts/import-bls.mjs` lässt einen BLS-Eintrag weg, wenn
+es schon ein Lebensmittel gibt (BLV oder kuratiert) mit
+
+- denselben Wörtern im Namen (Gross-/Kleinschreibung, Umlaute, Satzzeichen,
+  Klammerzusätze, Reihenfolge und Einzahl/Mehrzahl egal) – auch bei anderen
+  Werten, oder
+- fast demselben Namen (≥ 75 % gleiche Wörter) bei einem Gericht oder bei
+  ähnlichen Kohlenhydraten (± 5 g bzw. 30 %).
+
+Der vorhandene Eintrag hat immer Vorrang. Jede Entscheidung steht in
+`data-sources/bls-duplicates-report.txt`. Zusätzlich überspringt die App beim
+Einspielen BLV-/BLS-Einträge, die genau wie ein kuratierter Eintrag heissen.
+
+```bash
+npm run import:bls -- data-sources/BLS_4_0_Daten_2025_DE.xlsx
+```
+
 ### Übliche Portionsgrössen (menuCH)
 
 Rund 680 der BLV-Lebensmittel haben eine „Übliche Portion“ (z. B. Teigwaren,
