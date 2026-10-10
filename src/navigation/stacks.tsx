@@ -10,6 +10,7 @@ import { AccountView } from '@/screens/login/AccountView';
 import { PaywallScreen } from '@/screens/paywall/PaywallScreen';
 import { PrivacyScreen } from '@/screens/privacy/PrivacyScreen';
 import { ContactScreen } from '@/screens/contact/ContactScreen';
+import { ForgotPasswordScreen } from '@/screens/login/ForgotPasswordScreen';
 import type { LoginStackParamList, RatgeberStackParamList } from '@/navigation/types';
 
 // Shared themed header styling for all stacks.
@@ -72,6 +73,11 @@ export function LoginNavigator() {
         name="Privacy"
         component={PrivacyScreen}
         options={{ title: 'Datenschutz', headerBackTitle: 'Zurück' }}
+      />
+      <LoginStack.Screen
+        name="ForgotPassword"
+        component={ForgotPasswordScreen}
+        options={{ title: 'Passwort vergessen', headerBackTitle: 'Zurück' }}
       />
       <LoginStack.Screen
         name="Contact"

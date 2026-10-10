@@ -68,6 +68,13 @@ function LoginForm() {
         secureTextEntry
         placeholder="••••••••"
       />
+      <Text
+        style={styles.forgot}
+        onPress={() => navigation.navigate('ForgotPassword')}
+        accessibilityRole="link"
+      >
+        Passwort vergessen?
+      </Text>
 
       {error && <Text style={styles.error}>{error}</Text>}
 
@@ -108,6 +115,13 @@ const makeStyles = (colors: Colors) =>
       marginTop: spacing.md,
     },
     error: { color: colors.danger, fontSize: 14, marginBottom: spacing.md },
+    forgot: {
+      alignSelf: 'flex-end',
+      color: colors.accent,
+      fontSize: 14,
+      fontWeight: '600',
+      marginBottom: spacing.md,
+    },
     btn: { marginTop: spacing.sm },
     dividerRow: { flexDirection: 'row', alignItems: 'center', marginVertical: spacing.xl },
     divider: { flex: 1, height: 1, backgroundColor: colors.border },

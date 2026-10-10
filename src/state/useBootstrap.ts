@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { AppState } from 'react-native';
+import { AppState, Platform } from 'react-native';
+import * as Linking from 'expo-linking';
 import { useAppStore } from '@/state/store';
 import { seedDatabase } from '@/db/seed';
 import { authService } from '@/services/auth';
@@ -17,14 +18,36 @@ import { Sentry } from '@/services/sentry';
 export function useBootstrap(): void {
   const setUser = useAppStore((s) => s.setUser);
   const setReady = useAppStore((s) => s.setReady);
+  const setPasswordRecovery = useAppStore((s) => s.setPasswordRecovery);
 
   useEffect(() => {
     let mounted = true;
+
+    // Password-reset link (from the e-mail) opened the app: sign in with its
+    // one-time session and ask for a new password.
+    const handleLink = async (url: string | null): Promise<boolean> => {
+      if (!url) return false;
+      const result = await authService.handleRecoveryLink(url);
+      if (!result) return false;
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        // Don't leave the tokens in the address bar / history.
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+      if ('error' in result) {
+        setPasswordRecovery({ state: 'expired', message: result.error });
+        return false;
+      }
+      setUser(result.user);
+      setPasswordRecovery({ state: 'active' });
+      return true;
+    };
+    const linkSub = Linking.addEventListener('url', ({ url }) => void handleLink(url));
 
     (async () => {
       Sentry.init();
       try {
         await seedDatabase();
+        await handleLink(await Linking.getInitialURL());
         const user = await authService.currentUser();
         if (mounted && user) {
           setUser(user);
@@ -55,7 +78,8 @@ export function useBootstrap(): void {
     return () => {
       mounted = false;
       sub.remove();
+      linkSub.remove();
       unsubscribeAuth();
     };
-  }, [setUser, setReady]);
+  }, [setUser, setReady, setPasswordRecovery]);
 }

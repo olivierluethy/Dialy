@@ -467,6 +467,20 @@ Supabase erlaubt jede E-Mail-Adresse nur **einmal**. Für Tests:
 - Damit der Bestätigungslink in der App landet, unter *Authentication → URL
   Configuration* die **Site URL** auf `http://localhost:8081` setzen (Web).
 
+#### Passwort zurücksetzen
+
+„Passwort vergessen?“ auf der Anmeldeseite schickt einen Link per E-Mail; der
+Link öffnet die App, meldet über ihn an und fragt nach dem neuen Passwort.
+Damit Supabase in die App zurückleitet, die Adressen unter *Authentication →
+URL Configuration → Redirect URLs* erlauben:
+
+- `http://localhost:8081` (Web, Entwicklung)
+- `exp://**` (Expo Go auf dem Handy)
+- `dialy://**` (eigene iOS-/Android-Builds)
+
+Lokale Konten (ohne Server) haben keine bestätigte E-Mail-Adresse und können
+deshalb nicht zurückgesetzt werden.
+
 ---
 
 ## Premium im Dev-Build testen

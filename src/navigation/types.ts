@@ -12,6 +12,7 @@ export type LoginStackParamList = {
   Paywall: undefined;
   Privacy: undefined;
   Contact: undefined;
+  ForgotPassword: undefined;
 };
 
 export type RootTabParamList = {

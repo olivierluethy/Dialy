@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+import * as Linking from 'expo-linking';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getSupabase, isNetworkError, supabaseStorageKey } from '@/sync/supabaseClient';
 import { softDeleteAllUserData } from '@/db/repositories/userData';
@@ -91,6 +93,56 @@ export const authService = {
     return user;
   },
 
+  /**
+   * Sends a password-reset e-mail. The link in it opens the app again (see
+   * handleRecoveryLink). Local accounts have no verified e-mail, so there's
+   * no reset for them.
+   */
+  async requestPasswordReset(email: string): Promise<{ error: string | null }> {
+    const sb = getSupabase();
+    if (!sb) return { error: LOCAL_RESET_UNAVAILABLE };
+    const { error } = await sb.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: recoveryRedirectUrl(),
+    });
+    return { error: error ? translateAuthError(error.message) : null };
+  },
+
+  /**
+   * If `url` is a password-reset link, signs in with its one-time session and
+   * returns the user — or an error for an expired / already used link. Returns
+   * null for any other URL.
+   */
+  async handleRecoveryLink(
+    url: string
+  ): Promise<{ user: AuthUser } | { error: string } | null> {
+    const sb = getSupabase();
+    if (!sb) return null;
+    const params = linkParams(url);
+    if (params.get('error_code') || params.get('error')) {
+      return { error: 'Der Link ist abgelaufen oder wurde schon verwendet. Bitte fordere einen neuen an.' };
+    }
+    if (params.get('type') !== 'recovery') return null;
+    const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
+    if (!accessToken || !refreshToken) return null;
+    const { data, error } = await sb.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
+    if (error || !data.user) {
+      return { error: 'Der Link ist abgelaufen oder wurde schon verwendet. Bitte fordere einen neuen an.' };
+    }
+    return { user: toUser(data.user)! };
+  },
+
+  /** Sets a new password for the signed-in user (after a reset link). */
+  async updatePassword(password: string): Promise<{ error: string | null }> {
+    const sb = getSupabase();
+    if (!sb) return { error: LOCAL_RESET_UNAVAILABLE };
+    const { error } = await sb.auth.updateUser({ password });
+    return { error: error ? translateAuthError(error.message) : null };
+  },
+
   /** Calls `handler` when the server-side session ends; returns an unsubscribe. */
   onSignedOut(handler: () => void): () => void {
     const sb = getSupabase();
@@ -127,6 +179,28 @@ export const authService = {
   },
 };
 
+const LOCAL_RESET_UNAVAILABLE =
+  'Ohne Server kann das Passwort nicht zurückgesetzt werden: Lokale Konten haben keine bestätigte E-Mail-Adresse. Erstelle bei Bedarf ein neues Konto.';
+
+/**
+ * Where the reset link sends the user back to. Must be listed in Supabase
+ * (Authentication → URL Configuration → Redirect URLs), otherwise Supabase
+ * falls back to the Site URL.
+ */
+function recoveryRedirectUrl(): string {
+  if (Platform.OS === 'web' && typeof window !== 'undefined') return window.location.origin;
+  return Linking.createURL('/');
+}
+
+/** Query + fragment parameters of a link (Supabase puts the tokens in the #fragment). */
+function linkParams(url: string): URLSearchParams {
+  const hashAt = url.indexOf('#');
+  const queryAt = url.indexOf('?');
+  const hash = hashAt >= 0 ? url.slice(hashAt + 1) : '';
+  const query = queryAt >= 0 ? url.slice(queryAt + 1, hashAt > queryAt ? hashAt : undefined) : '';
+  return new URLSearchParams(`${query}&${hash}`);
+}
+
 /** User of the session supabase-js persisted on this device, if any. */
 async function storedSessionUser(): Promise<AuthUser | null> {
   try {
@@ -155,6 +229,7 @@ function translateAuthError(msg: string): string {
   if (m.includes('email not confirmed')) {
     return 'Bitte bestätige zuerst deine E-Mail-Adresse (Link in der Bestätigungs-Mail) und melde dich dann an.';
   }
+  if (m.includes('should be different')) return 'Das neue Passwort muss sich vom bisherigen unterscheiden.';
   if (m.includes('rate limit')) return 'Zu viele Versuche. Bitte warte einen Moment und versuche es erneut.';
   if (m.includes('password')) return 'Das Passwort erfüllt die Anforderungen nicht (mind. 6 Zeichen).';
   if (m.includes('email')) return 'Bitte gib eine gültige E-Mail-Adresse ein.';

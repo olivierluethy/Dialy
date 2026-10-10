@@ -6,6 +6,11 @@ import type { ThemeMode } from '@/theme/theme';
 import type { AuthUser } from '@/services/auth';
 import type { GateContext } from '@/policy/gating';
 
+export type PasswordRecovery =
+  | { state: 'idle' }
+  | { state: 'active' }
+  | { state: 'expired'; message: string };
+
 interface AppState {
   // Global Typ-1/Typ-2 selection — persists across tabs and restarts.
   diabetesType: DiabetesType;
@@ -14,6 +19,11 @@ interface AppState {
   // Appearance: dark (default), light, or follow the OS.
   themeMode: ThemeMode;
   setThemeMode: (m: ThemeMode) => void;
+
+  // Password reset: 'active' after opening a valid reset link (set a new
+  // password), 'expired' for an invalid one. Not persisted.
+  passwordRecovery: PasswordRecovery;
+  setPasswordRecovery: (v: PasswordRecovery) => void;
 
   // Auth/session.
   user: AuthUser | null;
@@ -42,6 +52,9 @@ export const useAppStore = create<AppState>()(
 
       themeMode: 'dark',
       setThemeMode: (m) => set({ themeMode: m }),
+
+      passwordRecovery: { state: 'idle' },
+      setPasswordRecovery: (v) => set({ passwordRecovery: v }),
 
       user: null,
       setUser: (u) => set({ user: u }),

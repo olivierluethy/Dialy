@@ -16,6 +16,7 @@ import { fontAssets } from '@/theme/fonts';
 import { useAppStore } from '@/state/store';
 import { useBootstrap } from '@/state/useBootstrap';
 import { RootNavigator } from '@/navigation/RootNavigator';
+import { NewPasswordModal } from '@/screens/login/NewPasswordModal';
 
 export default function App() {
   useBootstrap();
@@ -51,6 +52,8 @@ export default function App() {
         {ready ? (
           <NavigationContainer theme={navTheme}>
             <RootNavigator />
+            {/* Opened by a password-reset link (see useBootstrap). */}
+            <NewPasswordModal />
           </NavigationContainer>
         ) : (
           <View style={styles.loading}>
