@@ -42,13 +42,16 @@ interface IndexedFood {
   lower: string; // lower-case, umlauts kept
 }
 
-// ~1200 foods: loaded once, searched in memory. Rebuilt after re-seeding.
+// Loaded once (foods with carbohydrates only), searched in memory. Rebuilt after re-seeding.
 let index: IndexedFood[] | null = null;
 
 async function loadIndex(): Promise<IndexedFood[]> {
   if (!index) {
     const foods = await foodsRepo.all();
     index = foods
+      // Foods without carbohydrates (meat, fish, oils, spirits …) don't
+      // matter for counting carbs, so search doesn't offer them.
+      .filter((food) => food.carbs_per_100g > 0)
       .map((food) => ({ food, key: foldText(food.name), lower: food.name.toLowerCase() }))
       .sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
   }
