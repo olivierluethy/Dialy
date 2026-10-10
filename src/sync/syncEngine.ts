@@ -1,5 +1,5 @@
 import { getDb } from '@/db/database';
-import { getSupabase } from '@/sync/supabaseClient';
+import { getSupabase, isNetworkError } from '@/sync/supabaseClient';
 import { Sentry } from '@/services/sentry';
 import { nowIso } from '@/utils/id';
 
@@ -26,6 +26,9 @@ type UserTable = (typeof USER_TABLES)[number];
 
 let syncing = false;
 
+// How long to wait for the server before treating the device as offline.
+const ONLINE_CHECK_MS = 6000;
+
 export const syncEngine = {
   isSyncing(): boolean {
     return syncing;
@@ -35,7 +38,17 @@ export const syncEngine = {
   async syncNow(): Promise<{ pushed: number; pulled: number; error?: string }> {
     const sb = getSupabase();
     if (!sb) return { pushed: 0, pulled: 0, error: 'offline' };
-    const { data: userData } = await sb.auth.getUser();
+    // getUser() asks the server (and refreshes an expired token), so it also
+    // tells us whether we're online. Offline, a token refresh is retried for up
+    // to ~30 s, so give up after a few seconds; everything stays queued locally.
+    const reply = await Promise.race([
+      sb.auth.getUser(),
+      new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), ONLINE_CHECK_MS)),
+    ]);
+    if (reply === 'timeout' || (reply.error && isNetworkError(reply.error))) {
+      return { pushed: 0, pulled: 0, error: 'network' };
+    }
+    const userData = reply.data;
     const uid = userData.user?.id;
     if (!uid) return { pushed: 0, pulled: 0, error: 'no-session' };
     if (syncing) return { pushed: 0, pulled: 0, error: 'busy' };

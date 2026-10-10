@@ -505,6 +505,10 @@ ohne externe Konfiguration läuft. Im Code als `TODO(native)` markiert.
 - **Konfliktauflösung: Last-Write-Wins** über `updated_at`.
 - **Löschungen sind weich** (`deleted_at`), nie physisch — so kann eine
   gelöschte Zeile auf einem anderen Gerät nicht wieder auftauchen.
+- **Angemeldet bleiben ohne Internet:** Die Sitzung wird beim Start vom Gerät
+  gelesen (kein Server nötig), abgelaufene Tokens werden im Hintergrund
+  erneuert, sobald wieder eine Verbindung besteht. Tagebuch & Speichern
+  funktionieren offline; nur Anmelden/Registrieren braucht Internet.
 - **Sync-Trigger:** rund um FCM gebaut (kein Polling); lokal Fallback auf
   Sync-on-Foreground + manuelles „Jetzt synchronisieren“.
 

@@ -1,4 +1,5 @@
-import { getSupabase } from '@/sync/supabaseClient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getSupabase, isNetworkError, supabaseStorageKey } from '@/sync/supabaseClient';
 import { softDeleteAllUserData } from '@/db/repositories/userData';
 import { localAuth } from '@/services/localAuth';
 
@@ -72,11 +73,32 @@ export const authService = {
     await sb.auth.signOut();
   },
 
+  /**
+   * The signed-in user, read from the session stored on the device — no
+   * network round trip, so the app opens (and the diary stays usable)
+   * offline. An expired access token is refreshed in the background once a
+   * connection is available. If the server has really ended the session,
+   * supabase-js drops it and emits SIGNED_OUT (see onSignedOut).
+   *
+   * (getSession() isn't used directly: offline with an expired token it
+   * returns no session and retries the refresh for up to ~30 s.)
+   */
   async currentUser(): Promise<AuthUser | null> {
     const sb = getSupabase();
     if (!sb) return localAuth.currentUser();
-    const { data } = await sb.auth.getUser();
-    return toUser(data.user);
+    const user = await storedSessionUser();
+    if (user) void sb.auth.getSession(); // refresh in the background if needed
+    return user;
+  },
+
+  /** Calls `handler` when the server-side session ends; returns an unsubscribe. */
+  onSignedOut(handler: () => void): () => void {
+    const sb = getSupabase();
+    if (!sb) return () => {};
+    const { data } = sb.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') handler();
+    });
+    return () => data.subscription.unsubscribe();
   },
 
   /**
@@ -105,6 +127,18 @@ export const authService = {
   },
 };
 
+/** User of the session supabase-js persisted on this device, if any. */
+async function storedSessionUser(): Promise<AuthUser | null> {
+  try {
+    const raw = await AsyncStorage.getItem(supabaseStorageKey());
+    if (!raw) return null;
+    const stored = JSON.parse(raw) as { user?: { id: string; email?: string | null } };
+    return toUser(stored.user ?? null);
+  } catch {
+    return null;
+  }
+}
+
 function toUser(user: { id: string; email?: string | null } | null): AuthUser | null {
   if (!user) return null;
   return { id: user.id, email: user.email ?? '' };
@@ -113,6 +147,9 @@ function toUser(user: { id: string; email?: string | null } | null): AuthUser | 
 /** Map common Supabase auth errors to simple Swiss-German copy. */
 function translateAuthError(msg: string): string {
   const m = msg.toLowerCase();
+  if (isNetworkError({ message: msg })) {
+    return 'Keine Internetverbindung. Anmelden und Registrieren brauchen Internet – alles andere funktioniert auch offline.';
+  }
   if (m.includes('invalid login')) return 'E-Mail oder Passwort ist falsch.';
   if (m.includes('already registered')) return 'Diese E-Mail ist bereits registriert.';
   if (m.includes('email not confirmed')) {

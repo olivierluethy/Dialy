@@ -14,6 +14,26 @@ import { config, isSupabaseConfigured } from '@/config';
  */
 let client: SupabaseClient | null = null;
 
+/**
+ * Where the session is persisted — the same value supabase-js would derive by
+ * default (so existing sign-ins survive), made explicit so the app can read
+ * the stored session itself while offline (see authService.currentUser).
+ */
+export const supabaseStorageKey = (): string =>
+  `sb-${new URL(config.supabaseUrl).hostname.split('.')[0]}-auth-token`;
+
+/** True for errors caused by a missing connection rather than by the server. */
+export const isNetworkError = (e: unknown): boolean => {
+  const err = e as { name?: string; message?: string } | null;
+  const msg = (err?.message ?? '').toLowerCase();
+  return (
+    err?.name === 'AuthRetryableFetchError' ||
+    msg.includes('failed to fetch') ||
+    msg.includes('network request failed') ||
+    msg.includes('networkerror')
+  );
+};
+
 export function getSupabase(): SupabaseClient | null {
   if (!isSupabaseConfigured()) return null;
   if (!client) {
@@ -22,6 +42,7 @@ export function getSupabase(): SupabaseClient | null {
         storage: AsyncStorage,
         autoRefreshToken: true,
         persistSession: true,
+        storageKey: supabaseStorageKey(),
         detectSessionInUrl: false,
       },
     });

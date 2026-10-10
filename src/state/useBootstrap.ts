@@ -47,9 +47,15 @@ export function useBootstrap(): void {
       }
     });
 
+    // The server ended the session (e.g. password changed elsewhere): sign
+    // out locally too. Offline the session is kept, so this only fires on a
+    // definitive answer from the server.
+    const unsubscribeAuth = authService.onSignedOut(() => setUser(null));
+
     return () => {
       mounted = false;
       sub.remove();
+      unsubscribeAuth();
     };
   }, [setUser, setReady]);
 }

@@ -50,10 +50,6 @@ function LoginForm() {
       <View style={styles.header}>
         <IconBubble name="person" size={28} />
         <Text style={styles.title}>Willkommen</Text>
-        <Text style={styles.subtitle}>
-          Ratgeber & KH-Rechner ohne Konto verfügbar.{'\n'}
-          Mit Konto: Tagebuch.
-        </Text>
       </View>
 
       <TextField
@@ -110,13 +106,6 @@ const makeStyles = (colors: Colors) =>
       fontWeight: '700',
       color: colors.textPrimary,
       marginTop: spacing.md,
-    },
-    subtitle: {
-      fontSize: 15,
-      color: colors.textSecondary,
-      textAlign: 'center',
-      marginTop: spacing.sm,
-      lineHeight: 21,
     },
     error: { color: colors.danger, fontSize: 14, marginBottom: spacing.md },
     btn: { marginTop: spacing.sm },

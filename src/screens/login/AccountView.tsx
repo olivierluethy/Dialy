@@ -58,6 +58,8 @@ export function AccountView() {
     const res = await syncEngine.syncNow();
     if (res.error === 'offline') {
       setSyncMsg('Offline-Modus – kein Server konfiguriert.');
+    } else if (res.error === 'network') {
+      setSyncMsg('Keine Verbindung. Deine Einträge sind auf dem Gerät gespeichert und werden später synchronisiert.');
     } else if (res.error) {
       setSyncMsg('Sync nicht möglich.');
     } else {
@@ -77,21 +79,9 @@ export function AccountView() {
         </View>
       </View>
 
-      <SectionLabel>Konto</SectionLabel>
-      <Card>
-        <Button title="Jetzt synchronisieren" icon="sync" variant="secondary" onPress={syncNow} />
-        {syncMsg && <Text style={styles.syncMsg}>{syncMsg}</Text>}
-        {!isSupabaseConfigured() && (
-          <Text style={styles.offlineNote}>
-            Offline-Modus: Es ist kein Supabase-Server konfiguriert. Alle Daten
-            bleiben lokal auf dem Gerät.
-          </Text>
-        )}
-      </Card>
-
       {/* Dev-only premium toggle (no real IAP in this build). Long-press the
           row to flip the premium flag and test the premium UI. */}
-      <SectionLabel style={styles.spaced}>Premium</SectionLabel>
+      <SectionLabel>Premium</SectionLabel>
       <Pressable onLongPress={togglePremiumDev} delayLongPress={500}>
         <Card>
           <View style={styles.row}>
@@ -128,6 +118,18 @@ export function AccountView() {
           <Text style={[styles.linkText, { color: colors.danger }]}>Daten löschen</Text>
           <Ionicons name="trash" size={18} color={colors.danger} />
         </Pressable>
+      </Card>
+
+      <SectionLabel style={styles.spaced}>Konto</SectionLabel>
+      <Card>
+        <Button title="Jetzt synchronisieren" icon="sync" variant="secondary" onPress={syncNow} />
+        {syncMsg && <Text style={styles.syncMsg}>{syncMsg}</Text>}
+        {!isSupabaseConfigured() && (
+          <Text style={styles.offlineNote}>
+            Offline-Modus: Es ist kein Supabase-Server konfiguriert. Alle Daten
+            bleiben lokal auf dem Gerät.
+          </Text>
+        )}
       </Card>
 
       <Button
