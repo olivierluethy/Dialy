@@ -219,6 +219,11 @@ export function KHRechnerScreen() {
   const addToMeal = () => {
     if (!selected || grams <= 0) return;
     setMeal((m) => [...m, { key: uuidv4(), food: selected, grams }]);
+    closeFood();
+  };
+
+  // Close the food editor without adding anything.
+  const closeFood = () => {
     setSelected(null);
     cardY.current = null;
   };
@@ -403,6 +408,15 @@ export function KHRechnerScreen() {
                     <Text style={styles.foodSource}>{foodSourceText(selected)}</Text>
                   )}
                 </View>
+                <Pressable
+                  onPress={closeFood}
+                  accessibilityRole="button"
+                  accessibilityLabel="Lebensmittel schliessen"
+                  hitSlop={8}
+                  style={styles.closeBtn}
+                >
+                  <Ionicons name="close" size={22} color={colors.textTertiary} />
+                </Pressable>
               </View>
 
               {/* Portion presets (BLV foods have none: grams only) */}
@@ -643,11 +657,13 @@ const makeStyles = (colors: Colors) =>
     categoryScroll: { marginHorizontal: -spacing.lg, marginBottom: spacing.md },
     categoryRow: { gap: spacing.sm, paddingHorizontal: spacing.lg },
     selectedCard: { marginTop: spacing.lg },
-    foodHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.lg },
+    // flex-start keeps the close button top right when the name wraps.
+    foodHeader: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: spacing.lg },
     // flex: 1 lets long names and the source line wrap instead of overflowing.
     foodHeaderText: { flex: 1 },
     foodName: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
     foodSource: { fontSize: 12, color: colors.textTertiary, marginTop: 2 },
+    closeBtn: { marginLeft: spacing.md, marginTop: 1 },
     chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
     gramRow: { flexDirection: 'row', alignItems: 'center' },
     gramField: { flex: 1, marginBottom: spacing.sm },
