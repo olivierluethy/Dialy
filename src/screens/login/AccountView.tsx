@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,10 +8,11 @@ import { ThemeModeControl } from '@/components/SegmentedControl';
 import { Button } from '@/components/Button';
 import { radius, spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
-import { useAppStore } from '@/state/store';
+import { useAppStore, type SyncStatus } from '@/state/store';
 import { authService } from '@/services/auth';
 import { syncEngine } from '@/sync/syncEngine';
 import { isSupabaseConfigured } from '@/config';
+import { formatDate, formatTime } from '@/utils/format';
 
 /** Account state shown on the Login tab once signed in. */
 export function AccountView() {
@@ -22,10 +23,19 @@ export function AccountView() {
   const setUser = useAppStore((s) => s.setUser);
   const isPremium = useAppStore((s) => s.isPremium);
   const togglePremiumDev = useAppStore((s) => s.togglePremiumDev);
-  const [syncMsg, setSyncMsg] = useState<string | null>(null);
+  const syncStatus = useAppStore((s) => s.syncStatus);
+  const lastSyncedAt = useAppStore((s) => s.lastSyncedAt);
+  // Re-render every 30 s so "vor 2 Min." stays current.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+  const sync = describeSync(isSupabaseConfigured(), syncStatus, lastSyncedAt, now);
 
   const logout = async () => {
     await authService.signOut();
+    syncEngine.reset();
     setUser(null);
   };
 
@@ -51,20 +61,6 @@ export function AccountView() {
         },
       ]
     );
-  };
-
-  const syncNow = async () => {
-    setSyncMsg('Synchronisiere…');
-    const res = await syncEngine.syncNow();
-    if (res.error === 'offline') {
-      setSyncMsg('Offline-Modus – kein Server konfiguriert.');
-    } else if (res.error === 'network') {
-      setSyncMsg('Keine Verbindung. Deine Einträge sind auf dem Gerät gespeichert und werden später synchronisiert.');
-    } else if (res.error) {
-      setSyncMsg('Sync nicht möglich.');
-    } else {
-      setSyncMsg(`Synchronisiert: ${res.pushed} gesendet, ${res.pulled} empfangen.`);
-    }
   };
 
   return (
@@ -120,16 +116,14 @@ export function AccountView() {
         </Pressable>
       </Card>
 
-      <SectionLabel style={styles.spaced}>Konto</SectionLabel>
+      {/* Sync runs automatically (after every change, on start and foreground,
+          retrying while offline); this only shows how it's going. */}
+      <SectionLabel style={styles.spaced}>Synchronisierung</SectionLabel>
       <Card>
-        <Button title="Jetzt synchronisieren" icon="sync" variant="secondary" onPress={syncNow} />
-        {syncMsg && <Text style={styles.syncMsg}>{syncMsg}</Text>}
-        {!isSupabaseConfigured() && (
-          <Text style={styles.offlineNote}>
-            Offline-Modus: Es ist kein Supabase-Server konfiguriert. Alle Daten
-            bleiben lokal auf dem Gerät.
-          </Text>
-        )}
+        <View style={styles.row} accessibilityLiveRegion="polite">
+          <Ionicons name={sync.icon} size={20} color={sync.warn ? colors.warn : colors.accent} />
+          <Text style={[styles.rowBody, styles.syncText]}>{sync.text}</Text>
+        </View>
       </Card>
 
       <Button
@@ -158,8 +152,7 @@ const makeStyles = (colors: Colors) =>
     badgeText: { fontSize: 13, color: colors.textSecondary, fontWeight: '600' },
     badgeTextPremium: { color: colors.accent },
     spaced: { marginTop: spacing.xl },
-    syncMsg: { color: colors.textSecondary, fontSize: 13, marginTop: spacing.md },
-    offlineNote: { color: colors.textTertiary, fontSize: 13, marginTop: spacing.md, lineHeight: 18 },
+    syncText: { color: colors.textSecondary, fontSize: 14, lineHeight: 20 },
     row: { flexDirection: 'row', alignItems: 'center' },
     rowBody: { flex: 1, marginLeft: spacing.md },
     rowTitle: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
@@ -173,3 +166,58 @@ const makeStyles = (colors: Colors) =>
     },
     linkText: { fontSize: 16, color: colors.textPrimary },
   });
+
+/** Icon + sentence for the sync status card. */
+function describeSync(
+  configured: boolean,
+  status: SyncStatus,
+  lastSyncedAt: string | null,
+  now: number
+): { icon: keyof typeof Ionicons.glyphMap; text: string; warn: boolean } {
+  if (!configured || status.state === 'disabled') {
+    return {
+      icon: 'phone-portrait-outline',
+      text: 'Offline-Modus: Es ist kein Server konfiguriert. Alle Daten bleiben lokal auf dem Gerät.',
+      warn: false,
+    };
+  }
+  const n = status.pending;
+  const waiting = n === 1 ? '1 Änderung wartet' : `${n} Änderungen warten`;
+  switch (status.state) {
+    case 'syncing':
+      return { icon: 'sync-outline', text: 'Synchronisiere …', warn: false };
+    case 'offline':
+      return {
+        icon: 'cloud-offline-outline',
+        text:
+          n > 0
+            ? `Keine Verbindung – ${waiting} und ${n === 1 ? 'wird' : 'werden'} automatisch nachgeschickt.`
+            : 'Keine Verbindung – deine Einträge sind auf dem Gerät gespeichert.',
+        warn: true,
+      };
+    case 'error':
+      return {
+        icon: 'alert-circle-outline',
+        text: 'Synchronisierung fehlgeschlagen – wird automatisch erneut versucht.',
+        warn: true,
+      };
+    default:
+      if (n > 0) return { icon: 'time-outline', text: `${waiting} auf die Synchronisierung.`, warn: false };
+      return {
+        icon: 'cloud-done-outline',
+        text: lastSyncedAt
+          ? `Alles synchronisiert · ${sinceText(lastSyncedAt, now)}`
+          : 'Noch nicht synchronisiert.',
+        warn: false,
+      };
+  }
+}
+
+/** "gerade eben", "vor 5 Min.", "heute, 14:05" or "3. Oktober 2026, 14:05". */
+function sinceText(iso: string, now: number): string {
+  const minutes = Math.floor((now - new Date(iso).getTime()) / 60_000);
+  if (minutes < 1) return 'gerade eben';
+  if (minutes < 60) return `vor ${minutes} Min.`;
+  const sameDay = new Date(iso).toDateString() === new Date(now).toDateString();
+  return `${sameDay ? 'heute' : formatDate(iso)}, ${formatTime(iso)}`;
+}

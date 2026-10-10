@@ -6,6 +6,14 @@ import type { ThemeMode } from '@/theme/theme';
 import type { AuthUser } from '@/services/auth';
 import type { GateContext } from '@/policy/gating';
 
+/** What the account screen shows about syncing (see sync/syncEngine.ts). */
+export type SyncState = 'disabled' | 'idle' | 'syncing' | 'offline' | 'error';
+export interface SyncStatus {
+  state: SyncState;
+  /** Local changes of the signed-in account not on the server yet. */
+  pending: number;
+}
+
 export type PasswordRecovery =
   | { state: 'idle' }
   | { state: 'active' }
@@ -24,6 +32,15 @@ interface AppState {
   // password), 'expired' for an invalid one. Not persisted.
   passwordRecovery: PasswordRecovery;
   setPasswordRecovery: (v: PasswordRecovery) => void;
+
+  // Sync status (not persisted) and time of the last successful sync.
+  syncStatus: SyncStatus;
+  setSyncStatus: (s: SyncStatus) => void;
+  lastSyncedAt: string | null;
+  setLastSyncedAt: (iso: string | null) => void;
+  // Bumped when a sync brought in remote changes, so lists reload.
+  dataRevision: number;
+  bumpDataRevision: () => void;
 
   // Auth/session.
   user: AuthUser | null;
@@ -56,6 +73,13 @@ export const useAppStore = create<AppState>()(
       passwordRecovery: { state: 'idle' },
       setPasswordRecovery: (v) => set({ passwordRecovery: v }),
 
+      syncStatus: { state: 'idle', pending: 0 },
+      setSyncStatus: (s) => set({ syncStatus: s }),
+      lastSyncedAt: null,
+      setLastSyncedAt: (iso) => set({ lastSyncedAt: iso }),
+      dataRevision: 0,
+      bumpDataRevision: () => set((s) => ({ dataRevision: s.dataRevision + 1 })),
+
       user: null,
       setUser: (u) => set({ user: u }),
 
@@ -80,6 +104,7 @@ export const useAppStore = create<AppState>()(
       partialize: (s) => ({
         diabetesType: s.diabetesType,
         themeMode: s.themeMode,
+        lastSyncedAt: s.lastSyncedAt,
         isPremium: s.isPremium,
       }),
     }

@@ -62,6 +62,8 @@ export function TagebuchScreen() {
   const isPremium = useAppStore((s) => s.isPremium);
   const ctx = { isLoggedIn: user !== null, isPremium };
   const userId = user?.id ?? null;
+  // Changes pulled in by a sync (e.g. from another device) reload the list.
+  const dataRevision = useAppStore((s) => s.dataRevision);
 
   const [groups, setGroups] = useState<DayGroup[]>([]);
   const [loading, setLoading] = useState(true);
@@ -93,7 +95,7 @@ export function TagebuchScreen() {
       return () => {
         active = false;
       };
-    }, [userId, reloadTick])
+    }, [userId, reloadTick, dataRevision])
   );
 
   const itemsByKey = useMemo(() => {

@@ -75,11 +75,20 @@ export function useBootstrap(): void {
     // definitive answer from the server.
     const unsubscribeAuth = authService.onSignedOut(() => setUser(null));
 
+    // Browser: send waiting changes as soon as the connection is back (native
+    // apps retry on a timer and on return to the foreground).
+    const onOnline = () => {
+      if (useAppStore.getState().user) void syncEngine.syncNow();
+    };
+    const isWeb = Platform.OS === 'web' && typeof window !== 'undefined';
+    if (isWeb) window.addEventListener('online', onOnline);
+
     return () => {
       mounted = false;
       sub.remove();
       linkSub.remove();
       unsubscribeAuth();
+      if (isWeb) window.removeEventListener('online', onOnline);
     };
   }, [setUser, setReady, setPasswordRecovery]);
 }

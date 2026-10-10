@@ -507,7 +507,7 @@ ohne externe Konfiguration läuft. Im Code als `TODO(native)` markiert.
   `EXPO_PUBLIC_FEATURE_HEALTH=true`.
 - **FCM (Push/Sync-Trigger):** `src/services/fcm.ts` + Edge-Function
   `supabase/functions/notify-sync`. Ohne Firebase ist FCM ein No-op; der Client
-  synchronisiert beim App-Vordergrund und über „Jetzt synchronisieren“.
+  synchronisiert automatisch (siehe unten).
 - **Sentry:** `src/services/sentry.ts` — No-op ohne DSN.
 
 ---
@@ -523,8 +523,12 @@ ohne externe Konfiguration läuft. Im Code als `TODO(native)` markiert.
   gelesen (kein Server nötig), abgelaufene Tokens werden im Hintergrund
   erneuert, sobald wieder eine Verbindung besteht. Tagebuch & Speichern
   funktionieren offline; nur Anmelden/Registrieren braucht Internet.
-- **Sync-Trigger:** rund um FCM gebaut (kein Polling); lokal Fallback auf
-  Sync-on-Foreground + manuelles „Jetzt synchronisieren“.
+- **Sync-Trigger:** automatisch – nach jeder lokalen Änderung (2 s gebündelt),
+  beim App-Start, nach dem Anmelden und beim Zurückkehren in die App; im
+  Browser zusätzlich, sobald die Verbindung zurück ist. Offline wiederholt die
+  App den Versuch mit wachsenden Pausen (30 s bis 5 Min.). Einen Button gibt es
+  nicht; unter Konto → „Synchronisierung“ steht nur der Status. FCM (Server
+  stösst den Client an) ist vorbereitet, aber aus.
 
 ---
 

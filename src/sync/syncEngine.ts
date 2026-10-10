@@ -2,6 +2,7 @@ import { getDb } from '@/db/database';
 import { getSupabase, isNetworkError } from '@/sync/supabaseClient';
 import { Sentry } from '@/services/sentry';
 import { nowIso } from '@/utils/id';
+import { useAppStore } from '@/state/store';
 
 /**
  * Offline-first sync engine implementing the §7 contract.
@@ -13,8 +14,11 @@ import { nowIso } from '@/utils/id';
  *    regardless of origin).
  *  - Deletes are SOFT (`deleted_at`), never physical, so a deleted row can't
  *    resurface on another device.
- *  - Trigger: designed around FCM (server pings client) — no polling. Locally
- *    we fall back to sync-on-foreground and a manual `syncNow()`.
+ *  - Triggers: automatic. Every local change schedules a sync (debounced, so a
+ *    burst of changes goes out together); also on app start, sign-in and
+ *    return to the foreground. Without a connection it retries with growing
+ *    pauses. (FCM — the server pinging the client — is prepared but off.)
+ *  - The account screen shows the resulting status (SyncStatus in the store).
  *
  * No-ops cleanly when Supabase isn't configured or no user is signed in.
  */
@@ -25,56 +29,150 @@ const USER_TABLES = ['meal_entries', 'sport_entries', 'bg_readings'] as const;
 type UserTable = (typeof USER_TABLES)[number];
 
 let syncing = false;
+// A sync was requested while one was running: run once more afterwards.
+let rerun = false;
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
 // How long to wait for the server before treating the device as offline.
 const ONLINE_CHECK_MS = 6000;
+// Pause after a local change before syncing (bundles quick successive edits).
+const DEBOUNCE_MS = 2000;
+// Retry pauses while offline / failing: 30 s, doubling up to 5 min.
+const RETRY_MIN_MS = 30_000;
+const RETRY_MAX_MS = 5 * 60_000;
+let retryDelay = RETRY_MIN_MS;
+
+const clearTimer = (t: ReturnType<typeof setTimeout> | null) => {
+  if (t) clearTimeout(t);
+};
+
+type SyncResult = { pushed: number; pulled: number; error?: string };
 
 export const syncEngine = {
   isSyncing(): boolean {
     return syncing;
   },
 
-  /** Manual / on-foreground sync. Push local changes, then pull remote. */
-  async syncNow(): Promise<{ pushed: number; pulled: number; error?: string }> {
-    const sb = getSupabase();
-    if (!sb) return { pushed: 0, pulled: 0, error: 'offline' };
-    // getUser() asks the server (and refreshes an expired token), so it also
-    // tells us whether we're online. Offline, a token refresh is retried for up
-    // to ~30 s, so give up after a few seconds; everything stays queued locally.
-    const reply = await Promise.race([
-      sb.auth.getUser(),
-      new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), ONLINE_CHECK_MS)),
-    ]);
-    if (reply === 'timeout' || (reply.error && isNetworkError(reply.error))) {
-      return { pushed: 0, pulled: 0, error: 'network' };
-    }
-    const userData = reply.data;
-    const uid = userData.user?.id;
-    if (!uid) return { pushed: 0, pulled: 0, error: 'no-session' };
-    if (syncing) return { pushed: 0, pulled: 0, error: 'busy' };
+  /** Sync soon — called after every local change (see enqueueSync). */
+  scheduleSync(): void {
+    if (!getSupabase()) return;
+    clearTimer(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      debounceTimer = null;
+      void syncEngine.syncNow();
+    }, DEBOUNCE_MS);
+  },
 
+  /** Stop pending timers and forget the status (e.g. on sign-out). */
+  reset(): void {
+    clearTimer(debounceTimer);
+    clearTimer(retryTimer);
+    debounceTimer = retryTimer = null;
+    retryDelay = RETRY_MIN_MS;
+    useAppStore.getState().setSyncStatus({ state: 'idle', pending: 0 });
+    useAppStore.getState().setLastSyncedAt(null);
+  },
+
+  /** Push local changes, then pull remote ones; updates the sync status. */
+  async syncNow(): Promise<SyncResult> {
+    const store = useAppStore.getState();
+    if (!getSupabase()) {
+      store.setSyncStatus({ state: 'disabled', pending: 0 });
+      return { pushed: 0, pulled: 0, error: 'offline' };
+    }
+    if (syncing) {
+      rerun = true;
+      return { pushed: 0, pulled: 0, error: 'busy' };
+    }
     syncing = true;
+    clearTimer(retryTimer);
+    retryTimer = null;
+    store.setSyncStatus({ ...store.syncStatus, state: 'syncing' });
+
+    let result: SyncResult;
+    let uid: string | undefined;
     try {
-      const pushed = await pushPending(uid);
-      const pulled = await pullRemote(uid);
-      return { pushed, pulled };
+      result = await runSync((id) => (uid = id));
     } catch (e) {
       Sentry.captureException(e);
-      return { pushed: 0, pulled: 0, error: String(e) };
+      result = { pushed: 0, pulled: 0, error: String(e) };
     } finally {
       syncing = false;
     }
+
+    const pending = uid ? await pendingCount(uid) : 0;
+    const signedOut = result.error === 'no-session';
+    const failed = result.error !== undefined && !signedOut;
+    if (failed || pending > 0) {
+      // Offline or a failed push: try again later, with growing pauses.
+      retryTimer = setTimeout(() => void syncEngine.syncNow(), retryDelay);
+      retryDelay = Math.min(retryDelay * 2, RETRY_MAX_MS);
+    } else {
+      retryDelay = RETRY_MIN_MS;
+    }
+    const after = useAppStore.getState();
+    after.setSyncStatus({
+      state: result.error === 'network' ? 'offline' : failed ? 'error' : 'idle',
+      pending,
+    });
+    if (!failed && !signedOut) after.setLastSyncedAt(nowIso());
+    if (result.pulled > 0) after.bumpDataRevision();
+
+    if (rerun) {
+      rerun = false;
+      void syncEngine.syncNow();
+    }
+    return result;
   },
 };
 
+async function runSync(onUser: (uid: string) => void): Promise<SyncResult> {
+  const sb = getSupabase()!;
+  // getUser() asks the server (and refreshes an expired token), so it also
+  // tells us whether we're online. Offline, a token refresh is retried for up
+  // to ~30 s, so give up after a few seconds; everything stays queued locally.
+  const reply = await Promise.race([
+    sb.auth.getUser(),
+    new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), ONLINE_CHECK_MS)),
+  ]);
+  if (reply === 'timeout' || (reply.error && isNetworkError(reply.error))) {
+    // Still count what's waiting, for the status line.
+    const stored = useAppStore.getState().user?.id;
+    if (stored) onUser(stored);
+    return { pushed: 0, pulled: 0, error: 'network' };
+  }
+  const uid = reply.data.user?.id;
+  if (!uid) return { pushed: 0, pulled: 0, error: 'no-session' };
+  onUser(uid);
+  const { pushed, failed } = await pushPending(uid);
+  const pulled = await pullRemote(uid);
+  if (failed > 0) return { pushed, pulled, error: 'push-failed' };
+  return { pushed, pulled };
+}
+
+/** Changed rows of `uid` still queued, i.e. not on the server yet. */
+async function pendingCount(uid: string): Promise<number> {
+  const db = await getDb();
+  const owned = (table: string) =>
+    `EXISTS (SELECT 1 FROM ${table} t WHERE q.table_name = '${table}' AND t.id = q.row_id AND t.user_id = ?)`;
+  const row = await db.getFirstAsync<{ n: number }>(
+    `SELECT COUNT(DISTINCT q.table_name || ':' || q.row_id) AS n FROM sync_queue q
+     WHERE ${USER_TABLES.map(owned).join(' OR ')}`,
+    USER_TABLES.map(() => uid)
+  );
+  return row?.n ?? 0;
+}
+
 /** Push every queued local row to Supabase (upsert; LWW handled by updated_at). */
-async function pushPending(uid: string): Promise<number> {
+async function pushPending(uid: string): Promise<{ pushed: number; failed: number }> {
   const sb = getSupabase()!;
   const db = await getDb();
   const queued = await db.getAllAsync<{ id: number; table_name: string; row_id: string }>(
     'SELECT id, table_name, row_id FROM sync_queue ORDER BY id ASC'
   );
   let pushed = 0;
+  let failed = 0;
 
   for (const item of queued) {
     if (!USER_TABLES.includes(item.table_name as UserTable)) {
@@ -99,12 +197,13 @@ async function pushPending(uid: string): Promise<number> {
     if (error) {
       // Leave it queued to retry on the next sync. Don't block the rest.
       Sentry.captureException(error);
+      failed += 1;
       continue;
     }
     await db.runAsync('DELETE FROM sync_queue WHERE id = ?', [item.id]);
     pushed += 1;
   }
-  return pushed;
+  return { pushed, failed };
 }
 
 /**
