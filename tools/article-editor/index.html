@@ -6,9 +6,11 @@
 <title>Dialy-Editor</title>
 <!--
   Dialy-Editor: create, edit and remove the Ratgeber articles in Supabase
-  (table public.articles) and read the Kontakt messages (contact_messages).
+  (table public.articles), edit, add and deactivate KH-Rechner foods
+  (public.foods) and read the Kontakt messages (contact_messages).
   Start with `npm run editor`; needs an account in public.article_editors
-  (supabase/migrations/0006_article_editors.sql, 0008_contact_messages_editors.sql).
+  (supabase/migrations/0006_article_editors.sql, 0008_contact_messages_editors.sql,
+  0010_food_edits.sql).
 -->
 <style>
   :root {
@@ -141,11 +143,25 @@
   .p-meta { font-size: 13px; color: var(--text-3); margin-bottom: 16px; }
   .p-body p { margin: 0; color: var(--text-2); font-size: 16px; line-height: 24px; min-height: 12px; }
 
+  /* Lebensmittel */
+  #food-form { padding: 22px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 14px; }
+  fieldset.section { border: 0; padding: 0; margin: 20px 0 0; min-width: 0; }
+  fieldset.section legend { font-size: 13px; font-weight: 600; color: var(--text-2); padding: 0; margin-bottom: 8px; }
+  .cats { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 6px 14px; }
+  .portion { display: grid; grid-template-columns: minmax(0, 1fr) 110px auto; gap: 8px; margin-bottom: 8px; }
+  .list li.inactive .t { text-decoration: line-through; color: var(--text-3); }
+  .hint { margin-top: 14px; font-size: 13px; color: var(--warn); }
+  .notice { padding: 16px 18px; margin-bottom: 20px; }
+  .p-rows { margin: 12px 0 0; padding: 0; list-style: none; }
+  .p-rows li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-top: 1px solid var(--border); font-size: 14px; }
+  .p-rows li span:last-child { font-weight: 600; white-space: nowrap; }
+
   @media (max-width: 1100px) { main { grid-template-columns: 1fr; } .preview { position: static; max-height: none; } }
   @media (max-width: 760px) {
     .layout { grid-template-columns: 1fr; padding: 16px; }
     .list { max-height: 260px; }
-    .grid { grid-template-columns: 1fr; }
+    .grid, .grid3 { grid-template-columns: 1fr; }
     header { padding: 12px 16px; gap: 8px; }
     header h1 span, #user-email { display: none; }
     .tabs { margin-left: 0; }
@@ -188,6 +204,7 @@
     <h1>Dialy <span>· Editor</span></h1>
     <nav class="tabs" role="tablist">
       <button class="tab active" role="tab" data-tab="articles">Artikel</button>
+      <button class="tab" role="tab" data-tab="foods">Lebensmittel</button>
       <button class="tab" role="tab" data-tab="messages">Nachrichten<span class="count" id="msg-badge" hidden></span></button>
     </nav>
     <span class="spacer"></span>
@@ -260,6 +277,78 @@
         <div class="p-body" id="p-body"></div>
       </div>
     </main>
+  </div>
+
+  <div class="layout" id="panel-foods" hidden>
+    <aside>
+      <button class="btn primary" id="food-new">+ Neues Lebensmittel</button>
+      <input id="food-search" type="search" placeholder="Suchen …">
+      <div class="filters">
+        <select id="food-filter" aria-label="Status">
+          <option value="">Alle</option>
+          <option value="active">Aktiv</option>
+          <option value="inactive">Inaktiv</option>
+          <option value="edited">Bearbeitet</option>
+          <option value="custom">Neu angelegt</option>
+        </select>
+        <select id="food-category" aria-label="Kategorie">
+          <option value="">Alle Kategorien</option>
+        </select>
+        <button class="btn" id="food-reload" title="Neu laden">↻</button>
+      </div>
+      <ul id="food-list" class="list card"></ul>
+      <div class="muted" id="food-count"></div>
+    </aside>
+
+    <div>
+      <div class="card notice error" id="food-error" hidden></div>
+      <main>
+        <form id="food-form" class="card" novalidate>
+          <div class="p-cat" id="food-source"></div>
+          <div class="grid" style="margin-top: 12px">
+            <div class="full"><label for="ff-name">Name</label><input id="ff-name" required maxlength="200"></div>
+            <div>
+              <label for="ff-group">Untergruppe</label>
+              <input id="ff-group" list="food-groups" maxlength="100" placeholder="wird unter dem Namen angezeigt">
+              <datalist id="food-groups"></datalist>
+            </div>
+            <div><label for="ff-gi">Glykämischer Index</label><input id="ff-gi" type="number" min="0" max="150" step="1" placeholder="unbekannt"></div>
+          </div>
+          <div class="grid3">
+            <div><label for="ff-carbs">Kohlenhydrate (g / 100 g)</label><input id="ff-carbs" type="number" min="0" max="100" step="any" required></div>
+            <div><label for="ff-sugar">davon Zucker (g / 100 g)</label><input id="ff-sugar" type="number" min="0" max="100" step="any" required></div>
+            <div><label for="ff-fat">Fett (g / 100 g)</label><input id="ff-fat" type="number" min="0" max="100" step="any" required></div>
+          </div>
+          <fieldset class="section">
+            <legend>Kategorien (Filter im KH-Rechner)</legend>
+            <div class="cats" id="ff-cats"></div>
+          </fieldset>
+          <fieldset class="section">
+            <legend>Portionen</legend>
+            <div id="ff-portions"></div>
+            <button class="btn" type="button" id="ff-add-portion">+ Portion</button>
+            <div class="muted" style="margin-top: 6px">Ohne Portionen wird im KH-Rechner nur in Gramm gerechnet.</div>
+          </fieldset>
+          <div class="actions">
+            <button class="btn primary" type="submit" id="food-save">Speichern</button>
+            <button class="btn" type="button" id="food-revert">Verwerfen</button>
+            <span id="food-status"></span>
+            <span class="spacer"></span>
+            <button class="btn danger" type="button" id="food-deactivate">Deaktivieren</button>
+            <button class="btn" type="button" id="food-activate" hidden>Aktivieren</button>
+          </div>
+        </form>
+
+        <div class="card preview" aria-label="Vorschau">
+          <div class="label">Vorschau im KH-Rechner</div>
+          <div class="p-title" id="fp-name"></div>
+          <div class="p-meta" id="fp-meta"></div>
+          <div class="p-body"><p id="fp-per100"></p></div>
+          <ul class="p-rows" id="fp-portions"></ul>
+          <div class="hint" id="fp-hint" hidden></div>
+        </div>
+      </main>
+    </div>
   </div>
 
   <div class="layout" id="panel-messages" hidden>
@@ -386,8 +475,9 @@
   });
 
   async function logout() {
-    if (dirty && !confirm('Ungespeicherte Änderungen verwerfen?')) return;
+    if ((dirty || foodDirty) && !confirm('Ungespeicherte Änderungen verwerfen?')) return;
     dirty = false;
+    foodDirty = false;
     await sb.auth.signOut();
     show('login');
   }
@@ -417,16 +507,17 @@
     }
     $('user-email').textContent = user.email;
     show('editor');
-    showTab(store.get(TAB_KEY) === 'messages' ? 'messages' : 'articles');
+    showTab(TABS.includes(store.get(TAB_KEY)) ? store.get(TAB_KEY) : 'articles');
     loadMessages();
+    foodsReady = loadFoods().then(() => { if (!currentFood && !foodDirty) fillFood(null); });
     await loadArticles();
     if (!current) newArticle();
   }
 
   // ---------------------------------------------------------------- tabs
+  const TABS = ['articles', 'foods', 'messages'];
   function showTab(tab) {
-    $('panel-articles').hidden = tab !== 'articles';
-    $('panel-messages').hidden = tab !== 'messages';
+    TABS.forEach((t) => { $('panel-' + t).hidden = t !== tab; });
     document.querySelectorAll('.tab').forEach((b) => {
       b.classList.toggle('active', b.dataset.tab === tab);
       b.setAttribute('aria-selected', String(b.dataset.tab === tab));
@@ -554,6 +645,21 @@
           href: `mailto:${email}?subject=${encodeURIComponent('Dialy: ' + m.food_name)}`,
         })
       : null;
+    // Jump to the food in the Lebensmittel tab: the reported one, or a new
+    // one prefilled with the suggested values.
+    let food = null;
+    if (m.kind === 'food_fix' && m.food_id) {
+      food = el('button', { className: 'btn', textContent: 'Lebensmittel öffnen' });
+      food.addEventListener('click', () => openFood(m.food_id));
+    } else if (m.kind === 'new_food') {
+      food = el('button', { className: 'btn', textContent: 'Als Lebensmittel anlegen' });
+      food.addEventListener('click', () => draftFood({
+        name: m.food_name,
+        carbs_per_100g: m.carbs_per_100g,
+        sugar_per_100g: m.sugar_per_100g,
+        fat_per_100g: m.fat_per_100g,
+      }));
+    }
 
     box.replaceChildren(
       el('div', { className: 'p-cat', textContent: KIND_LABEL[m.kind] || m.kind }),
@@ -564,7 +670,7 @@
       m.message
         ? el('div', { className: 'msg-text', textContent: m.message })
         : el('p', { className: 'muted', textContent: 'Keine Bemerkung.' }),
-      el('div', { className: 'actions' }, toggle, reply, el('span', { id: 'msg-status' })));
+      el('div', { className: 'actions' }, toggle, reply, food, el('span', { id: 'msg-status' })));
   }
 
   async function setHandled(m, handled, button) {
@@ -761,8 +867,371 @@
   $('delete').addEventListener('click', () => setDeleted(true));
   $('restore').addEventListener('click', () => setDeleted(false));
 
+  // ---------------------------------------------------------------- foods
+  // The foods the app ships with come from the editor server (/foods.json,
+  // the same data the app seeds). public.foods holds a full row for every
+  // food edited, added or deactivated here; the app applies those rows over
+  // its bundled foods. Bundled foods without a row are shown as they ship.
+  const FOOD_COLUMNS = 'id, created_at, updated_at, deleted_at, name, food_group, categories, ' +
+    'carbs_per_100g, sugar_per_100g, fat_per_100g, glycemic_index, portions, active';
+  const FOOD_LIST_LIMIT = 200;
+  const collator = new Intl.Collator('de');
+  let foodCategories = []; // [{ name, label }]
+  let baseFoods = new Map(); // id -> bundled food
+  let foodEdits = new Map(); // id -> row of public.foods
+  let foods = []; // merged, by name
+  let currentFood = null; // food being edited; null = new
+  let foodDirty = false;
+  let foodsReady = Promise.resolve();
+
+  const sourceLabel = (id) =>
+    id.startsWith('blv-') ? 'BLV (Schweizer Nährwertdatenbank)'
+      : id.startsWith('bls-') ? 'BLS 4.0 (Max Rubner-Institut)'
+      : id.startsWith('off-') ? 'Open Food Facts'
+      : id.startsWith('brand-') ? 'Herstellerangaben'
+      : id.startsWith('custom-') ? 'Im Editor angelegt'
+      : 'Dialy (kuratiert)';
+  const num = (v) => (v === null || v === undefined || v === '' ? NaN : Number(v));
+  const fmt = (v) => (Number.isFinite(v) ? String(Math.round(v * 10) / 10).replace('.', ',') : '–');
+
+  function setFoodStatus(text, kind) {
+    $('food-status').textContent = text;
+    $('food-status').className = kind || '';
+  }
+
+  function fromEdit(row) {
+    return {
+      id: row.id,
+      name: row.name,
+      food_group: row.food_group,
+      categories: row.categories ? row.categories.split(';') : [],
+      carbs_per_100g: Number(row.carbs_per_100g),
+      sugar_per_100g: Number(row.sugar_per_100g),
+      fat_per_100g: Number(row.fat_per_100g),
+      glycemic_index: row.glycemic_index === null ? null : Number(row.glycemic_index),
+      portions: Array.isArray(row.portions) ? row.portions : [],
+    };
+  }
+
+  function toRow(food, active) {
+    return {
+      id: food.id,
+      name: food.name,
+      food_group: food.food_group,
+      categories: food.categories.join(';'),
+      carbs_per_100g: food.carbs_per_100g,
+      sugar_per_100g: food.sugar_per_100g,
+      fat_per_100g: food.fat_per_100g,
+      glycemic_index: food.glycemic_index,
+      portions: food.portions,
+      active,
+    };
+  }
+
+  function mergeFoods() {
+    const ids = new Set([...baseFoods.keys(), ...foodEdits.keys()]);
+    foods = [...ids].map((id) => {
+      const edit = foodEdits.get(id) || null;
+      const food = edit ? fromEdit(edit) : baseFoods.get(id);
+      return {
+        ...food,
+        active: edit ? edit.active && !edit.deleted_at : true,
+        edit,
+        custom: !baseFoods.has(id),
+        key: fold(`${food.name} ${food.food_group}`),
+      };
+    }).sort((a, b) => collator.compare(a.name, b.name));
+    if (currentFood) currentFood = foods.find((f) => f.id === currentFood.id) || null;
+  }
+
+  function showFoodError(text) {
+    $('food-error').textContent = text || '';
+    $('food-error').hidden = !text;
+  }
+
+  async function loadFoods() {
+    $('food-reload').disabled = true;
+    showFoodError('');
+    try {
+      const reply = await fetch('foods.json', { cache: 'no-store' });
+      if (!reply.ok) throw new Error((await reply.text()) || `HTTP ${reply.status}`);
+      const data = await reply.json();
+      foodCategories = data.categories;
+      baseFoods = new Map(data.foods.map((f) => [f.id, f]));
+    } catch (e) {
+      showFoodError('Die Lebensmittel der App konnten nicht geladen werden. Editor mit "npm run editor" starten (Node 22.18 oder neuer). ' + e.message);
+    }
+    const rows = [];
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await sb.from('foods').select(FOOD_COLUMNS).order('id').range(from, from + 999);
+      if (error) {
+        showFoodError(/active|uuid|does not exist|schema cache/i.test(error.message)
+          ? 'Lebensmittel bearbeiten ist in Supabase noch nicht eingerichtet. Führe im SQL Editor supabase/migrations/0010_food_edits.sql aus.'
+          : 'Änderungen konnten nicht geladen werden: ' + errorText(error));
+        break;
+      }
+      rows.push(...data);
+      if (data.length < 1000) break;
+    }
+    foodEdits = new Map(rows.map((r) => [r.id, r]));
+    $('food-reload').disabled = false;
+    mergeFoods();
+
+    // Filters and inputs: the app's categories plus any others in the data.
+    const names = new Set(foodCategories.map((c) => c.name));
+    const extra = [...new Set(foods.flatMap((f) => f.categories))].filter((c) => !names.has(c));
+    foodCategories = [...foodCategories, ...extra.map((c) => ({ name: c, label: c }))];
+    const selected = $('food-category').value;
+    $('food-category').replaceChildren(el('option', { value: '', textContent: 'Alle Kategorien' }),
+      ...foodCategories.map((c) => el('option', { value: c.name, textContent: c.label })));
+    $('food-category').value = selected;
+    $('ff-cats').replaceChildren(...foodCategories.map((c) =>
+      el('label', { className: 'check', title: c.name },
+        el('input', { type: 'checkbox', value: c.name }), c.label)));
+    $('food-groups').replaceChildren(...[...new Set(foods.map((f) => f.food_group).filter(Boolean))]
+      .sort(collator.compare).map((g) => el('option', { value: g })));
+    renderFoods();
+  }
+  $('food-reload').addEventListener('click', () => {
+    if (!confirmFoodDiscard()) return;
+    foodDirty = false;
+    foodsReady = loadFoods().then(() => fillFood(currentFood));
+  });
+
+  function visibleFoods() {
+    const q = fold($('food-search').value.trim());
+    const terms = q.split(/[\s,;/]+/).filter(Boolean);
+    const filter = $('food-filter').value;
+    const category = $('food-category').value;
+    return foods.filter((f) =>
+      (!filter ||
+        (filter === 'active' && f.active) || (filter === 'inactive' && !f.active) ||
+        (filter === 'edited' && f.edit && !f.custom) || (filter === 'custom' && f.custom)) &&
+      (!category || f.categories.includes(category)) &&
+      (terms.every((t) => f.key.includes(t)) || f.id.toLowerCase() === q));
+  }
+
+  function renderFoods() {
+    const visible = visibleFoods();
+    $('food-list').replaceChildren(...visible.slice(0, FOOD_LIST_LIMIT).map((f) => {
+      const li = el('li', {
+        className: (currentFood && currentFood.id === f.id ? 'active ' : '') + (f.active ? '' : 'inactive'),
+      },
+        el('div', { className: 't', textContent: f.name }),
+        el('div', { className: 'm' },
+          f.active ? null : badge('inaktiv', 'del'),
+          f.custom ? badge('neu', 'done') : f.edit ? badge('bearbeitet', 'open') : null,
+          `${fmt(f.carbs_per_100g)} g KH${f.food_group ? ' · ' + f.food_group : ''}`));
+      li.addEventListener('click', () => selectFood(f));
+      return li;
+    }));
+    if (visible.length === 0) {
+      $('food-list').append(el('li', { className: 'muted', textContent: 'Keine Lebensmittel.' }));
+    }
+    const inactive = foods.filter((f) => !f.active).length;
+    $('food-count').textContent =
+      (visible.length > FOOD_LIST_LIMIT
+        ? `${visible.length} Treffer, die ersten ${FOOD_LIST_LIMIT} angezeigt`
+        : `${visible.length} Treffer`) +
+      ` · ${foods.length} insgesamt, ${foodEdits.size} bearbeitet, ${inactive} inaktiv`;
+  }
+  ['food-search', 'food-filter', 'food-category'].forEach((id) => $(id).addEventListener('input', renderFoods));
+
+  // -- form
+  const ff = {
+    name: $('ff-name'), group: $('ff-group'), gi: $('ff-gi'),
+    carbs: $('ff-carbs'), sugar: $('ff-sugar'), fat: $('ff-fat'),
+  };
+
+  function addPortionRow(p) {
+    const label = el('input', { className: 'pl', value: p ? p.label : '', placeholder: 'z. B. 1 Scheibe', maxLength: 80 });
+    label.setAttribute('aria-label', 'Bezeichnung');
+    const grams = el('input', { className: 'pg', type: 'number', min: '1', step: 'any', value: p ? p.grams : '', placeholder: 'Gramm' });
+    grams.setAttribute('aria-label', 'Gramm');
+    const remove = el('button', { className: 'btn', type: 'button', textContent: '×', title: 'Portion entfernen' });
+    const row = el('div', { className: 'portion' }, label, grams, remove);
+    remove.addEventListener('click', () => {
+      row.remove();
+      foodChanged();
+    });
+    $('ff-portions').append(row);
+    return row;
+  }
+  $('ff-add-portion').addEventListener('click', () => {
+    addPortionRow(null).querySelector('.pl').focus();
+    foodChanged();
+  });
+
+  // draft: values for a new food (from a Kontakt message); counts as unsaved.
+  function fillFood(f, draft) {
+    const src = f || draft || {};
+    ff.name.value = src.name || '';
+    ff.group.value = src.food_group || '';
+    ff.gi.value = src.glycemic_index ?? '';
+    ff.carbs.value = src.carbs_per_100g ?? '';
+    ff.sugar.value = src.sugar_per_100g ?? '';
+    ff.fat.value = src.fat_per_100g ?? '';
+    $('ff-cats').querySelectorAll('input').forEach((c) => {
+      c.checked = (src.categories || []).includes(c.value);
+    });
+    $('ff-portions').replaceChildren();
+    (src.portions || []).forEach(addPortionRow);
+    $('food-source').textContent = (f ? sourceLabel(f.id) : 'Neues Lebensmittel').toUpperCase();
+    $('food-deactivate').hidden = !f || !f.active;
+    $('food-activate').hidden = !f || f.active;
+    $('food-revert').disabled = !f && !draft;
+    foodDirty = !!draft;
+    setFoodStatus(draft ? 'Ungespeichert'
+      : !f ? 'Neues Lebensmittel'
+      : f.edit ? `Zuletzt geändert: ${new Date(f.edit.updated_at).toLocaleString('de-CH')}`
+      : 'Werte wie ausgeliefert');
+    updateFoodPreview();
+    renderFoods();
+  }
+
+  function readFood() {
+    const portions = [...$('ff-portions').children]
+      .map((r) => ({ label: r.querySelector('.pl').value.trim(), grams: num(r.querySelector('.pg').value) }))
+      .filter((p) => p.label || !Number.isNaN(p.grams));
+    return {
+      name: ff.name.value.trim(),
+      food_group: ff.group.value.trim(),
+      categories: [...$('ff-cats').querySelectorAll('input:checked')].map((c) => c.value),
+      carbs_per_100g: num(ff.carbs.value),
+      sugar_per_100g: num(ff.sugar.value),
+      fat_per_100g: num(ff.fat.value),
+      glycemic_index: ff.gi.value.trim() === '' ? null : num(ff.gi.value),
+      portions,
+    };
+  }
+
+  // Same limits as the check constraint in 0010_food_edits.sql.
+  function foodProblems(f) {
+    const problems = [];
+    const per100 = (v) => Number.isFinite(v) && v >= 0 && v <= 100;
+    if (!f.name) problems.push('Name fehlt.');
+    if (!per100(f.carbs_per_100g)) problems.push('Kohlenhydrate: 0 bis 100 g.');
+    if (!per100(f.sugar_per_100g)) problems.push('Zucker: 0 bis 100 g.');
+    else if (f.sugar_per_100g > f.carbs_per_100g) problems.push('Zucker kann nicht mehr sein als die Kohlenhydrate.');
+    if (!per100(f.fat_per_100g)) problems.push('Fett: 0 bis 100 g.');
+    if (f.glycemic_index !== null && !(f.glycemic_index >= 0 && f.glycemic_index <= 150)) {
+      problems.push('Glykämischer Index: 0 bis 150 oder leer.');
+    }
+    if (f.portions.some((p) => !p.label || !(p.grams > 0))) {
+      problems.push('Jede Portion braucht eine Bezeichnung und Gramm.');
+    }
+    return problems;
+  }
+
+  function updateFoodPreview() {
+    const f = readFood();
+    const active = currentFood ? currentFood.active : true;
+    $('fp-name').textContent = f.name || 'Name';
+    $('fp-meta').textContent = [f.food_group, currentFood && `Quelle: ${sourceLabel(currentFood.id)}`]
+      .filter(Boolean).join(' · ');
+    $('fp-per100').textContent = `Pro 100 g: ${fmt(f.carbs_per_100g)} g KH · ${fmt(f.sugar_per_100g)} g Zucker · ` +
+      `${fmt(f.fat_per_100g)} g Fett · GI ${f.glycemic_index === null ? 'k.A.' : fmt(f.glycemic_index)}`;
+    $('fp-portions').replaceChildren(...f.portions.map((p) =>
+      el('li', {}, el('span', { textContent: `${p.label || 'Portion'} (${fmt(p.grams)} g)` }),
+        el('span', { textContent: `${fmt((p.grams * f.carbs_per_100g) / 100)} g KH` }))));
+    const hint = !active ? 'Inaktiv: erscheint nicht im KH-Rechner.'
+      : f.carbs_per_100g === 0 ? 'Ohne Kohlenhydrate erscheint das Lebensmittel nicht im KH-Rechner.'
+      : '';
+    $('fp-hint').textContent = hint;
+    $('fp-hint').hidden = !hint;
+  }
+
+  function foodChanged() {
+    foodDirty = true;
+    $('food-revert').disabled = false;
+    setFoodStatus('Ungespeicherte Änderungen');
+    updateFoodPreview();
+  }
+  $('food-form').addEventListener('input', foodChanged);
+
+  function confirmFoodDiscard() {
+    return !foodDirty || confirm('Ungespeicherte Änderungen verwerfen?');
+  }
+
+  function selectFood(f) {
+    if (currentFood && f.id === currentFood.id) return;
+    if (!confirmFoodDiscard()) return;
+    currentFood = f;
+    fillFood(f);
+  }
+
+  function newFood() {
+    if (!confirmFoodDiscard()) return;
+    currentFood = null;
+    fillFood(null);
+    ff.name.focus();
+  }
+  $('food-new').addEventListener('click', newFood);
+  $('food-revert').addEventListener('click', () => { if (confirmFoodDiscard()) fillFood(currentFood); });
+
+  // From a Kontakt message: the reported food, found by its id.
+  async function openFood(id) {
+    await foodsReady;
+    if (!confirmFoodDiscard()) return;
+    showTab('foods');
+    const f = foods.find((x) => x.id === id);
+    $('food-filter').value = '';
+    $('food-category').value = '';
+    $('food-search').value = f ? f.id : '';
+    currentFood = f || null;
+    fillFood(currentFood);
+    if (!f) setFoodStatus(`Kein Lebensmittel mit der ID ${id}.`, 'err');
+  }
+
+  async function draftFood(values) {
+    await foodsReady;
+    if (!confirmFoodDiscard()) return;
+    showTab('foods');
+    currentFood = null;
+    fillFood(null, values);
+  }
+
+  async function saveFood(row, message) {
+    $('food-save').disabled = true;
+    setFoodStatus('Speichern …');
+    const { data, error } = await sb.from('foods').upsert(row, { onConflict: 'id' }).select(FOOD_COLUMNS).single();
+    $('food-save').disabled = false;
+    if (error) {
+      setFoodStatus(/uuid|column .*active/i.test(error.message)
+        ? 'Zuerst supabase/migrations/0010_food_edits.sql im SQL Editor ausführen.'
+        : errorText(error), 'err');
+      return;
+    }
+    foodEdits.set(data.id, data);
+    currentFood = { id: data.id };
+    mergeFoods();
+    fillFood(currentFood);
+    setFoodStatus(message, 'ok');
+  }
+
+  $('food-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const f = readFood();
+    const problems = foodProblems(f);
+    if (problems.length) {
+      setFoodStatus(problems.join(' '), 'err');
+      return;
+    }
+    const id = currentFood ? currentFood.id : `custom-${crypto.randomUUID()}`;
+    saveFood(toRow({ ...f, id }, currentFood ? currentFood.active : true), 'Gespeichert ✓');
+  });
+
+  // Saves the stored values (not unsaved form changes) with the new state.
+  function setFoodActive(active) {
+    if (!currentFood || !confirmFoodDiscard()) return;
+    if (!active && !confirm(`«${currentFood.name}» deaktivieren? Es erscheint nicht mehr im KH-Rechner und kann unter «Inaktiv» wieder aktiviert werden.`)) return;
+    saveFood(toRow(currentFood, active), active ? 'Aktiviert ✓' : 'Deaktiviert');
+  }
+  $('food-deactivate').addEventListener('click', () => setFoodActive(false));
+  $('food-activate').addEventListener('click', () => setFoodActive(true));
+
   window.addEventListener('beforeunload', (e) => {
-    if (dirty) { e.preventDefault(); e.returnValue = ''; }
+    if (dirty || foodDirty) { e.preventDefault(); e.returnValue = ''; }
   });
 
   start();

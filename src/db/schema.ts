@@ -12,6 +12,7 @@
  *       Composition Database has no GI values)
  *   3 — foods.categories (top-level categories, ";"-separated)
  *   4 — note (free-text comment) on meal_entries + sport_entries
+ *   5 — food_edits (foods changed or added in the Dialy-Editor)
  */
 
 /** Minimal DB surface needed to migrate; both implementations provide it. */
@@ -20,7 +21,7 @@ export interface MigratableDb {
   getFirstAsync<T>(sql: string): Promise<T | null>;
 }
 
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 const FOODS_TABLE = `
 CREATE TABLE IF NOT EXISTS foods (
@@ -119,6 +120,25 @@ CREATE TABLE IF NOT EXISTS profile (
   diabetes_type TEXT NOT NULL,
   is_premium INTEGER NOT NULL DEFAULT 0,
   settings TEXT NOT NULL DEFAULT '{}'
+);
+
+/* Foods changed or added in the Dialy-Editor (Supabase table foods), applied
+   over the bundled foods after every seed (services/foodEdits.ts). Separate
+   from foods, which seeding rewrites. active = 0: hidden in the KH-Rechner. */
+CREATE TABLE IF NOT EXISTS food_edits (
+  id TEXT PRIMARY KEY NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  deleted_at TEXT,
+  name TEXT NOT NULL,
+  food_group TEXT NOT NULL,
+  categories TEXT NOT NULL DEFAULT '',
+  carbs_per_100g REAL NOT NULL,
+  sugar_per_100g REAL NOT NULL,
+  fat_per_100g REAL NOT NULL,
+  glycemic_index REAL,
+  portions TEXT NOT NULL,
+  active INTEGER NOT NULL DEFAULT 1
 );
 
 /* Small key/value store for local bookkeeping (e.g. imported data versions). */

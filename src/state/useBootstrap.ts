@@ -3,6 +3,7 @@ import { AppState, Platform } from 'react-native';
 import * as Linking from 'expo-linking';
 import { useAppStore } from '@/state/store';
 import { seedDatabase } from '@/db/seed';
+import { pullFoodEdits } from '@/services/foodEdits';
 import { authService } from '@/services/auth';
 import { syncEngine } from '@/sync/syncEngine';
 import { fcm } from '@/services/fcm';
@@ -14,6 +15,7 @@ import { Sentry } from '@/services/sentry';
  *  2. seed/migrate the local DB (offline source of truth)
  *  3. restore any existing Supabase session
  *  4. register FCM sync-ping handler (no-op without config) and sync-on-foreground
+ *  5. fetch food changes from the Dialy-Editor (start + foreground)
  */
 export function useBootstrap(): void {
   const setUser = useAppStore((s) => s.setUser);
@@ -22,6 +24,12 @@ export function useBootstrap(): void {
 
   useEffect(() => {
     let mounted = true;
+
+    // KH-Rechner foods changed in the Dialy-Editor; no account needed.
+    const refreshFoods = () =>
+      void pullFoodEdits().then((changed) => {
+        if (changed) useAppStore.getState().bumpDataRevision();
+      });
 
     // Password-reset link (from the e-mail) opened the app: sign in with its
     // one-time session and ask for a new password.
@@ -47,6 +55,7 @@ export function useBootstrap(): void {
       Sentry.init();
       try {
         await seedDatabase();
+        refreshFoods();
         await handleLink(await Linking.getInitialURL());
         const user = await authService.currentUser();
         if (mounted && user) {
@@ -63,11 +72,11 @@ export function useBootstrap(): void {
     })();
 
     // Fallback sync trigger for local dev when FCM is inactive: sync whenever
-    // the app returns to the foreground.
+    // the app returns to the foreground. Food changes too, once seeded.
     const sub = AppState.addEventListener('change', (state) => {
-      if (state === 'active' && useAppStore.getState().user) {
-        void syncEngine.syncNow();
-      }
+      if (state !== 'active') return;
+      if (useAppStore.getState().ready) refreshFoods();
+      if (useAppStore.getState().user) void syncEngine.syncNow();
     });
 
     // The server ended the session (e.g. password changed elsewhere): sign
