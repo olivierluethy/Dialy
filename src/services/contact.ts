@@ -7,8 +7,8 @@ import { getSupabase, isNetworkError } from '@/sync/supabaseClient';
  */
 
 export interface ContactMessage {
-  kind: 'new_food' | 'food_fix';
-  food_name: string;
+  kind: 'new_food' | 'food_fix' | 'other';
+  food_name: string; // subject for 'other'
   food_id?: string | null;
   carbs_per_100g?: number | null;
   sugar_per_100g?: number | null;

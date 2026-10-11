@@ -363,6 +363,7 @@
           <option value="">Alle Arten</option>
           <option value="new_food">Neues Lebensmittel</option>
           <option value="food_fix">Fehler gemeldet</option>
+          <option value="other">Sonstiges</option>
         </select>
         <button class="btn" id="msg-reload" title="Neu laden">↻</button>
       </div>
@@ -386,7 +387,8 @@
   const WORDS_PER_MINUTE = 200;
   const CONFIG_KEY = 'dialy-editor-config';
   const TAB_KEY = 'dialy-editor-tab';
-  const KIND_LABEL = { new_food: 'Neues Lebensmittel', food_fix: 'Fehler gemeldet' };
+  const KIND_LABEL = { new_food: 'Neues Lebensmittel', food_fix: 'Fehler gemeldet', other: 'Sonstiges' };
+  const KIND_BADGE = { new_food: 'Neu', food_fix: 'Fehler', other: 'Sonstiges' };
 
   const $ = (id) => document.getElementById(id);
   const views = ['config', 'login', 'denied', 'editor'];
@@ -580,7 +582,7 @@
       },
         el('div', { className: 't', textContent: m.food_name }),
         el('div', { className: 'm' },
-          badge(m.kind === 'new_food' ? 'Neu' : 'Fehler'),
+          badge(KIND_BADGE[m.kind] || m.kind),
           m.handled_at ? badge('erledigt', 'done') : null,
           `${formatDateTime(m.created_at)} · ${senders.get(m.user_id) || 'ohne Konto'}`));
       li.addEventListener('click', () => { currentMsg = m; renderMessages(); });
@@ -627,7 +629,7 @@
       : m.user_id ? 'Konto (E-Mail nicht verfügbar)' : 'ohne Konto gesendet');
     if (m.kind === 'new_food') {
       fact('Pro 100 g', `${grams(m.carbs_per_100g)} KH · ${grams(m.sugar_per_100g)} Zucker · ${grams(m.fat_per_100g)} Fett`);
-    } else {
+    } else if (m.kind === 'food_fix') {
       fact('Lebensmittel-ID', m.food_id || '–');
     }
     fact('App-Version', m.app_version || '–');

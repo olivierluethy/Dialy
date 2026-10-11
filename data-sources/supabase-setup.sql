@@ -1,4 +1,4 @@
--- Dialy: all Supabase migrations (0001-0010) in order, for the SQL Editor.
+-- Dialy: all Supabase migrations (0001-0011) in order, for the SQL Editor.
 -- Generated from supabase/migrations - edit those files, not this one.
 
 -- ===== 0001_init.sql =====
@@ -448,4 +448,16 @@ drop trigger if exists foods_touch_updated_at on public.foods;
 create trigger foods_touch_updated_at
   before update on public.foods
   for each row execute function public.touch_updated_at();
+
+
+-- ===== 0011_contact_other.sql =====
+-- Dialy: third Kontakt category "Sonstiges" (kind 'other'). For these
+-- messages food_name holds the subject the sender typed.
+
+alter table public.contact_messages
+  drop constraint if exists contact_messages_kind_check;
+
+alter table public.contact_messages
+  add constraint contact_messages_kind_check
+  check (kind in ('new_food', 'food_fix', 'other'));
 

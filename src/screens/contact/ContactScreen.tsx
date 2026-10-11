@@ -15,7 +15,7 @@ import { config } from '@/config';
 import { contactErrorText, sendContactMessage, type ContactError } from '@/services/contact';
 import type { Food } from '@/types/models';
 
-type Kind = 'new' | 'fix';
+type Kind = 'new' | 'fix' | 'other';
 type DialogState = null | 'sent' | ContactError;
 
 const PICKER_RESULTS = 6;
@@ -48,6 +48,9 @@ export function ContactScreen() {
   const [results, setResults] = useState<Food[]>([]);
   const [food, setFood] = useState<Food | null>(null);
 
+  // Sonstiges
+  const [subject, setSubject] = useState('');
+
   const [message, setMessage] = useState('');
   const [dialog, setDialog] = useState<DialogState>(null);
   const [sending, setSending] = useState(false);
@@ -71,7 +74,9 @@ export function ContactScreen() {
   const canSend =
     kind === 'new'
       ? name.trim().length > 0 && valuesValid
-      : food !== null && message.trim().length > 0;
+      : kind === 'fix'
+        ? food !== null && message.trim().length > 0
+        : subject.trim().length > 0 && message.trim().length > 0;
 
   const reset = () => {
     setName('');
@@ -80,6 +85,7 @@ export function ContactScreen() {
     setFat('');
     setQuery('');
     setFood(null);
+    setSubject('');
     setMessage('');
   };
 
@@ -98,13 +104,20 @@ export function ContactScreen() {
             message: message.trim(),
             app_version,
           }
-        : {
-            kind: 'food_fix',
-            food_name: food!.name,
-            food_id: food!.id,
-            message: message.trim(),
-            app_version,
-          }
+        : kind === 'fix'
+          ? {
+              kind: 'food_fix',
+              food_name: food!.name,
+              food_id: food!.id,
+              message: message.trim(),
+              app_version,
+            }
+          : {
+              kind: 'other',
+              food_name: subject.trim(),
+              message: message.trim(),
+              app_version,
+            }
     );
     setSending(false);
     if ('ok' in result) {
@@ -118,8 +131,8 @@ export function ContactScreen() {
   return (
     <Screen contentStyle={styles.content}>
       <Text style={styles.intro}>
-        Fehlt ein Lebensmittel oder stimmt ein Wert nicht? Schreib uns – wir prüfen jeden
-        Hinweis.
+        Fehlt ein Lebensmittel, stimmt ein Wert nicht oder hast du ein anderes Anliegen? Schreib
+        uns – wir prüfen jeden Hinweis.
       </Text>
 
       <View style={styles.kindRow}>
@@ -132,6 +145,11 @@ export function ContactScreen() {
           label="Fehler melden"
           selected={kind === 'fix'}
           onPress={() => setKind('fix')}
+        />
+        <SelectableChip
+          label="Sonstiges"
+          selected={kind === 'other'}
+          onPress={() => setKind('other')}
         />
       </View>
 
@@ -176,6 +194,25 @@ export function ContactScreen() {
             onChangeText={setMessage}
             placeholder="z. B. Werte von der Verpackung"
             multiline
+            style={styles.multiline}
+          />
+        </>
+      ) : kind === 'other' ? (
+        <>
+          <TextField
+            label="Betreff *"
+            value={subject}
+            onChangeText={setSubject}
+            placeholder="z. B. Frage zum Tagebuch"
+            maxLength={200}
+          />
+          <TextField
+            label="Nachricht *"
+            value={message}
+            onChangeText={setMessage}
+            placeholder="Was möchtest du uns mitteilen?"
+            multiline
+            maxLength={4000}
             style={styles.multiline}
           />
         </>
