@@ -52,8 +52,10 @@ async function bundledFoods() {
   const sources = [[json('blvFoods.json'), menuch], [json('blsFoods.json'), menuch]];
   if (existsSync(join(root, 'src', 'data', 'offFoods.json'))) {
     const off = json('offFoods.json');
+    // [id, amount, "g" | "ml"], as in seed.ts.
+    const servings = new Map((off.portions || []).map(([id, amount, unit]) => [id, [amount, unit]]));
     sources.push([off, (id) => {
-      const serving = off.portions?.[id];
+      const serving = servings.get(id);
       return serving
         ? { label: `Portion laut Packung (${serving[0]} ${serving[1]})`, grams: serving[0] }
         : null;

@@ -409,6 +409,31 @@ npm run import:blv -- data-sources/Schweizer_Nahrwertdatenbank.xlsx
 npm run import:menuch -- data-sources/menuCH_portion_sizes_2014_2015_per_meal.xlsx
 ```
 
+### Markenprodukte (Open Food Facts)
+
+Rund 19'000 Markenprodukte aus der Schweiz (z. B. „Nutella“, „Cashewkerne
+(Alesto)“) stammen aus [Open Food Facts](https://world.openfoodfacts.org) –
+von Freiwilligen erfasst, deshalb streng gefiltert: nur Produkte mit
+deutschem Namen, deklarierten (nicht geschätzten) Kohlenhydraten, plausiblen
+Werten (Zucker ≤ KH, Energie passt zu den Nährwerten) und ohne
+Open-Food-Facts-Qualitätsfehler; nichts, was es in der App schon gibt. Die
+Portion „laut Packung“ wird übernommen. Im KH-Rechner: „Quelle: Open Food
+Facts (ODbL)“.
+
+**Lizenz:** Open Database License (ODbL 1.0). `src/data/offFoods.json` ist
+eine abgeleitete Datenbank und steht ebenfalls unter ODbL – Details in
+`data-sources/open-food-facts-LICENSE.md`.
+
+**Aktualisieren:** Dump `openfoodfacts-products.jsonl.gz` (~12 GB) von
+<https://world.openfoodfacts.org/data> herunterladen (nicht entpacken), dann
+
+```bash
+npm run import:off -- pfad/zu/openfoodfacts-products.jsonl.gz
+```
+
+Dauert ca. 25 Minuten; Zahlen pro Filterregel und Beispiele stehen danach in
+`data-sources/off-import-report.txt`.
+
 ---
 
 ## Web-Unterstützung (Browser)
@@ -508,7 +533,8 @@ Ratgeber keine Artikel**, sondern einen Hinweis mit „Erneut versuchen“.
 ihn auf <http://localhost:8095> (`tools/article-editor/`), mit Supabase-URL
 und Publishable Key aus `.env`. Anmelden mit einem Dialy-Konto. Tab
 *Artikel*: Beiträge anlegen, bearbeiten, löschen und wiederherstellen, mit
-Vorschau wie in der App. Tab *Nachrichten*: siehe Kontaktformular unten.
+Vorschau wie in der App. Tab *Lebensmittel*: siehe unten. Tab *Nachrichten*:
+siehe Kontaktformular unten.
 Nur freigeschaltete Konten haben Zugriff:
 
 1. Einmalig `supabase/migrations/0006_article_editors.sql` im SQL Editor
@@ -518,6 +544,25 @@ Nur freigeschaltete Konten haben Zugriff:
    insert into public.article_editors (user_id)
    select id from auth.users where email = '<deine E-Mail>';
    ```
+
+#### Lebensmittel im KH-Rechner pflegen
+
+Im **Dialy-Editor**, Tab *Lebensmittel*: alle Lebensmittel der App suchen
+(kuratiert, Marken, BLV, BLS, Open Food Facts), Name, Untergruppe,
+Nährwerte pro 100 g, GI, Kategorien und Portionen ändern, neue Lebensmittel
+anlegen und Lebensmittel **deaktivieren** (verschwinden aus dem KH-Rechner,
+lassen sich unter *Inaktiv* wieder aktivieren). Aus einer Kontakt-Nachricht
+führt *Lebensmittel öffnen* bzw. *Als Lebensmittel anlegen* direkt dorthin.
+
+- Die Lebensmittel bleiben in der App gebündelt; Supabase (`foods`) hält nur
+  die geänderten, neuen und deaktivierten – je eine vollständige Zeile mit
+  der Lebensmittel-ID der App. Die App holt neue Änderungen beim Start und
+  beim Zurückkehren in den Vordergrund (ohne Konto), speichert sie lokal
+  (`food_edits`, auch offline gültig) und legt sie über die gebündelten
+  Werte – auch nach einem neuen BLV-/BLS-Import.
+- Einmalig `supabase/migrations/0010_food_edits.sql` im SQL Editor
+  ausführen; Zugriff haben dieselben freigeschalteten Konten wie für die
+  Artikel. Braucht Node 22.18 oder neuer (der Editor liest die `.ts`-Daten).
 
 #### Kontaktformular
 
@@ -648,7 +693,7 @@ npm run android      # start + open Android
 npm run ios          # start + open iOS (macOS only)
 npm run web          # start + open in the browser
 npm run typecheck    # TypeScript type check (tsc --noEmit)
-npm run editor       # Dialy-Editor (articles, contact messages) on http://localhost:8095
+npm run editor       # Dialy-Editor (articles, foods, contact messages) on http://localhost:8095
 
 # Local backend (Supabase in Docker) — see section 3C
 npm run backend:start   # boot local Supabase + auto-write .env

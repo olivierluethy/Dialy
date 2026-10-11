@@ -55,6 +55,7 @@ type DialogState =
  */
 function foodSourceText(food: Food): string | null {
   if (food.id.startsWith('brand-')) return 'Quelle: Herstellerangaben (Stand Oktober 2026)';
+  if (food.id.startsWith('off-')) return 'Quelle: Open Food Facts (ODbL)';
   const nutrients = food.id.startsWith('blv-')
     ? 'BLV'
     : food.id.startsWith('bls-')
@@ -129,6 +130,8 @@ export function KHRechnerScreen() {
   const navigation = useNavigation<any>();
   const user = useAppStore((s) => s.user);
   const isPremium = useAppStore((s) => s.isPremium);
+  // Bumped when food changes from the Dialy-Editor arrive: search again.
+  const dataRevision = useAppStore((s) => s.dataRevision);
   const ctx = { isLoggedIn: user !== null, isPremium };
 
   // A collected (unsaved) meal belongs to whoever built it: drop it when the
@@ -151,14 +154,14 @@ export function KHRechnerScreen() {
     return () => {
       active = false;
     };
-  }, [query, category]);
+  }, [query, category, dataRevision]);
 
   // Filter chips: only categories that actually contain foods.
   useEffect(() => {
     foodsRepo.categories().then((present) =>
       setCategories(FOOD_CATEGORIES.filter((c) => present.has(c.name)))
     );
-  }, []);
+  }, [dataRevision]);
 
   // Scroll the calculation card into view when a food is picked. On first
   // show the card's position is only known after layout, so the scroll is

@@ -16,7 +16,8 @@
     "import:blv": "node scripts/import-blv.mjs",
     "import:menuch": "node scripts/import-menuch.mjs",
     "import:bls": "node scripts/import-bls.mjs",
-    "editor": "node scripts/article-editor.mjs"
+    "import:off": "node scripts/import-off.mjs",
+    "editor": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/article-editor.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",

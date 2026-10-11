@@ -4,9 +4,12 @@ import { SEED_FOODS } from '@/data/seedFoods';
 import { BRAND_DRINKS } from '@/data/brandDrinks';
 import BLV_FOODS from '@/data/blvFoods.json';
 import BLS_FOODS from '@/data/blsFoods.json';
+import OFF_FOODS from '@/data/offFoods.json';
 import MENUCH from '@/data/menuchPortions.json';
 import { USUAL_PORTION_LABEL } from '@/data/foodCategories';
+import { applyFoodEdits } from '@/services/foodEdits';
 import { nowIso } from '@/utils/id';
+import type { Portion } from '@/types/models';
 
 /**
  * Idempotently seed the food database. Ratgeber articles are not seeded: they
@@ -51,6 +54,9 @@ export async function seedDatabase(): Promise<void> {
 
   await seedBlvFoods();
   await seedBlsFoods();
+  await seedOffFoods();
+  // Changes from the Dialy-Editor win over the bundled values.
+  await applyFoodEdits();
   foodsRepo.invalidateSearch();
 }
 
@@ -82,12 +88,19 @@ const nameKey = (name: string): string =>
 // with the same name (e.g. BLV "Joghurt, nature" vs. curated "Joghurt nature").
 const CURATED_NAMES = new Set(SEED_FOODS.map((f) => nameKey(f.name)));
 
+// Usual portion from menuCH (`npm run import:menuch`), keyed by food id.
+const MENUCH_PORTIONS = MENUCH.portions as Record<string, number>;
+const menuchPortion = (id: string): Portion | null => {
+  const grams = MENUCH_PORTIONS[id];
+  return grams ? { label: `${USUAL_PORTION_LABEL} (${grams} g)`, grams } : null;
+};
+
 /**
  * Foods from the Swiss Food Composition Database (BLV, `npm run import:blv`)
- * with usual portions from menuCH (`npm run import:menuch`).
+ * with usual portions from menuCH.
  */
 function seedBlvFoods(): Promise<void> {
-  return seedImportedFoods('blv', BLV_FOODS, MENUCH.portions as Record<string, number>);
+  return seedImportedFoods('blv', BLV_FOODS, menuchPortion);
 }
 
 /**
@@ -96,7 +109,24 @@ function seedBlvFoods(): Promise<void> {
  * portions from menuCH where a rule matches (`npm run import:menuch`).
  */
 function seedBlsFoods(): Promise<void> {
-  return seedImportedFoods('bls', BLS_FOODS, MENUCH.portions as Record<string, number>);
+  return seedImportedFoods('bls', BLS_FOODS, menuchPortion);
+}
+
+/**
+ * Branded products sold in Switzerland from Open Food Facts (ODbL,
+ * `npm run import:off`), de-duplicated against all foods above, with the
+ * serving declared on the package.
+ */
+function seedOffFoods(): Promise<void> {
+  // [id, amount, "g" | "ml"] — a list, not an object keyed by id, so
+  // TypeScript doesn't infer a type with ~10'000 properties.
+  const servings = new Map(
+    (OFF_FOODS.portions as Array<[string, number, string]>).map(([id, amount, unit]) => [
+      id,
+      { label: `Portion laut Packung (${amount} ${unit})`, grams: amount },
+    ])
+  );
+  return seedImportedFoods('off', OFF_FOODS, (id) => servings.get(id) ?? null);
 }
 
 /**
@@ -105,15 +135,15 @@ function seedBlsFoods(): Promise<void> {
  * app_meta). No GI in these sources.
  */
 async function seedImportedFoods(
-  prefix: 'blv' | 'bls',
+  prefix: 'blv' | 'bls' | 'off',
   source: ImportedFoods,
-  usual: Record<string, number>
+  portionFor: (id: string) => Portion | null
 ): Promise<void> {
   const db = await getDb();
   const foods = source.foods as ImportedFood[];
   const metaKey = `${prefix}_foods`;
-  const marker =
-    `${source.version} · ${foods.length} · f${IMPORT_FORMAT} · p${Object.keys(usual).length}`;
+  const withPortion = foods.filter(([id]) => portionFor(id)).length;
+  const marker = `${source.version} · ${foods.length} · f${IMPORT_FORMAT} · p${withPortion}`;
   const current = await db.getFirstAsync<{ value: string }>(
     'SELECT value FROM app_meta WHERE key = ?',
     [metaKey]
@@ -127,10 +157,8 @@ async function seedImportedFoods(
     for (const [id, name, group, categoryIdx, carbs, sugar, fat] of foods) {
       if (CURATED_NAMES.has(nameKey(name))) continue; // stays soft-deleted
       const categories = categoryIdx.map((i) => source.categoryNames[i]).join(';');
-      const grams = usual[id];
-      const portions = JSON.stringify(
-        grams ? [{ label: `${USUAL_PORTION_LABEL} (${grams} g)`, grams }] : []
-      );
+      const portion = portionFor(id);
+      const portions = JSON.stringify(portion ? [portion] : []);
       await db.runAsync(
         `INSERT INTO foods
            (id, user_id, created_at, updated_at, deleted_at, name, food_group, categories,

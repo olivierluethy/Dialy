@@ -1,0 +1,183 @@
+Open Food Facts (Stand 2026-10-10) — 4803824 Produkte gelesen in 15.1 min
+
+Regeln (Anzahl):
+  0 Schweiz, mit KH-Angabe: 87977
+  0 g KH (im KH-Rechner ausgeblendet): 1874
+  Duplikat innerhalb Open Food Facts (ohne Marke): 126
+  Duplikat innerhalb Open Food Facts: 1110
+  Energie passt nicht zu den Nährwerten: 465
+  Fett/Eiweiss/Energie fehlen (nicht prüfbar): 78
+  KH ausserhalb 0–100 g: 2
+  KH nur geschätzt: 506
+  Markengetränk schon kuratiert: 68
+  Name wirkt nicht deutsch: 1569
+  Nährwerte > 100 g: 4
+  Qualitätsfehler laut Open Food Facts: 598
+  Zucker > KH: 53
+  kein deutscher Name: 60907
+  schon vorhanden (gleicher Name): 899
+  = importiert: 19718 (davon mit Portion laut Packung: 8251)
+
+Kategorien:
+  6154  (ohne Kategorie)
+  2743  Süssigkeiten
+  1756  Getreideprodukte, Hülsenfrüchte und Kartoffeln
+  1599  Milch und Milchprodukte
+  1221  Alkoholfreie Getränke
+  1092  Verschiedenes
+  1068  Brote, Flocken und Frühstückscerealien
+  941  Gerichte
+  540  Pflanzliche Proteinlieferanten und Alternativen zu tierischen Produkten
+  377  Früchte
+  365  Gemüse
+  346  Nüsse, Samen und Ölfrüchte
+  336  Salzige Snacks
+  330  Fleisch- und Wurstwaren
+  259  Speziallebensmittel
+  237  Fisch
+  225  Fleisch und Innereien
+  56  Eier
+  51  Fette und Öle
+  22  Alkoholhaltige Getränke
+
+Beispiele pro Regel:
+  [0 g KH (im KH-Rechner ausgeblendet)]
+    0033984017603 | Fish Omega-3 | KH 0 Z 0 F 1 E 0.5 kcal 11
+    0070177010775 | Tea English Schwarztee | KH 0 Z 0 F 0 E 0 kcal 4
+    0070177118563 | Twinings Infusions Lemon & Ginger | KH 0 Z 0 F 0 E 0 kcal 4
+    20013578 | Rapsöl | KH 0 Z 0 F 9.2 E 0 kcal 83
+    20013639 | Magarine | KH 0 Z 0 F 80 E 0 kcal 720
+    20047290 | Primadonna Native olivenöl extra aus Spanien | KH 0 Z 0 F 91.3 E 0 kcal 822
+    20106294 | Sardinen in Sonnenblumenöl | KH 0 Z 0 F 10.3 E 25.6 kcal 195
+    20112707 | Kassler Minutensteaks | KH 0 Z 0 F 6.8 E 20.7 kcal 144
+    20135188 | Kalkun Schnitzler Af Bryst | KH 0 Z null F 2 E 23 kcal 110
+    20171124 | Wasser still Saskia | KH 0 Z 0 F 0 E 0 kcal 0
+  [Duplikat innerhalb Open Food Facts (ohne Marke)]
+    off-20098988 | Mini Mozzarella
+    off-20103644 | Kokosmilch
+    off-20425555 | Pesto alla Genovese
+    off-2157156006252 | Luzerner rahmkäse
+    off-23192744 | Fruchtaufstrich Mandarine Maracuja
+    off-4099200026053 | Coolpresso
+    off-28504207 | Joghurt erdbeere
+    off-80176800 | Nutella
+    off-7610058008502 | Sticks
+    off-7610215203993 | Haushaltmehl
+  [Duplikat innerhalb Open Food Facts]
+    20559625 | Nussmix | KH 19.2 Z 6.5 F 46.1 E 22.8 kcal 598
+    2109867006656 | Bio Tofu Nature | KH 0.5 Z 0.5 F 7 E 16 kcal 131
+    2111728003209 | Appenzeller Classic Mild-würzig | KH 0.1 Z null F 32 E 25 kcal 388.4
+    2131023006903 | Riviera-Schinken | KH 1 Z null F 7 E 20 kcal 147
+    22139634 | Vollrahm | KH 3.5 Z 3 F 35.1 E 2.5 kcal 339.90000000000003
+    3057640480003 | Volvic Juicy Grapefruit 50cl PET | KH 4.4 Z 4.4 F 0.5 E 0.5 kcal 19
+    3073780818520 | Meerrettich | KH 3 Z 3 F 29.5 E 6.5 kcal 303.5
+    3073781091144 | Pfeffer mix | KH 3 Z 2.5 F 31 E 6.5 kcal 317
+    3083680004671 | Junge Erbsen | KH 10 Z 1.7 F 0.7 E 6.2 kcal 86
+    3083680037303 | Junge Erbsen | KH 7 Z 3 F 0.9 E 5.6 kcal 71
+  [Energie passt nicht zu den Nährwerten]
+    0031146254903 | Shincup: nudelsuppe | KH 69.2982456140351 Z 4.3859649122807 F 12.280701754386 E 8.7719298245614 kcal 98.4141266449217
+    0734756003014 | Texas Butter : Injectable All-Natural Marinade | KH 6.67 Z 0 F 0 E 0 kcal 67
+    20094508 | Crefee mit feinen Kräutern | KH 3 Z 3 F 23 E 6 kcal 163.333333333333
+    20129705 | Bio-Joghurt | KH 3.7 Z 3.7 F 3.8 E 4.1 kcal 13.0497131931166
+    20139124 | Blätterteig lidl | KH 33.4 Z 2 F 23.4 E 4.9 kcal 234.61
+    20189433 | Kaugummi Strong Mint | KH 64.2 Z 0 F 0 E 0 kcal 157
+    2200041388534 | SensiDent WHITE | KH 66 Z 0 F 0 E 0 kcal 163
+    28114178 | Pouletaufschnitt | KH 2 Z 1.5 F 2 E 21 kcal 152
+    28123972 | Well & active Joghurt & Frucht | KH 89.5 Z 1.4 F 5.1 E 0.7 kcal 269
+    3049610004104 | Veuve Clicquot Champagne Brut | KH 0.8 Z 0.8 F 0 E 0 kcal 85
+  [Fett/Eiweiss/Energie fehlen (nicht prüfbar)]
+    2111727004900 | Appenzeller switzerland kräftig-würzig | KH 0.1 Z null F null E 25 kcal null
+    3179732328915 | Natürliches Mineralwasser | KH 1 Z 1 F null E null kcal null
+    3608580791546 | Erdbeere | KH 41 Z null F null E 0.5 kcal null
+    4000521741020 | Gelatine | KH 88 Z null F null E null kcal 352
+    4002103249535 | Erdinger weissbräu erdinger alkoholfrei | KH 5.3 Z 3.6 F null E null kcal 25
+    4019633049214 | KAP Seeteufelfilets | KH 0 Z 0 F 15 E null kcal null
+    4062300252370 | Müesli-Spaß Bircher-Müesli | KH 14.5 Z 9.8 F 0.2 E null kcal null
+    4104420142107 | Eistee Zitronengras | KH 4 Z 3.9 F null E null kcal 16
+    5010017057343 | Boddingtons, Pub Ale | KH 2.41 Z null F null E null kcal null
+    7610200055323 | Kutteln | KH 3.5 Z 1.5 F null E 10 kcal 64
+  [KH ausserhalb 0–100 g]
+    3166353931402 | Cod mit Zitronensauce - Reis mit Gemüse | KH 130 Z 0.7 F 5.9 E 8.6 kcal 141
+    7610089074439 | Caramelsauce | KH 101 Z 78 F 0 E 0.3 kcal 405
+  [KH nur geschätzt]
+    0070177010768 | Earl Grey Tee | KH 0.23001 Z 0 F 0.0053669 E 0 kcal 0.966042
+    0070177011598 | Earl Grey | KH 0.291 Z 0 F 0.00679 E 0 kcal 1.2222
+    0070177011604 | English Breakfast - Rich & Balanced - Schwarztee | KH 0.3 Z 0 F 0.007 E 0 kcal 1.26
+    0070177095253 | Schwarzer Tee &quot;Rose Garden&quot; | KH 0.291 Z 0 F 0.00679 E 0 kcal 1.2222
+    0070177095666 | Grüner Tee &quot;Exotic Mango & Ginger&quot; | KH 1.83295 Z 0.4435 F 0.27875 E 0.28445 kcal 12.929
+    0070177095819 | Kräutertee Minze | KH 5.3 Z 5.3 F 0.84 E 3.52 kcal 57.6
+    0733411000078 | Ground Espresso Coffee | KH 40.2 Z null F 15.4 E 14.4 kcal 396.6
+    20000295 | Paprika edelsüß | KH 7.62398 Z 4.52412 F 0.452412 E 1.34048 kcal 44.23584
+    20000349 | Delikatess Kochhinterschinken | KH 18.6 Z 1.2 F 0.25 E 5.31 kcal 111
+    20030995 | Saskia mineralwasser classic | KH 0 Z 0 F 0 E 0 kcal 0
+  [Markengetränk schon kuratiert]
+    0049000014266 | Fanta Strawberry | KH 13.5 Z 13.5 F 0 E 0 kcal 51
+    3502110003782 | Ice Tea : Citron&Citron vert | KH 7 Z 6.9 F 0.5 E 0.5 kcal 30
+    3502110007810 | Kalter pfirsisch tee | KH 7 Z 6.9 F 0 E 0 kcal 28
+    4060800157416 | Schwip Schwap Zero - Lemon Taste | KH 0.3 Z 0.3 F 0 E 0.1 kcal 1
+    42105220 | Coca Cola | KH 10.6 Z 10.6 F 0 E 0 kcal 42
+    5000112548082 | Fanta Orange | KH 7.7 Z 7.6 F 0.5 E 0.5 kcal 32
+    54008373 | Honest organic Tea Raspherry & Basil | KH 4.5 Z 4.5 F 0 E 0 kcal 18
+    5449000000286 | Original Taste | KH 10.6 Z 10.6 F 0 E 0 kcal 42
+    5449000000439 | Coca Cola | KH 11.2 Z 11.2 F 0 E 0 kcal 45
+    5449000030245 | Original Taste Coca Cola | KH 10.6 Z 10.6 F 0 E 0 kcal 42
+  [Name wirkt nicht deutsch]
+    06280895 | Favorit les spécialités Waldbeeren | KH 52 Z 50 F 0.5 E 0.9 kcal 221.1
+    09018273 | Blevita Quinoa épeautre | KH 53 Z 2.5 F 15 E 15 kcal 407
+    2000000020846 | Bûche 3 chocolat 4/6 pers | KH 7.9 Z 7.1 F 5.4 E 0.8 kcal 84
+    20024703 | Carré de l'Est | KH 0.5 Z 0.1 F 27 E 21 kcal 329
+    20085018 | Flammkuchen Tarte Flambée | KH 28 Z 3.7 F 11 E 7.2 kcal 242
+    20088484 | Șuncă Din Pipt De Curcan 91 % Carne | KH 1 Z 0.9 F 2 E 20 kcal 103
+    20094546 | Crefée | KH 3 Z 3 F 22.5 E 0 kcal 239
+    20127107 | Camembert finesse & caractère | KH 0.1 Z 0.1 F 21 E 19 kcal 265
+    20198114 | Double Concentré de Tomates | KH 15.7 Z 13.2 F 0.5 E 4.7 kcal 97
+    20281151 | Crème brûlée | KH 20 Z 19 F 15 E 4.3 kcal 232
+  [Nährwerte > 100 g]
+    7613331747129 | Cruchy Edamame | KH 61.904761904761905 Z 14.285714285714286 F 52.38095238095238 E 190.47619047619048 kcal 1738.095238095238
+    4061462022685 | Sesam & Cranberry Knusperriegel | KH 83.33333333333333 Z 20 F 46.666666666666664 E 19 kcal 600
+    7250811206778 | Tagliatelle Pilzpfanne | KH 83 Z 8.2 F 29 E 21 kcal 649
+    272115282006553400000390 | Bio Schweins Hackfleisch Naturaplan | KH 6.9 Z 0 F 198 E 18 kcal 100
+  [Qualitätsfehler laut Open Food Facts]
+    0078895720051 | Sweet & Sour Sauce | KH 43 Z 31 F 0.5 E 0.5 kcal 176
+    14101885 | Zitronensaft 100% | KH 9.3 Z 8.4 F 0 E 0.8 kcal 41
+    20003258 | Semmelknödel | KH 26 Z 1.4 F 0.7 E 4.4 kcal 131
+    20004132 | Tomaten gehackt, 10x | KH 3 Z 3 F 0.1 E 1.3 kcal 20
+    20004323 | Kapern | KH 2.6 Z 0.5 F 0.6 E 2.2 kcal 29
+    20009816 | Junge Erbsen sehr fein | KH 6.5 Z 1.7 F 0.9 E 5.4 kcal 67
+    20013394 | Salami Lufgetrocknet | KH 1 Z 1 F 38 E 28 kcal 459
+    20032432 | Primadonna Natives Olivenöl Extra | KH 0 Z 0 F 91.6 E 0 kcal 824
+    20067274 | Flexi | KH 74.4 Z 22.4 F 2.7 E 9.6 kcal 377
+    20084035 | Cappuccino Schoko | KH 6 Z 6 F 0.5 E 0.5 kcal 32
+  [Zucker > KH]
+    0580533009454 | Reblochon von Savoyen | KH 0 Z 4.86591 F 16 E 20 kcal 224
+    20175818 | Himbeeren frisch | KH 4.8 Z 5.69916 F 0.3 E 1.3 kcal 47
+    2100086007257 | Pro Montagna Gomser mild | KH 1 Z 3.6975 F 33 E 23 kcal 393
+    2106914007703 | Berg-Raclettescheiben Pro Montagna | KH 0 Z 3.6975 F 32 E 23 kcal 380
+    2107879007258 | Emmentaler Switzerland Emmentaler Gotthelf | KH 0.5 Z 3.6975 F 31 E 29 kcal 397
+    2109312006057 | Käse der terroir franche-comté morbier aop | KH 0 Z 4.85605 F 30 E 24 kcal 366
+    2109859003052 | Betty Bossi Rüebli bio | KH 5 Z 6 F 0 E 1 kcal 24
+    2110611003852 | Qualite & prix schweiz edamer | KH 0 Z 3.6975 F 22 E 25 kcal 298
+    2111056005654 | Vollfett-Weichkäse, aus pasteurisierter Bio Milch | KH 0 Z 4.85605 F 28 E 19 kcal 328
+    2111227004905 | Qualité & Prix Der halb gesalzene Gruyère | KH 0 Z 3.6975 F 32 E 27 kcal 396
+  [kein deutscher Name]
+    0009542031695 | DARK CHOCOLATE | KH 63.3333333333333 Z 16.6666666666667 F 46.6666666666667 E 10 kcal 566.666666666667
+    0011210000018 | 16000085 Tabasco Pepper Sauce | KH 1.6 Z 0 F 0.7 E 1 kcal 16
+    0011210115224 | Tabasco | KH 1.55 Z 1.1 F 0.64 E 0.95 kcal 16
+    0013964175929 | Choco Watch | KH 48.1 Z 38.6 F 38.2125 E 3.8 kcal 289.633928571429
+    0014100096993 | Chocolate chunk classic dark chocolate crispy Cookies | KH 60 Z 34 F 26 E 5.4 kcal 503
+    0014100097006 | Chocolate Chunk Milk Chocolate Macadamia Crispy Cookies | KH 58 Z 33 F 30 E 5.6 kcal 525
+    0014113230230 | Natural Almonds | KH 9.5 Z 3.9 F 49.4 E 21.2 kcal 585
+    0014800513240 | Tomato Cocktail from Concentrate | KH 11 Z 11 F 0 E 1 kcal 50
+    0016229000547 | Ramboutan Et Ananas Aroyd 565GR 0 | KH 19 Z 19 F 0 E 0 kcal 77
+    0016229004019 | Coconut Cream | KH 3.33333 Z 2.22222 F 22.22222 E 2.22222 kcal 222.22222
+  [schon vorhanden (gleicher Name)]
+    1001509090003 | Lebkuchen | KH 64.7 Z 35.6 F 11.8 E 6.5 kcal 398
+    1602256950000 | Ketchup | KH 28 Z 21 F 0.5 E 1.2 kcal 122
+    20002268 | Mozzarella | KH 1.5 Z 1.5 F 19 E 17.5 kcal 248
+    20002718 | Senf | KH 2.8 Z 2 F 6.1 E 5.8 kcal 98
+    20003166 | Haferflocken | KH 58.7 Z 0.7 F 7 E 13.5 kcal 372
+    20004064 | Apfelmus | KH 17 Z 15.9 F 0.1 E 0.3 kcal 76
+    20004125 | Tomatenmark | KH 17.8 Z 17.8 F 0.7 E 5.5 kcal 111
+    20019907 | Zitronensaft | KH 2.2 Z 2.2 F 0.5 E 0.4 kcal 28
+    20037154 | Tomatensauce | KH 6.2 Z 4.4 F 1.2 E 1.3 kcal 45
+    20066727 | Kokoswasser | KH 2.9 Z 1.7 F 0.5 E 0.5 kcal 15
