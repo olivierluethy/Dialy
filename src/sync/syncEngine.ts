@@ -1,4 +1,5 @@
 import { getDb } from '@/db/database';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabase, isNetworkError } from '@/sync/supabaseClient';
 import { Sentry } from '@/services/sentry';
 import { refreshPremiumGrant } from '@/services/premium';
@@ -221,15 +222,9 @@ async function pullRemote(uid: string): Promise<number> {
   let pulled = 0;
 
   for (const table of USER_TABLES) {
-    const { data, error } = await sb
-      .from(table)
-      .select('*')
-      .eq('user_id', uid);
-    if (error || !data) {
-      if (error) Sentry.captureException(error);
-      continue;
-    }
-    for (const remote of data as Array<Record<string, unknown>>) {
+    const rows = await pullAll(sb, table, uid);
+    if (!rows) continue;
+    for (const remote of rows) {
       const id = remote.id as string;
       const local = await db.getFirstAsync<{ updated_at: string }>(
         `SELECT updated_at FROM ${table} WHERE id = ?`,
@@ -242,6 +237,36 @@ async function pullRemote(uid: string): Promise<number> {
     }
   }
   return pulled;
+}
+
+// PostgREST returns at most this many rows per request (max_rows).
+const PAGE_SIZE = 1000;
+
+/**
+ * All of the account's rows of one table, page by page (ordered by id, so
+ * pages don't overlap). null when a page failed - then nothing is applied
+ * for this table and the next sync tries again.
+ */
+async function pullAll(
+  sb: SupabaseClient,
+  table: UserTable,
+  uid: string
+): Promise<Array<Record<string, unknown>> | null> {
+  const rows: Array<Record<string, unknown>> = [];
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await sb
+      .from(table)
+      .select('*')
+      .eq('user_id', uid)
+      .order('id')
+      .range(from, from + PAGE_SIZE - 1);
+    if (error || !data) {
+      if (error) Sentry.captureException(error);
+      return null;
+    }
+    rows.push(...(data as Array<Record<string, unknown>>));
+    if (data.length < PAGE_SIZE) return rows;
+  }
 }
 
 async function upsertLocal(

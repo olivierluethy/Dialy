@@ -35,7 +35,11 @@ export interface Food extends SyncMeta {
   fat_per_100g: number;
   glycemic_index: number | null; // unknown for BLV foods
   portions: Portion[]; // may be empty (BLV foods)
+  names: FoodNames; // name in the other UI languages; German is `name`
 }
+
+/** Translated food names, e.g. { en: 'Apple', fr: 'Pomme' }; any may be missing. */
+export type FoodNames = Partial<Record<'en' | 'fr' | 'it', string>>;
 
 export interface MealEntry extends SyncMeta {
   food_id: string | null;

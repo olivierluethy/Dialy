@@ -171,10 +171,12 @@ const api = {
 };
 
 /**
- * The foods the app ships with, as src/db/seed.ts writes them: curated foods
- * and brand drinks, then BLV, BLS and Open Food Facts (if imported) without
- * the ones named like a curated food. The .ts data files load through Node's
- * type stripping (Node 22.18+).
+ * The foods from the data files in src/data, for transferring them into the
+ * database (public.foods, 0013_foods_from_database.sql) - the app no longer
+ * bundles them. Curated foods and brand drinks, then BLV, BLS and Open Food
+ * Facts (if imported) without the ones named like a curated food, with their
+ * names in en/fr/it (src/data/foodNames). The .ts data files load through
+ * Node's type stripping (Node 22.18+).
  */
 async function bundledFoods() {
   const load = (file) => import(pathToFileURL(join(root, 'src', 'data', file)).href);
@@ -190,6 +192,13 @@ async function bundledFoods() {
     import(pathToFileURL(join(root, 'src', 'i18n', 'locales', 'de.ts')).href),
   ]);
   const json = (file) => JSON.parse(readFileSync(join(root, 'src', 'data', file), 'utf8'));
+  const translations = Object.fromEntries(
+    ['en', 'fr', 'it'].map((lang) => [lang, json(`foodNames/${lang}.json`)]));
+  const namesFor = (id) => {
+    const names = {};
+    for (const [lang, map] of Object.entries(translations)) if (map[id]) names[lang] = map[id];
+    return names;
+  };
   const usual = json('menuchPortions.json').portions;
   const menuch = (id) =>
     usual[id] ? { label: `${USUAL_PORTION_LABEL} (${usual[id]} g)`, grams: usual[id] } : null;
@@ -209,8 +218,10 @@ async function bundledFoods() {
   // Same name key as seed.ts.
   const nameKey = (name) => name.toLowerCase().replace(/[^a-zäöüéèàß0-9]+/g, ' ').trim();
   const curatedNames = new Set(SEED_FOODS.map((f) => nameKey(f.name)));
-  // The editor works on the stored (German) data; translations stay in the app.
-  const foods = [...SEED_FOODS, ...BRAND_DRINKS].map(({ names, ...food }) => food);
+  const foods = [...SEED_FOODS, ...BRAND_DRINKS].map(({ names, ...food }) => ({
+    ...food,
+    names: { en: names.en, fr: names.fr, it: names.it },
+  }));
   for (const [source, portionFor] of sources) {
     for (const [id, name, group, categoryIdx, carbs, sugar, fat] of source.foods) {
       if (curatedNames.has(nameKey(name))) continue;
@@ -225,6 +236,7 @@ async function bundledFoods() {
         fat_per_100g: fat,
         glycemic_index: null,
         portions: portion ? [portion] : [],
+        names: namesFor(id),
       });
     }
   }

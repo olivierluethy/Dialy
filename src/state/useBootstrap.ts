@@ -2,8 +2,8 @@ import { useEffect } from 'react';
 import { AppState, Platform } from 'react-native';
 import * as Linking from 'expo-linking';
 import { useAppStore } from '@/state/store';
-import { seedDatabase } from '@/db/seed';
-import { pullFoodEdits } from '@/services/foodEdits';
+import { getDb } from '@/db/database';
+import { pullFoods } from '@/services/foodSync';
 import { authService } from '@/services/auth';
 import { syncEngine } from '@/sync/syncEngine';
 import { fcm } from '@/services/fcm';
@@ -12,10 +12,10 @@ import { Sentry } from '@/services/sentry';
 /**
  * One-time app bootstrap:
  *  1. init crash reporting (no-op without DSN)
- *  2. seed/migrate the local DB (offline source of truth)
+ *  2. open/migrate the local DB (offline source of truth)
  *  3. restore any existing Supabase session
  *  4. register FCM sync-ping handler (no-op without config) and sync-on-foreground
- *  5. fetch food changes from the Dialy-Editor (start + foreground)
+ *  5. download the foods from Supabase (start + foreground)
  */
 export function useBootstrap(): void {
   const setUser = useAppStore((s) => s.setUser);
@@ -25,9 +25,9 @@ export function useBootstrap(): void {
   useEffect(() => {
     let mounted = true;
 
-    // KH-Rechner foods changed in the Dialy-Editor; no account needed.
+    // KH-Rechner foods (all of them from Supabase); no account needed.
     const refreshFoods = () =>
-      void pullFoodEdits().then((changed) => {
+      void pullFoods().then((changed) => {
         if (changed) useAppStore.getState().bumpDataRevision();
       });
 
@@ -54,7 +54,7 @@ export function useBootstrap(): void {
     (async () => {
       Sentry.init();
       try {
-        await seedDatabase();
+        await getDb();
         refreshFoods();
         await handleLink(await Linking.getInitialURL());
         const user = await authService.currentUser();
@@ -72,7 +72,7 @@ export function useBootstrap(): void {
     })();
 
     // Fallback sync trigger for local dev when FCM is inactive: sync whenever
-    // the app returns to the foreground. Food changes too, once seeded.
+    // the app returns to the foreground. Food changes too, once the DB is open.
     const sub = AppState.addEventListener('change', (state) => {
       if (state !== 'active') return;
       if (useAppStore.getState().ready) refreshFoods();

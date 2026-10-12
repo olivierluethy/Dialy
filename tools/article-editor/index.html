@@ -325,6 +325,13 @@
 
     <div>
       <div class="card notice error" id="food-error" hidden></div>
+      <div class="card notice" id="food-import" hidden>
+        <div id="food-import-text"></div>
+        <div class="actions">
+          <button class="btn primary" type="button" id="food-import-btn">In die Datenbank übernehmen</button>
+          <span id="food-import-status"></span>
+        </div>
+      </div>
       <main>
         <form id="food-form" class="card" novalidate>
           <div class="p-cat" id="food-source"></div>
@@ -417,10 +424,10 @@
   <div class="backup" id="panel-backup" hidden>
     <section class="card" aria-labelledby="bk-export-title">
       <h2 id="bk-export-title">Backup erstellen</h2>
-      <p class="muted">Lädt den aktuellen Stand aus Supabase als JSON-Datei herunter. Die mit der App ausgelieferten Lebensmittel sind im Code und nicht Teil des Backups – nur was im Editor geändert, angelegt oder deaktiviert wurde.</p>
+      <p class="muted">Lädt den aktuellen Stand aus Supabase als JSON-Datei herunter, Lebensmittel inklusive (rund 28 000 Einträge, die Datei wird entsprechend gross).</p>
       <div class="bk-tables">
         <label class="check"><input type="checkbox" data-table="articles" checked> Ratgeber-Beiträge</label>
-        <label class="check"><input type="checkbox" data-table="foods" checked> Lebensmittel-Änderungen</label>
+        <label class="check"><input type="checkbox" data-table="foods" checked> Lebensmittel</label>
         <label class="check"><input type="checkbox" data-table="contact_messages" checked> Kontakt-Nachrichten</label>
         <label class="check"><input type="checkbox" data-table="premium_grants" checked> Premium-Freischaltungen</label>
         <label class="check"><input type="checkbox" data-table="users" id="bk-users" checked> Benutzerkonten mit Tagebuch, Blutzucker und Sport</label>
@@ -1126,18 +1133,19 @@
   $('restore').addEventListener('click', () => setDeleted(false));
 
   // ---------------------------------------------------------------- foods
-  // The foods the app ships with come from the editor server (/foods.json,
-  // the same data the app seeds). public.foods holds a full row for every
-  // food edited, added or deactivated here; the app applies those rows over
-  // its bundled foods. Bundled foods without a row are shown as they ship.
+  // public.foods holds every food of the KH-Rechner (0013_foods_from_database.sql);
+  // the app downloads it. The data files in src/data (/foods.json from the
+  // editor server) are only the source for transferring foods into it:
+  // missing ones are offered for import, nothing is overwritten.
   const FOOD_COLUMNS = 'id, created_at, updated_at, deleted_at, name, food_group, categories, ' +
-    'carbs_per_100g, sugar_per_100g, fat_per_100g, glycemic_index, portions, active';
+    'carbs_per_100g, sugar_per_100g, fat_per_100g, glycemic_index, portions, active, names';
   const FOOD_LIST_LIMIT = 200;
+  const IMPORT_CHUNK = 500;
   const collator = new Intl.Collator('de');
   let foodCategories = []; // [{ name, label }]
-  let baseFoods = new Map(); // id -> bundled food
-  let foodEdits = new Map(); // id -> row of public.foods
-  let foods = []; // merged, by name
+  let bundledFoods = []; // from src/data, for the import
+  let dbFoods = new Map(); // id -> row of public.foods
+  let foods = []; // by name
   let currentFood = null; // food being edited; null = new
   let foodDirty = false;
   let foodsReady = Promise.resolve();
@@ -1187,15 +1195,15 @@
   }
 
   function mergeFoods() {
-    const ids = new Set([...baseFoods.keys(), ...foodEdits.keys()]);
-    foods = [...ids].map((id) => {
-      const edit = foodEdits.get(id) || null;
-      const food = edit ? fromEdit(edit) : baseFoods.get(id);
+    foods = [...dbFoods.values()].map((row) => {
+      const food = fromEdit(row);
       return {
         ...food,
-        active: edit ? edit.active && !edit.deleted_at : true,
-        edit,
-        custom: !baseFoods.has(id),
+        active: row.active && !row.deleted_at,
+        edit: row,
+        // Changed after it was imported or added (the trigger touches updated_at).
+        edited: new Date(row.updated_at) - new Date(row.created_at) > 1000,
+        custom: row.id.startsWith('custom-'),
         key: fold(`${food.name} ${food.food_group}`),
       };
     }).sort((a, b) => collator.compare(a.name, b.name));
@@ -1215,25 +1223,30 @@
       if (!reply.ok) throw new Error((await reply.text()) || `HTTP ${reply.status}`);
       const data = await reply.json();
       foodCategories = data.categories;
-      baseFoods = new Map(data.foods.map((f) => [f.id, f]));
+      bundledFoods = data.foods;
     } catch (e) {
-      showFoodError('Die Lebensmittel der App konnten nicht geladen werden. Editor mit "npm run editor" starten (Node 22.18 oder neuer). ' + e.message);
+      showFoodError('Die Kategorien und die Lebensmittel-Daten aus src/data konnten nicht geladen werden. Editor mit "npm run editor" starten (Node 22.18 oder neuer). ' + e.message);
     }
     const rows = [];
+    let dbError = null;
     for (let from = 0; ; from += 1000) {
       const { data, error } = await sb.from('foods').select(FOOD_COLUMNS).order('id').range(from, from + 999);
       if (error) {
-        showFoodError(/active|uuid|does not exist|schema cache/i.test(error.message)
-          ? 'Lebensmittel bearbeiten ist in Supabase noch nicht eingerichtet. Führe im SQL Editor supabase/migrations/0010_food_edits.sql aus.'
-          : 'Änderungen konnten nicht geladen werden: ' + errorText(error));
+        dbError = error;
+        showFoodError(/names/i.test(error.message)
+          ? 'Die Lebensmittel-Datenbank ist in Supabase noch nicht eingerichtet. Führe im SQL Editor supabase/migrations/0013_foods_from_database.sql aus.'
+          : /active|uuid|does not exist|schema cache/i.test(error.message)
+            ? 'Lebensmittel bearbeiten ist in Supabase noch nicht eingerichtet. Führe im SQL Editor supabase/migrations/0010_food_edits.sql und danach 0013_foods_from_database.sql aus.'
+            : 'Lebensmittel konnten nicht geladen werden: ' + errorText(error));
         break;
       }
       rows.push(...data);
       if (data.length < 1000) break;
     }
-    foodEdits = new Map(rows.map((r) => [r.id, r]));
+    dbFoods = new Map(rows.map((r) => [r.id, r]));
     $('food-reload').disabled = false;
     mergeFoods();
+    renderImport(dbError ? null : missingFoods());
 
     // Filters and inputs: the app's categories plus any others in the data.
     const names = new Set(foodCategories.map((c) => c.name));
@@ -1250,6 +1263,71 @@
       .sort(collator.compare).map((g) => el('option', { value: g })));
     renderFoods();
   }
+  // -- transfer from src/data
+  // Foods in the data files that the database doesn't have yet, and existing
+  // ones still without translations (edited before 0013). Nothing else is
+  // touched, so edits in the database always win.
+  function missingFoods() {
+    const add = bundledFoods.filter((f) => !dbFoods.has(f.id));
+    const names = bundledFoods.filter((f) => {
+      const row = dbFoods.get(f.id);
+      return row && Object.keys(f.names || {}).length > 0 && Object.keys(row.names || {}).length === 0;
+    });
+    return { add, names };
+  }
+
+  function renderImport(missing) {
+    const box = $('food-import');
+    box.hidden = !missing || (missing.add.length === 0 && missing.names.length === 0);
+    if (box.hidden) return;
+    $('food-import-text').textContent = dbFoods.size === 0
+      ? `Die Datenbank enthält noch keine Lebensmittel. Die App lädt sie von dort – ${missing.add.length} Lebensmittel aus src/data (kuratiert, BLV, BLS, Open Food Facts) übernehmen?`
+      : [
+          missing.add.length && `${missing.add.length} Lebensmittel aus src/data fehlen in der Datenbank.`,
+          missing.names.length && `${missing.names.length} Lebensmittel haben noch keine Übersetzungen.`,
+          'Bestehende Einträge werden nicht überschrieben.',
+        ].filter(Boolean).join(' ');
+  }
+
+  function setImportStatus(text, kind) {
+    $('food-import-status').textContent = text;
+    $('food-import-status').className = kind === 'err' ? 'error' : 'muted';
+  }
+
+  $('food-import-btn').addEventListener('click', async () => {
+    const { add, names } = missingFoods();
+    if (!confirm(`${add.length} Lebensmittel anlegen${names.length ? ` und ${names.length} Übersetzungen ergänzen` : ''}?`)) return;
+    $('food-import-btn').disabled = true;
+    let done = 0;
+    try {
+      for (let i = 0; i < add.length; i += IMPORT_CHUNK) {
+        setImportStatus(`${done} von ${add.length} angelegt …`);
+        const rows = add.slice(i, i + IMPORT_CHUNK).map((f) => ({
+          // A few Open Food Facts products state more sugar than carbs.
+          ...toRow({ ...f, sugar_per_100g: Math.min(f.sugar_per_100g, f.carbs_per_100g) }, true),
+          names: f.names || {},
+        }));
+        const { error } = await sb.from('foods').insert(rows);
+        if (error) throw error;
+        done += rows.length;
+      }
+      let translated = 0;
+      for (const f of names) {
+        setImportStatus(`Übersetzungen ${translated} von ${names.length} …`);
+        const { error } = await sb.from('foods').update({ names: f.names }).eq('id', f.id);
+        if (error) throw error;
+        translated++;
+      }
+      setImportStatus('');
+      foodsReady = loadFoods().then(() => fillFood(currentFood));
+      await foodsReady;
+      setFoodStatus(`${done} Lebensmittel übernommen ✓`, 'ok');
+    } catch (e) {
+      setImportStatus(`Abgebrochen nach ${done} Lebensmitteln: ${errorText(e)} – erneut klicken setzt fort.`, 'err');
+    }
+    $('food-import-btn').disabled = false;
+  });
+
   $('food-reload').addEventListener('click', () => {
     if (!confirmFoodDiscard()) return;
     foodDirty = false;
@@ -1264,7 +1342,7 @@
     return foods.filter((f) =>
       (!filter ||
         (filter === 'active' && f.active) || (filter === 'inactive' && !f.active) ||
-        (filter === 'edited' && f.edit && !f.custom) || (filter === 'custom' && f.custom)) &&
+        (filter === 'edited' && f.edited && !f.custom) || (filter === 'custom' && f.custom)) &&
       (!category || f.categories.includes(category)) &&
       (terms.every((t) => f.key.includes(t)) || f.id.toLowerCase() === q));
   }
@@ -1278,7 +1356,7 @@
         el('div', { className: 't', textContent: f.name }),
         el('div', { className: 'm' },
           f.active ? null : badge('inaktiv', 'del'),
-          f.custom ? badge('neu', 'done') : f.edit ? badge('bearbeitet', 'open') : null,
+          f.custom ? badge('neu', 'done') : f.edited ? badge('bearbeitet', 'open') : null,
           `${fmt(f.carbs_per_100g)} g KH${f.food_group ? ' · ' + f.food_group : ''}`));
       li.addEventListener('click', () => selectFood(f));
       return li;
@@ -1291,7 +1369,7 @@
       (visible.length > FOOD_LIST_LIMIT
         ? `${visible.length} Treffer, die ersten ${FOOD_LIST_LIMIT} angezeigt`
         : `${visible.length} Treffer`) +
-      ` · ${foods.length} insgesamt, ${foodEdits.size} bearbeitet, ${inactive} inaktiv`;
+      ` · ${foods.length} insgesamt, ${foods.filter((f) => f.edited && !f.custom).length} bearbeitet, ${inactive} inaktiv`;
   }
   ['food-search', 'food-filter', 'food-category'].forEach((id) => $(id).addEventListener('input', renderFoods));
 
@@ -1341,8 +1419,8 @@
     foodDirty = !!draft;
     setFoodStatus(draft ? 'Ungespeichert'
       : !f ? 'Neues Lebensmittel'
-      : f.edit ? `Zuletzt geändert: ${new Date(f.edit.updated_at).toLocaleString('de-CH')}`
-      : 'Werte wie ausgeliefert');
+      : f.edited ? `Zuletzt geändert: ${new Date(f.edit.updated_at).toLocaleString('de-CH')}`
+      : 'Unverändert seit der Übernahme');
     updateFoodPreview();
     renderFoods();
   }
@@ -1460,7 +1538,7 @@
         : errorText(error), 'err');
       return;
     }
-    foodEdits.set(data.id, data);
+    dbFoods.set(data.id, data);
     currentFood = { id: data.id };
     mergeFoods();
     fillFood(currentFood);
@@ -1505,9 +1583,9 @@
         'published_at', 'diabetes_type'],
     },
     foods: {
-      label: 'Lebensmittel-Änderungen',
+      label: 'Lebensmittel',
       restore: ['id', 'created_at', 'deleted_at', 'name', 'food_group', 'categories', 'carbs_per_100g',
-        'sugar_per_100g', 'fat_per_100g', 'glycemic_index', 'portions', 'active'],
+        'sugar_per_100g', 'fat_per_100g', 'glycemic_index', 'portions', 'active', 'names'],
     },
     contact_messages: { label: 'Kontakt-Nachrichten', restore: null },
     premium_grants: { label: 'Premium-Freischaltungen', restore: null, key: 'user_id' },

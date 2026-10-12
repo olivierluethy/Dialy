@@ -96,6 +96,8 @@ const it: Dict = {
     searchPlaceholder: 'Cerca alimenti…',
     all: 'Tutti',
     noResults: 'Nessun risultato',
+    noFoodsYet:
+      'Gli alimenti vengono scaricati da Internet al primo avvio. Collegati a Internet – poi il calcolatore di carboidrati funziona anche offline.',
     resultCount: (n) => (n === 1 ? '1 alimento' : `${n} alimenti`),
     showMore: (n) => `Mostra altri (${n})`,
     closeFoodA11y: 'Chiudi alimento',

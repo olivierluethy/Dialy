@@ -1,49 +1,32 @@
 import type { Dict, Language } from '@/i18n';
-import { SEED_FOODS } from '@/data/seedFoods';
-import { BRAND_DRINKS } from '@/data/brandDrinks';
 import { USUAL_PORTION_LABEL, PACKAGE_PORTION_LABEL } from '@/data/foodCategories';
+import type { FoodNames } from '@/types/models';
 
 /**
- * Food data in the UI language. The foods table stays German (names,
+ * Food data in the UI language. The foods table is German (names,
  * categories, portion labels — also what the Dialy-Editor edits); this
  * translates for display:
- *   - names: curated foods and brand drinks carry their own translations,
- *     BLV/BLS foods come from src/data/foodNames/<lang>.json
- *     (`npm run import:names`). Foods without a translation (Open Food Facts
- *     products, foods added in the Dialy-Editor) keep their German name.
+ *   - names: from the food's `names` (Supabase, with the food). Foods
+ *     without a translation (Open Food Facts products, foods added in the
+ *     Dialy-Editor) keep their German name.
  *   - categories and portion labels: from the UI dictionary.
  */
 
-type NameMap = Record<string, string>;
-
-const nameMaps: Partial<Record<Exclude<Language, 'de'>, NameMap>> = {};
-
-// Static requires so the bundler includes all three; parsed on first use.
-function loadImported(lang: Exclude<Language, 'de'>): NameMap {
-  switch (lang) {
-    case 'en':
-      return require('../data/foodNames/en.json') as NameMap;
-    case 'fr':
-      return require('../data/foodNames/fr.json') as NameMap;
-    case 'it':
-      return require('../data/foodNames/it.json') as NameMap;
-  }
-}
-
-function nameMap(lang: Exclude<Language, 'de'>): NameMap {
-  let map = nameMaps[lang];
-  if (!map) {
-    map = { ...loadImported(lang) };
-    for (const f of [...SEED_FOODS, ...BRAND_DRINKS]) map[f.id] = f.names[lang];
-    nameMaps[lang] = map;
-  }
-  return map;
-}
-
-/** Name of food `id` in `lang`; `germanName` (as stored) if there's no translation. */
-export function localizedFoodName(id: string, germanName: string, lang: Language): string {
+/** Name in `lang`; `germanName` (as stored) if there's no translation. */
+export function localizedFoodName(germanName: string, names: FoodNames, lang: Language): string {
   if (lang === 'de') return germanName;
-  return nameMap(lang)[id] ?? germanName;
+  return names[lang] || germanName;
+}
+
+/** Stored names (JSON text from the foods table); {} if missing or broken. */
+export function parseFoodNames(json: string | null | undefined): FoodNames {
+  if (!json) return {};
+  try {
+    const value: unknown = JSON.parse(json);
+    return value && typeof value === 'object' ? (value as FoodNames) : {};
+  } catch {
+    return {};
+  }
 }
 
 const USUAL = new RegExp(`^${USUAL_PORTION_LABEL} \\((.+)\\)$`);

@@ -101,6 +101,8 @@ const de = {
     searchPlaceholder: 'Lebensmittel suchen…',
     all: 'Alle',
     noResults: 'Keine Treffer',
+    noFoodsYet:
+      'Die Lebensmittel werden beim ersten Start aus dem Internet geladen. Bitte verbinde dich mit dem Internet – danach funktioniert der KH-Rechner auch offline.',
     resultCount: (n: number) => `${n} Lebensmittel`,
     showMore: (n: number) => `Weitere anzeigen (${n})`,
     closeFoodA11y: 'Lebensmittel schliessen',

@@ -1,11 +1,12 @@
 import { getDb } from '@/db/database';
 import { getLanguage, type Language } from '@/i18n';
-import { localizedFoodName } from '@/i18n/foods';
+import { localizedFoodName, parseFoodNames } from '@/i18n/foods';
 import type { Food, Portion } from '@/types/models';
 
-interface FoodRow extends Omit<Food, 'portions' | 'categories'> {
+interface FoodRow extends Omit<Food, 'portions' | 'categories' | 'names'> {
   portions: string;
   categories: string; // ";"-separated
+  names: string; // JSON
 }
 
 function mapRow(row: FoodRow): Food {
@@ -16,7 +17,7 @@ function mapRow(row: FoodRow): Food {
     portions = [];
   }
   const categories = row.categories ? row.categories.split(';') : [];
-  return { ...row, portions, categories };
+  return { ...row, portions, categories, names: parseFoodNames(row.names) };
 }
 
 // Explicit fold table (instead of String.normalize) so it behaves the same on
@@ -42,7 +43,7 @@ export const foldText = (s: string): string =>
 
 /** The food with its name in `lang` (stored names are German). */
 const localize = (food: Food, lang: Language): Food => {
-  const name = localizedFoodName(food.id, food.name, lang);
+  const name = localizedFoodName(food.name, food.names, lang);
   return name === food.name ? food : { ...food, name };
 };
 
@@ -54,7 +55,7 @@ interface IndexedFood {
 }
 
 // Loaded once per language (foods with carbohydrates only), searched in
-// memory. Rebuilt after re-seeding and when the language changes.
+// memory. Rebuilt after foods were downloaded and when the language changes.
 let index: { lang: Language; foods: IndexedFood[] } | null = null;
 
 async function loadIndex(): Promise<IndexedFood[]> {
@@ -153,11 +154,11 @@ export const foodsRepo = {
     // SQLite allows 999 parameters per statement.
     for (let i = 0; i < unique.length; i += 500) {
       const chunk = unique.slice(i, i + 500);
-      const rows = await db.getAllAsync<{ id: string; name: string }>(
-        `SELECT id, name FROM foods WHERE id IN (${chunk.map(() => '?').join(',')})`,
+      const rows = await db.getAllAsync<{ id: string; name: string; names: string }>(
+        `SELECT id, name, names FROM foods WHERE id IN (${chunk.map(() => '?').join(',')})`,
         chunk
       );
-      for (const r of rows) names.set(r.id, localizedFoodName(r.id, r.name, lang));
+      for (const r of rows) names.set(r.id, localizedFoodName(r.name, parseFoodNames(r.names), lang));
     }
     return names;
   },

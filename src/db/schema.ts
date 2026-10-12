@@ -13,6 +13,8 @@
  *   3 — foods.categories (top-level categories, ";"-separated)
  *   4 — note (free-text comment) on meal_entries + sport_entries
  *   5 — food_edits (foods changed or added in the Dialy-Editor)
+ *   6 — foods come only from Supabase (services/foodSync.ts): foods.names
+ *       (translations), food_edits dropped, bundled foods cleared
  */
 
 /** Minimal DB surface needed to migrate; both implementations provide it. */
@@ -21,7 +23,7 @@ export interface MigratableDb {
   getFirstAsync<T>(sql: string): Promise<T | null>;
 }
 
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 6;
 
 const FOODS_TABLE = `
 CREATE TABLE IF NOT EXISTS foods (
@@ -37,7 +39,8 @@ CREATE TABLE IF NOT EXISTS foods (
   sugar_per_100g REAL NOT NULL,
   fat_per_100g REAL NOT NULL,
   glycemic_index REAL,
-  portions TEXT NOT NULL
+  portions TEXT NOT NULL,
+  names TEXT NOT NULL DEFAULT '{}'
 );`;
 
 const MEAL_COLUMNS =
@@ -122,25 +125,6 @@ CREATE TABLE IF NOT EXISTS profile (
   settings TEXT NOT NULL DEFAULT '{}'
 );
 
-/* Foods changed or added in the Dialy-Editor (Supabase table foods), applied
-   over the bundled foods after every seed (services/foodEdits.ts). Separate
-   from foods, which seeding rewrites. active = 0: hidden in the KH-Rechner. */
-CREATE TABLE IF NOT EXISTS food_edits (
-  id TEXT PRIMARY KEY NOT NULL,
-  created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL,
-  deleted_at TEXT,
-  name TEXT NOT NULL,
-  food_group TEXT NOT NULL,
-  categories TEXT NOT NULL DEFAULT '',
-  carbs_per_100g REAL NOT NULL,
-  sugar_per_100g REAL NOT NULL,
-  fat_per_100g REAL NOT NULL,
-  glycemic_index REAL,
-  portions TEXT NOT NULL,
-  active INTEGER NOT NULL DEFAULT 1
-);
-
 /* Small key/value store for local bookkeeping (e.g. imported data versions). */
 CREATE TABLE IF NOT EXISTS app_meta (
   key TEXT PRIMARY KEY NOT NULL,
@@ -199,6 +183,18 @@ async function migrateTo4(db: MigratableDb): Promise<void> {
   }
 }
 
+/**
+ * v5 -> v6: foods are no longer bundled with the app but downloaded from
+ * Supabase. The table only holds that copy, so it's rebuilt (with names)
+ * and the download starts over; the old bookkeeping goes.
+ */
+const MIGRATE_TO_6 = `
+DROP TABLE IF EXISTS foods;
+${FOODS_TABLE}
+DROP TABLE IF EXISTS food_edits;
+DELETE FROM app_meta WHERE key IN ('blv_foods', 'bls_foods', 'off_foods', 'food_edits_since');
+`;
+
 async function inTransaction(db: MigratableDb, sql: string): Promise<void> {
   await db.execAsync('BEGIN;');
   try {
@@ -219,6 +215,7 @@ export async function migrate(db: MigratableDb): Promise<void> {
   if (current < 2) await inTransaction(db, MIGRATE_TO_2);
   if (current < 3) await inTransaction(db, MIGRATE_TO_3);
   if (current < 4) await migrateTo4(db);
+  if (current < 6) await inTransaction(db, MIGRATE_TO_6);
   if (current < SCHEMA_VERSION) {
     await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION};`);
   }

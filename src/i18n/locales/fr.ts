@@ -97,6 +97,8 @@ const fr: Dict = {
     searchPlaceholder: 'Rechercher un aliment…',
     all: 'Tous',
     noResults: 'Aucun résultat',
+    noFoodsYet:
+      'Les aliments sont téléchargés depuis Internet au premier démarrage. Connecte-toi à Internet – ensuite, le calculateur de glucides fonctionne aussi hors ligne.',
     resultCount: (n) => (n === 1 ? '1 aliment' : `${n} aliments`),
     showMore: (n) => `Afficher plus (${n})`,
     closeFoodA11y: 'Fermer l’aliment',

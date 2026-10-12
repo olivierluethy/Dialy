@@ -21,6 +21,7 @@ import { FadeIn } from '@/components/FadeIn';
 import { radius, spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import { foodsRepo } from '@/db/repositories/foods';
+import { hasFoods } from '@/services/foodSync';
 import { FOOD_CATEGORIES, USUAL_PORTION_LABEL } from '@/data/foodCategories';
 import { useLanguage, useT, type Dict } from '@/i18n';
 import { foodCategoryLabel, localizedPortionLabel } from '@/i18n/foods';
@@ -87,6 +88,8 @@ export function KHRechnerScreen() {
   const language = useLanguage();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Food[]>([]);
+  // No foods on the device yet (first start, not downloaded so far).
+  const [noFoods, setNoFoods] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [category, setCategory] = useState<string | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
@@ -152,6 +155,8 @@ export function KHRechnerScreen() {
     foodsRepo.search(query, category).then((rows) => {
       if (active) {
         setResults(rows);
+        if (rows.length > 0) setNoFoods(false);
+        else void hasFoods().then((has) => active && setNoFoods(!has));
         setVisibleCount(PAGE_SIZE);
         setLoading(false);
       }
@@ -391,7 +396,11 @@ export function KHRechnerScreen() {
       ) : (
         <>
           <Text style={styles.resultCount}>
-            {results.length === 0 ? t.khrechner.noResults : t.khrechner.resultCount(results.length)}
+            {noFoods
+              ? t.khrechner.noFoodsYet
+              : results.length === 0
+                ? t.khrechner.noResults
+                : t.khrechner.resultCount(results.length)}
           </Text>
           {resultRows}
           {remaining > 0 && (
