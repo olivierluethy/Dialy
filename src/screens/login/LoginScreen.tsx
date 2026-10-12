@@ -94,11 +94,14 @@ function LoginForm() {
         onPress={() => navigation.navigate('Register')}
       />
 
-      <Text
-        style={styles.privacyLink}
-        onPress={() => navigation.navigate('Privacy')}
-      >
-        {t.common.privacyPolicy}
+      <Text style={styles.legalLinks}>
+        <Text style={styles.legalLink} onPress={() => navigation.navigate('Privacy')}>
+          {t.common.privacyPolicy}
+        </Text>
+        {'  ·  '}
+        <Text style={styles.legalLink} onPress={() => navigation.navigate('Terms')}>
+          {t.common.termsOfUse}
+        </Text>
       </Text>
 
       <SectionLabel style={styles.appearanceLabel}>{t.common.appearance}</SectionLabel>
@@ -130,11 +133,7 @@ const makeStyles = (colors: Colors) =>
     dividerRow: { flexDirection: 'row', alignItems: 'center', marginVertical: spacing.xl },
     divider: { flex: 1, height: 1, backgroundColor: colors.border },
     dividerText: { color: colors.textTertiary, marginHorizontal: spacing.md },
-    privacyLink: {
-      color: colors.textTertiary,
-      textAlign: 'center',
-      marginTop: spacing.xl,
-      textDecorationLine: 'underline',
-    },
+    legalLinks: { color: colors.textTertiary, textAlign: 'center', marginTop: spacing.xl },
+    legalLink: { textDecorationLine: 'underline' },
     appearanceLabel: { marginTop: spacing.xxl },
   });

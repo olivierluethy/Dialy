@@ -40,6 +40,17 @@ export function PaywallScreen() {
         ))}
       </Card>
 
+      <Text style={styles.renewal}>{t.paywall.renewal}</Text>
+      <Text style={styles.legalLinks}>
+        <Text style={styles.legalLink} onPress={() => navigation.navigate('Terms')}>
+          {t.common.termsOfUse}
+        </Text>
+        {'  ·  '}
+        <Text style={styles.legalLink} onPress={() => navigation.navigate('Privacy')}>
+          {t.common.privacyPolicy}
+        </Text>
+      </Text>
+
       <Text style={styles.mockNote}>{t.paywall.mockNote}</Text>
 
       {isPremium ? (
@@ -72,6 +83,15 @@ const makeStyles = (colors: Colors) =>
     price: { fontSize: 18, color: colors.accent, fontWeight: '700', marginTop: spacing.xs },
     featureRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm },
     featureText: { fontSize: 16, color: colors.textPrimary, marginLeft: spacing.md },
+    renewal: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      marginTop: spacing.lg,
+      lineHeight: 18,
+      textAlign: 'center',
+    },
+    legalLinks: { fontSize: 13, color: colors.textTertiary, textAlign: 'center', marginTop: spacing.sm },
+    legalLink: { textDecorationLine: 'underline' },
     mockNote: {
       fontSize: 13,
       color: colors.textTertiary,

@@ -10,6 +10,7 @@ import { RegisterScreen } from '@/screens/login/RegisterScreen';
 import { AccountView } from '@/screens/login/AccountView';
 import { PaywallScreen } from '@/screens/paywall/PaywallScreen';
 import { PrivacyScreen } from '@/screens/privacy/PrivacyScreen';
+import { TermsScreen } from '@/screens/terms/TermsScreen';
 import { ContactScreen } from '@/screens/contact/ContactScreen';
 import { ForgotPasswordScreen } from '@/screens/login/ForgotPasswordScreen';
 import type { LoginStackParamList, RatgeberStackParamList } from '@/navigation/types';
@@ -76,6 +77,11 @@ export function LoginNavigator() {
         name="Privacy"
         component={PrivacyScreen}
         options={{ title: t.nav.privacy, headerBackTitle: t.common.back }}
+      />
+      <LoginStack.Screen
+        name="Terms"
+        component={TermsScreen}
+        options={{ title: t.nav.terms, headerBackTitle: t.common.back }}
       />
       <LoginStack.Screen
         name="ForgotPassword"

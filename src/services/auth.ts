@@ -47,10 +47,17 @@ export const authService = {
     return { user: toUser(data.user), error: null };
   },
 
-  async signUp(email: string, password: string): Promise<AuthResult> {
+  /** `termsVersion`: the terms of use (legal/terms) the user accepted; stored in the user metadata. */
+  async signUp(email: string, password: string, termsVersion: string): Promise<AuthResult> {
     const sb = getSupabase();
-    if (!sb) return localAuth.signUp(email, password);
-    const { data, error } = await sb.auth.signUp({ email, password });
+    if (!sb) return localAuth.signUp(email, password, termsVersion);
+    const { data, error } = await sb.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { terms_version: termsVersion, terms_accepted_at: new Date().toISOString() },
+      },
+    });
     if (error) return { user: null, error: translateAuthError(error.message) };
     // An already registered address gets a user without identities and no
     // error (Supabase doesn't reveal existing accounts that way).

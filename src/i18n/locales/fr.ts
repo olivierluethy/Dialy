@@ -19,6 +19,7 @@ const fr: Dict = {
     confirmPasswordLabel: 'Confirmer le mot de passe',
     minChars: (n) => `au moins ${n} caractères`,
     privacyPolicy: 'Déclaration de confidentialité',
+    termsOfUse: 'Conditions d’utilisation',
     appearance: 'Affichage',
     language: 'Langue',
     requiredHint: '* Champ obligatoire',
@@ -54,6 +55,7 @@ const fr: Dict = {
     contact: 'Contact',
     premium: 'Premium',
     privacy: 'Confidentialité',
+    terms: 'Conditions d’utilisation',
     article: 'Article',
     register: 'S’inscrire',
     forgotPassword: 'Mot de passe oublié',
@@ -81,7 +83,7 @@ const fr: Dict = {
     diaryNeedsAccount:
       'Le journal nécessite un compte (gratuit). Ainsi, tes entrées restent en sécurité et disponibles sur tous tes appareils.',
     diaryNeedsPremium:
-      'Le journal complet avec l’historique et l’analyse de la glycémie fait partie de Dialy Premium.',
+      'Le journal complet avec l’historique et les aperçus de la glycémie fait partie de Dialy Premium.',
     registerCta: 'S’inscrire gratuitement →',
   },
 
@@ -227,20 +229,20 @@ const fr: Dict = {
   },
 
   sport: {
-    title: 'Planifier le sport',
+    title: 'Saisir le sport',
     activity: 'Activité',
     duration: 'Durée (minutes)',
     bgBefore: 'Glycémie avant le sport',
-    curve: 'Évolution estimée de la glycémie',
+    curve: 'Tendance typique (exemple général)',
     disclaimer:
-      '⚠️ Estimation, pas une recommandation médicale. Dialy ne calcule aucune dose d’insuline.',
-    carbsBefore: 'Glucides avant le sport',
-    carbsAfter: 'Glucides après le sport',
+      '⚠️ Illustration générale, pas calculée pour toi : elle montre seulement dans quel sens la glycémie évolue souvent avec cette activité. Ni prévision ni recommandation – Dialy ne calcule ni dose d’insuline ni quantité de glucides.',
+    carbsBefore: 'Glucides avant le sport (note)',
+    carbsAfter: 'Glucides après le sport (note)',
     beforePrefix: 'Avant le sport',
     afterPrefix: 'Après',
     afterHint:
       'Après le sport, la sensibilité à l’insuline reste accrue pendant que les réserves de glycogène se reconstituent.',
-    pump: 'Réduire le débit de base (pompe)',
+    pump: 'Réglage de la pompe (note)',
     reduction: 'Réduction',
     for: 'pendant',
     pumpHint:
@@ -250,9 +252,8 @@ const fr: Dict = {
   },
 
   chart: {
-    empty: 'Saisis des valeurs pour voir l’évolution.',
-    sportStart: 'Début du sport',
     timeAxis: 'Temps en minutes',
+    noScale: 'Sans échelle – en pointillé : niveau de départ',
   },
 
   ratgeber: {
@@ -287,9 +288,9 @@ const fr: Dict = {
     title: 'Créer un compte',
     subtitle: 'Gratuit. Débloque le journal.',
     mismatch: 'Les mots de passe ne correspondent pas.',
-    consentMissing: 'Merci d’accepter le traitement de tes données de santé.',
+    consentMissing: 'Merci d’accepter les conditions d’utilisation et le traitement de tes données de santé.',
     consent:
-      'J’accepte que mes saisies (y compris des données de santé comme les valeurs de glycémie) soient traitées pour fournir le journal. Elles ne sont pas utilisées à des fins publicitaires ou d’analyse.',
+      'J’accepte les conditions d’utilisation et que mes saisies (y compris des données de santé comme les valeurs de glycémie) soient traitées conformément à la déclaration de confidentialité pour fournir le journal. Elles ne sont pas utilisées à des fins publicitaires ou d’analyse.',
     submit: 'S’inscrire',
   },
 
@@ -319,10 +320,10 @@ const fr: Dict = {
     premium: 'Premium',
     freeAccount: 'Compte gratuit',
     premiumTitle: 'Dialy Premium (CHF 3.00 / mois)',
-    premiumSub: 'Journal complet & analyse de la glycémie.',
+    premiumSub: 'Journal complet & historique de la glycémie.',
     viewPremium: 'Voir Premium',
     devHint: 'Dev : appui long sur cette carte pour activer/désactiver Premium pour les tests.',
-    privacy: 'Confidentialité',
+    legal: 'Mentions légales & confidentialité',
     deleteData: 'Supprimer les données',
     deleteConfirm:
       'Veux-tu vraiment supprimer définitivement toutes tes entrées (repas, sport, glycémie) ?',
@@ -357,9 +358,11 @@ const fr: Dict = {
     price: 'CHF 3.00 / mois',
     features: [
       'Journal complet avec historique',
-      'Suivi & analyse de la glycémie',
+      'Historique & aperçus de la glycémie',
       'Synchronisation entre appareils',
     ],
+    renewal:
+      'L’abonnement se renouvelle automatiquement chaque mois et peut être résilié à tout moment jusqu’à 24 heures avant son échéance dans les réglages de ton compte App Store ou Google Play.',
     mockNote:
       'Remarque : dans cette version, le paiement n’est qu’un aperçu. Aucun véritable système de paiement n’est configuré.',
     active: 'Premium est actif ✓',
@@ -371,7 +374,7 @@ const fr: Dict = {
     sections: [
       {
         h: 'Aperçu',
-        b: 'Dialy est un compagnon pour le quotidien avec le diabète. L’app consigne les valeurs que tu saisis toi-même et estime les glucides ainsi qu’une tendance illustrative de la glycémie. Dialy n’est pas un dispositif médical et ne donne aucune recommandation de traitement ou de dosage.',
+        b: 'Dialy est un compagnon pour le quotidien avec le diabète. L’app consigne les valeurs que tu saisis toi-même additionne les glucides et montre pour le sport une illustration générale, non personnalisée. Dialy n’est pas un dispositif médical, ne calcule pas de doses d’insuline et ne donne aucune recommandation de traitement ou de dosage.',
       },
       {
         h: 'Quelles données nous traitons',
@@ -400,6 +403,61 @@ const fr: Dict = {
       {
         h: 'Contact',
         b: 'Pour toute question sur la protection des données, écris-nous à datenschutz@dialy.example. (provisoire)',
+      },
+    ],
+  },
+
+  terms: {
+    title: 'Conditions d’utilisation',
+    version: 'Version du 12 octobre 2026',
+    sections: [
+      {
+        h: '1. Fournisseur',
+        b: 'Dialy est proposée par [nom / entreprise], [rue n°], [NPA localité], Suisse, e-mail : [kontakt@dialy.example]. (Espace réservé – à compléter avant la publication.)',
+      },
+      {
+        h: '2. Champ d’application',
+        b: 'Les présentes conditions d’utilisation s’appliquent à l’utilisation de l’app Dialy. En créant un compte ou en souscrivant Premium, tu les acceptes. Sans compte, elles s’appliquent par analogie aux fonctions librement accessibles. Notre déclaration de confidentialité s’applique en complément.',
+      },
+      {
+        h: '3. Ce que Dialy est – et ce qu’elle n’est pas',
+        b: 'Dialy est un compagnon du quotidien pour les personnes diabétiques : l’app affiche les valeurs nutritives des aliments, additionne les glucides d’un repas, tient un journal des valeurs que tu saisis toi-même et propose des articles d’information générale.\n\nDialy n’est pas un dispositif médical au sens de l’ordonnance sur les dispositifs médicaux (ODim) ni du règlement (UE) 2017/745. Dialy ne pose aucun diagnostic, ne donne aucune recommandation de thérapie ou de traitement, ne calcule ni doses d’insuline, ni corrections, ni quantités de glucides à manger, ni réglages de pompe, ne prédit pas ta glycémie et n’avertit pas en cas d’hypo- ou d’hyperglycémie. La courbe de la page sport est une illustration générale et n’est pas calculée pour toi. Les champs concernant les glucides ou la pompe sont de simples notes sur ce que tu as décidé toi-même.\n\nPrends toujours les décisions concernant ta thérapie toi-même ou avec ton équipe diabète. Dialy ne remplace ni un avis médical ni les mesures de glycémie. En cas d’urgence, appelle le 144.',
+      },
+      {
+        h: '4. Valeurs nutritives',
+        b: 'Les valeurs nutritives proviennent de bases de données publiques (notamment la Base de données suisse des valeurs nutritives de l’OSAV, le Bundeslebensmittelschlüssel et Open Food Facts) et des fabricants. Ce sont des valeurs moyennes ou indicatives, qui peuvent être incomplètes, dépassées ou erronées et varier selon le produit, la recette et la préparation. Les portions sont des estimations. Les indications figurant sur l’emballage font toujours foi. Nous n’assumons aucune garantie quant à leur exactitude.',
+      },
+      {
+        h: '5. Compte',
+        b: 'Il te faut un compte pour le journal. Tu dois avoir au moins 16 ans. Les plus jeunes ne peuvent utiliser Dialy qu’avec l’accord de leurs parents ou de leur représentant légal. Un compte est personnel. Garde ton mot de passe secret et informe-nous si tu soupçonnes un abus.',
+      },
+      {
+        h: '6. Utilisation gratuite et Premium',
+        b: 'Le calculateur de glucides, les conseils et la page sport sont gratuits. Premium coûte CHF 3.00 par mois (prix TVA incluse, sous réserve de modifications) et débloque des fonctions supplémentaires décrites dans l’app.\n\nPremium est souscrit et facturé sous forme d’abonnement via l’App Store d’Apple ou Google Play ; leurs conditions s’appliquent en plus. L’abonnement se renouvelle automatiquement chaque mois si tu ne le résilies pas au plus tard 24 heures avant son échéance dans les réglages de ton compte du store. Une résiliation prend effet à la fin de la période en cours. Les remboursements sont régis par les règles d’Apple ou de Google. Nous annonçons les changements de prix à temps ; ils ne s’appliquent qu’à partir de la période suivante et seulement si tu ne résilies pas.',
+      },
+      {
+        h: '7. Disponibilité',
+        b: 'Nous nous efforçons d’assurer un fonctionnement fiable, mais ne pouvons garantir une disponibilité ininterrompue. Des fonctions peuvent être modifiées, étendues ou supprimées. Tes entrées sont enregistrées sur l’appareil et, avec un compte, sauvegardées sur notre serveur ; conserve en plus les valeurs importantes là où ton équipe diabète en a besoin.',
+      },
+      {
+        h: '8. Responsabilité',
+        b: 'Tu utilises Dialy sous ta propre responsabilité. Nous ne répondons pas des décisions concernant l’alimentation, l’insuline ou la thérapie que tu prends sur la base de l’app, ni des valeurs nutritives inexactes ou des pertes de données. Dans la mesure permise par la loi, notre responsabilité est limitée au dol et à la négligence grave. La responsabilité légale impérative, par exemple pour les dommages corporels ou selon la loi sur la responsabilité du fait des produits, est réservée.',
+      },
+      {
+        h: '9. Droits',
+        b: 'L’app, ses textes et son design appartiennent au fournisseur ou aux titulaires de droits respectifs. Tu obtiens un droit simple et non transférable d’utiliser Dialy à des fins privées. Les licences des sources s’appliquent aux données nutritionnelles (voir la déclaration de confidentialité, section « Sources »).',
+      },
+      {
+        h: '10. Résiliation et suppression',
+        b: 'Tu peux cesser d’utiliser Dialy à tout moment et supprimer tes données dans les réglages sous « Supprimer les données ». Un abonnement Premium en cours se résilie séparément dans l’App Store ou sur Google Play. Nous pouvons bloquer ou supprimer des comptes en cas de violation des présentes conditions.',
+      },
+      {
+        h: '11. Modifications',
+        b: 'Nous pouvons adapter les présentes conditions d’utilisation, par exemple en cas de nouvelles fonctions ou de modifications légales. Nous t’informons à l’avance dans l’app des modifications importantes. Si tu n’es pas d’accord, tu peux cesser d’utiliser l’app et supprimer ton compte.',
+      },
+      {
+        h: '12. Droit applicable et for',
+        b: 'Le droit suisse est applicable. Le for est au siège du fournisseur. Si tu vis dans un autre pays en tant que consommatrice ou consommateur, tu conserves les dispositions protectrices impératives et les fors de ton pays de domicile.',
       },
     ],
   },

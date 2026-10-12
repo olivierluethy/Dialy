@@ -19,6 +19,7 @@ const it: Dict = {
     confirmPasswordLabel: 'Conferma password',
     minChars: (n) => `almeno ${n} caratteri`,
     privacyPolicy: 'Informativa sulla privacy',
+    termsOfUse: 'Condizioni d’uso',
     appearance: 'Aspetto',
     language: 'Lingua',
     requiredHint: '* Campo obbligatorio',
@@ -53,6 +54,7 @@ const it: Dict = {
     contact: 'Contatto',
     premium: 'Premium',
     privacy: 'Privacy',
+    terms: 'Condizioni d’uso',
     article: 'Articolo',
     register: 'Registrati',
     forgotPassword: 'Password dimenticata',
@@ -80,7 +82,7 @@ const it: Dict = {
     diaryNeedsAccount:
       'Il diario richiede un account (gratuito). Così le tue voci restano al sicuro e disponibili su tutti i dispositivi.',
     diaryNeedsPremium:
-      'Il diario completo con andamento e analisi della glicemia fa parte di Dialy Premium.',
+      'Il diario completo con andamento e panoramiche della glicemia fa parte di Dialy Premium.',
     registerCta: 'Registrati gratuitamente →',
   },
 
@@ -222,20 +224,20 @@ const it: Dict = {
   },
 
   sport: {
-    title: 'Pianifica sport',
+    title: 'Registra sport',
     activity: 'Attività',
     duration: 'Durata (minuti)',
     bgBefore: 'Glicemia prima dello sport',
-    curve: 'Andamento stimato della glicemia',
+    curve: 'Tendenza tipica (esempio generale)',
     disclaimer:
-      '⚠️ Stima, non una raccomandazione medica. Dialy non calcola dosi di insulina.',
-    carbsBefore: 'Carboidrati prima dello sport',
-    carbsAfter: 'Carboidrati dopo lo sport',
+      '⚠️ Illustrazione generale, non calcolata per te: mostra solo in che direzione si muove spesso la glicemia con questa attività. Nessuna previsione e nessuna raccomandazione – Dialy non calcola dosi di insulina né quantità di carboidrati.',
+    carbsBefore: 'Carboidrati prima dello sport (nota)',
+    carbsAfter: 'Carboidrati dopo lo sport (nota)',
     beforePrefix: 'Prima dello sport',
     afterPrefix: 'Dopo',
     afterHint:
       'Dopo lo sport la sensibilità all’insulina resta elevata mentre le riserve di glicogeno vengono ricostituite.',
-    pump: 'Ridurre la basale (microinfusore)',
+    pump: 'Regolazione del microinfusore (nota)',
     reduction: 'Riduzione',
     for: 'per',
     pumpHint:
@@ -245,9 +247,8 @@ const it: Dict = {
   },
 
   chart: {
-    empty: 'Inserisci dei valori per vedere l’andamento.',
-    sportStart: 'Inizio sport',
     timeAxis: 'Tempo in minuti',
+    noScale: 'Senza scala – tratteggiato: livello di partenza',
   },
 
   ratgeber: {
@@ -282,9 +283,9 @@ const it: Dict = {
     title: 'Crea account',
     subtitle: 'Gratuito. Sblocca il diario.',
     mismatch: 'Le password non coincidono.',
-    consentMissing: 'Acconsenti al trattamento dei tuoi dati sanitari.',
+    consentMissing: 'Accetta le condizioni d’uso e acconsenti al trattamento dei tuoi dati sanitari.',
     consent:
-      'Acconsento al trattamento dei miei dati (compresi dati sanitari come i valori glicemici) per fornire il diario. Non vengono usati per pubblicità o analisi.',
+      'Accetto le condizioni d’uso e acconsento al trattamento dei miei dati (compresi dati sanitari come i valori glicemici) secondo l’informativa sulla privacy per fornire il diario. Non vengono usati per pubblicità o analisi.',
     submit: 'Registrati',
   },
 
@@ -314,10 +315,10 @@ const it: Dict = {
     premium: 'Premium',
     freeAccount: 'Account gratuito',
     premiumTitle: 'Dialy Premium (CHF 3.00 / mese)',
-    premiumSub: 'Diario completo & analisi della glicemia.',
+    premiumSub: 'Diario completo & andamento della glicemia.',
     viewPremium: 'Vedi Premium',
     devHint: 'Dev: tieni premuta questa scheda per attivare/disattivare Premium per i test.',
-    privacy: 'Privacy',
+    legal: 'Note legali & privacy',
     deleteData: 'Elimina dati',
     deleteConfirm:
       'Vuoi davvero eliminare definitivamente tutte le tue voci (pasti, sport, glicemia)?',
@@ -352,9 +353,11 @@ const it: Dict = {
     price: 'CHF 3.00 / mese',
     features: [
       'Diario completo con cronologia',
-      'Monitoraggio & analisi della glicemia',
+      'Andamento & panoramiche della glicemia',
       'Sincronizzazione tra dispositivi',
     ],
+    renewal:
+      'L’abbonamento si rinnova automaticamente ogni mese e può essere disdetto in qualsiasi momento fino a 24 ore prima della scadenza nelle impostazioni del tuo account App Store o Google Play.',
     mockNote:
       'Nota: in questa versione il pagamento è solo un’anteprima. Non è configurato alcun sistema di pagamento reale.',
     active: 'Premium è attivo ✓',
@@ -366,7 +369,7 @@ const it: Dict = {
     sections: [
       {
         h: 'Panoramica',
-        b: 'Dialy è un compagno per la vita quotidiana con il diabete. L’app registra i valori che inserisci tu stesso e stima i carboidrati e un andamento illustrativo della glicemia. Dialy non è un dispositivo medico e non fornisce raccomandazioni terapeutiche o di dosaggio.',
+        b: 'Dialy è un compagno per la vita quotidiana con il diabete. L’app registra i valori che inserisci tu stesso somma i carboidrati e mostra per lo sport un’illustrazione generale, non personalizzata. Dialy non è un dispositivo medico, non calcola dosi di insulina e non fornisce raccomandazioni terapeutiche o di dosaggio.',
       },
       {
         h: 'Quali dati trattiamo',
@@ -395,6 +398,61 @@ const it: Dict = {
       {
         h: 'Contatto',
         b: 'Per domande sulla protezione dei dati scrivici a datenschutz@dialy.example. (segnaposto)',
+      },
+    ],
+  },
+
+  terms: {
+    title: 'Condizioni d’uso',
+    version: 'Versione del 12 ottobre 2026',
+    sections: [
+      {
+        h: '1. Fornitore',
+        b: 'Dialy è offerta da [nome / ditta], [via n.], [NPA località], Svizzera, e-mail: [kontakt@dialy.example]. (Segnaposto – da completare prima della pubblicazione.)',
+      },
+      {
+        h: '2. Campo d’applicazione',
+        b: 'Le presenti condizioni d’uso si applicano all’utilizzo dell’app Dialy. Creando un account o sottoscrivendo Premium le accetti. Senza account si applicano per analogia alle funzioni liberamente accessibili. Si applica inoltre la nostra informativa sulla privacy.',
+      },
+      {
+        h: '3. Che cosa è Dialy – e che cosa non è',
+        b: 'Dialy è un compagno quotidiano per le persone con diabete: l’app mostra i valori nutritivi degli alimenti, somma i carboidrati di un pasto, tiene un diario dei valori che inserisci tu stesso e offre articoli informativi generali.\n\nDialy non è un dispositivo medico ai sensi dell’ordinanza relativa ai dispositivi medici (ODmed) né del regolamento (UE) 2017/745. Dialy non formula diagnosi, non dà raccomandazioni di terapia o di trattamento, non calcola dosi di insulina, correzioni, quantità di carboidrati da mangiare né impostazioni del microinfusore, non prevede la tua glicemia e non avverte in caso di ipo- o iperglicemia. La curva della pagina sport è un’illustrazione generale e non viene calcolata per te. I campi relativi ai carboidrati o al microinfusore sono semplici note su ciò che hai deciso tu stesso.\n\nPrendi sempre le decisioni sulla tua terapia da solo o insieme al tuo team diabetologico. Dialy non sostituisce né la consulenza medica né le misurazioni della glicemia. In caso di emergenza chiama il 144.',
+      },
+      {
+        h: '4. Valori nutritivi',
+        b: 'I valori nutritivi provengono da banche dati pubbliche (tra cui la Banca dati svizzera dei valori nutritivi dell’USAV, il Bundeslebensmittelschlüssel e Open Food Facts) e dai produttori. Sono valori medi o indicativi, possono essere incompleti, obsoleti o errati e variare a seconda del prodotto, della ricetta e della preparazione. Le porzioni sono stime. Fanno sempre fede le indicazioni sulla confezione. Non garantiamo la loro esattezza.',
+      },
+      {
+        h: '5. Account',
+        b: 'Per il diario ti serve un account. Devi avere almeno 16 anni. I più giovani possono usare Dialy solo con il consenso dei genitori o del rappresentante legale. Un account è personale. Tieni segreta la tua password e informaci se sospetti un abuso.',
+      },
+      {
+        h: '6. Uso gratuito e Premium',
+        b: 'Il calcolatore di carboidrati, la guida e la pagina sport sono gratuiti. Premium costa CHF 3.00 al mese (prezzi IVA inclusa, con riserva di modifiche) e sblocca funzioni aggiuntive descritte nell’app.\n\nPremium viene sottoscritto e fatturato come abbonamento tramite l’App Store di Apple o Google Play; si applicano inoltre le loro condizioni. L’abbonamento si rinnova automaticamente ogni mese se non lo disdici almeno 24 ore prima della scadenza nelle impostazioni del tuo account dello store. La disdetta ha effetto alla fine del periodo in corso. I rimborsi sono disciplinati dalle regole di Apple o di Google. Annunciamo per tempo le modifiche di prezzo; si applicano solo dal periodo successivo e solo se non disdici.',
+      },
+      {
+        h: '7. Disponibilità',
+        b: 'Ci impegniamo per un funzionamento affidabile, ma non possiamo garantire una disponibilità ininterrotta. Le funzioni possono essere modificate, ampliate o sospese. Le tue voci vengono salvate sul dispositivo e, con un account, sul nostro server; conserva inoltre i valori importanti là dove servono al tuo team diabetologico.',
+      },
+      {
+        h: '8. Responsabilità',
+        b: 'Usi Dialy sotto la tua responsabilità. Non rispondiamo delle decisioni su alimentazione, insulina o terapia che prendi sulla base dell’app, né di valori nutritivi inesatti o perdite di dati. Nella misura consentita dalla legge, la nostra responsabilità è limitata al dolo e alla colpa grave. È fatta salva la responsabilità legale imperativa, ad esempio per danni alla persona o secondo la legge sulla responsabilità per danno da prodotti.',
+      },
+      {
+        h: '9. Diritti',
+        b: 'L’app, i suoi testi e il suo design appartengono al fornitore o ai rispettivi titolari dei diritti. Ricevi un diritto semplice e non trasferibile di usare Dialy per scopi privati. Per i dati nutrizionali valgono le licenze delle fonti (vedi informativa sulla privacy, sezione «Fonti»).',
+      },
+      {
+        h: '10. Disdetta e cancellazione',
+        b: 'Puoi smettere di usare Dialy in qualsiasi momento e cancellare i tuoi dati nelle impostazioni alla voce «Cancella dati». Un abbonamento Premium in corso si disdice separatamente nell’App Store o su Google Play. Possiamo bloccare o cancellare account in caso di violazione delle presenti condizioni.',
+      },
+      {
+        h: '11. Modifiche',
+        b: 'Possiamo adeguare le presenti condizioni d’uso, ad esempio per nuove funzioni o modifiche di legge. Ti informiamo per tempo nell’app delle modifiche importanti. Se non sei d’accordo, puoi smettere di usare l’app e cancellare il tuo account.',
+      },
+      {
+        h: '12. Diritto applicabile e foro',
+        b: 'Si applica il diritto svizzero. Il foro è presso la sede del fornitore. Se vivi in un altro paese come consumatrice o consumatore, conservi le disposizioni di protezione imperative e i fori del tuo paese di domicilio.',
       },
     ],
   },

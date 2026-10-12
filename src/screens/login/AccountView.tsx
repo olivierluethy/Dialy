@@ -103,10 +103,14 @@ export function AccountView() {
       <SectionLabel>{t.common.appearance}</SectionLabel>
       <ThemeModeControl />
 
-      <SectionLabel style={styles.spaced}>{t.account.privacy}</SectionLabel>
+      <SectionLabel style={styles.spaced}>{t.account.legal}</SectionLabel>
       <Card>
         <Pressable style={styles.linkRow} onPress={() => navigation.navigate('Privacy')}>
           <Text style={styles.linkText}>{t.common.privacyPolicy}</Text>
+          <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
+        </Pressable>
+        <Pressable style={styles.linkRow} onPress={() => navigation.navigate('Terms')}>
+          <Text style={styles.linkText}>{t.common.termsOfUse}</Text>
           <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
         </Pressable>
         <Pressable style={styles.linkRow} onPress={deleteData}>

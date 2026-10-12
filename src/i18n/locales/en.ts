@@ -19,6 +19,7 @@ const en: Dict = {
     confirmPasswordLabel: 'Confirm password',
     minChars: (n) => `at least ${n} characters`,
     privacyPolicy: 'Privacy policy',
+    termsOfUse: 'Terms of use',
     appearance: 'Appearance',
     language: 'Language',
     requiredHint: '* Required',
@@ -53,6 +54,7 @@ const en: Dict = {
     contact: 'Contact',
     premium: 'Premium',
     privacy: 'Privacy',
+    terms: 'Terms of use',
     article: 'Article',
     register: 'Sign up',
     forgotPassword: 'Forgot password',
@@ -80,7 +82,7 @@ const en: Dict = {
     diaryNeedsAccount:
       'The diary needs a (free) account. That way your entries stay safe and available on all your devices.',
     diaryNeedsPremium:
-      'The full diary with blood glucose history and analysis is part of Dialy Premium.',
+      'The full diary with blood glucose history and overviews is part of Dialy Premium.',
     registerCta: 'Sign up for free →',
   },
 
@@ -222,19 +224,20 @@ const en: Dict = {
   },
 
   sport: {
-    title: 'Plan sport',
+    title: 'Log sport',
     activity: 'Activity',
     duration: 'Duration (minutes)',
     bgBefore: 'Blood glucose before',
-    curve: 'Estimated blood glucose curve',
-    disclaimer: '⚠️ Estimate, not medical advice. Dialy does not calculate insulin doses.',
-    carbsBefore: 'Carbohydrates before sport',
-    carbsAfter: 'Carbohydrates after sport',
+    curve: 'Typical tendency (general example)',
+    disclaimer:
+      '⚠️ General illustration, not calculated for you: it only shows which way blood glucose often moves with this activity. No prediction and no recommendation – Dialy does not calculate insulin doses or carbohydrate amounts.',
+    carbsBefore: 'Carbohydrates before sport (note)',
+    carbsAfter: 'Carbohydrates after sport (note)',
     beforePrefix: 'Before sport',
     afterPrefix: 'After',
     afterHint:
       'After sport, insulin sensitivity stays higher while the glycogen stores are being refilled.',
-    pump: 'Reduce basal rate (pump)',
+    pump: 'Pump adjustment (note)',
     reduction: 'Reduction',
     for: 'for',
     pumpHint:
@@ -244,9 +247,8 @@ const en: Dict = {
   },
 
   chart: {
-    empty: 'Enter values to see the curve.',
-    sportStart: 'Sport start',
     timeAxis: 'Time in minutes',
+    noScale: 'No scale – dashed: starting level',
   },
 
   ratgeber: {
@@ -281,9 +283,9 @@ const en: Dict = {
     title: 'Create account',
     subtitle: 'Free. Unlocks the diary.',
     mismatch: 'The passwords do not match.',
-    consentMissing: 'Please agree to the processing of your health data.',
+    consentMissing: 'Please accept the terms of use and agree to the processing of your health data.',
     consent:
-      'I agree that my entries (including health data such as blood glucose values) are processed to provide the diary. They are not used for advertising or analytics.',
+      'I accept the terms of use and agree that my entries (including health data such as blood glucose values) are processed to provide the diary as described in the privacy policy. They are not used for advertising or analytics.',
     submit: 'Sign up',
   },
 
@@ -313,10 +315,10 @@ const en: Dict = {
     premium: 'Premium',
     freeAccount: 'Free account',
     premiumTitle: 'Dialy Premium (CHF 3.00 / month)',
-    premiumSub: 'Full diary & blood glucose analysis.',
+    premiumSub: 'Full diary & blood glucose history.',
     viewPremium: 'View Premium',
     devHint: 'Dev: long-press this card to toggle Premium for testing.',
-    privacy: 'Privacy',
+    legal: 'Legal & privacy',
     deleteData: 'Delete data',
     deleteConfirm:
       'Do you really want to permanently delete all your entries (meals, sport, blood glucose)?',
@@ -347,7 +349,9 @@ const en: Dict = {
 
   paywall: {
     price: 'CHF 3.00 / month',
-    features: ['Full diary with history', 'Blood glucose tracking & analysis', 'Sync across devices'],
+    features: ['Full diary with history', 'Blood glucose history & overviews', 'Sync across devices'],
+    renewal:
+      'The subscription renews automatically every month and can be cancelled at any time up to 24 hours before it ends in your App Store or Google Play account settings.',
     mockNote:
       'Note: in this build, payment is only a preview. No real payment system is set up.',
     active: 'Premium is active ✓',
@@ -359,7 +363,7 @@ const en: Dict = {
     sections: [
       {
         h: 'Overview',
-        b: 'Dialy is a companion for everyday life with diabetes. The app records values you enter yourself and estimates carbohydrates as well as an illustrative blood glucose trend. Dialy is not a medical device and gives no therapy or dosage recommendations.',
+        b: 'Dialy is a companion for everyday life with diabetes. The app records values you enter yourself adds up carbohydrates and shows a general, non-personal illustration for sport. Dialy is not a medical device, does not calculate insulin doses and gives no therapy or dosage recommendations.',
       },
       {
         h: 'What data we process',
@@ -388,6 +392,61 @@ const en: Dict = {
       {
         h: 'Contact',
         b: 'For questions about data protection, contact us at datenschutz@dialy.example. (placeholder)',
+      },
+    ],
+  },
+
+  terms: {
+    title: 'Terms of use',
+    version: 'Version: 12 October 2026',
+    sections: [
+      {
+        h: '1. Provider',
+        b: 'Dialy is provided by [name / company], [street no.], [postcode town], Switzerland, email: [kontakt@dialy.example]. (Placeholder – to be completed before publication.)',
+      },
+      {
+        h: '2. Scope',
+        b: 'These terms of use apply to the use of the Dialy app. By creating an account or purchasing Premium you accept them. Without an account they apply accordingly to the freely accessible features. Our privacy policy also applies.',
+      },
+      {
+        h: '3. What Dialy is – and what it is not',
+        b: 'Dialy is an everyday companion for people with diabetes: the app shows the nutritional values of foods, adds up the carbohydrates of a meal, keeps a diary of values you enter yourself and offers general information articles.\n\nDialy is not a medical device within the meaning of the Swiss Medical Devices Ordinance (MedDO) or EU Regulation 2017/745. Dialy does not make diagnoses, does not give therapy or treatment recommendations, does not calculate insulin doses, corrections, amounts of carbohydrates to eat or pump settings, does not predict your blood glucose and does not warn of hypo- or hyperglycaemia. The curve on the sport page is a general illustration and is not calculated for you. Fields for carbohydrates or the pump are only notes about what you decided yourself.\n\nAlways make decisions about your therapy yourself or together with your diabetes team. Dialy replaces neither medical advice nor blood glucose measurements. In an emergency call 144 (Switzerland) or 112.',
+      },
+      {
+        h: '4. Nutritional values',
+        b: 'The nutritional values come from public databases (including the Swiss Food Composition Database of the FSVO, the German Federal Food Key and Open Food Facts) and from manufacturers. They are averages or guide values, may be incomplete, outdated or wrong and differ depending on the product, recipe and preparation. Portion sizes are estimates. The information on the packaging always takes precedence. We give no guarantee of accuracy.',
+      },
+      {
+        h: '5. Account',
+        b: 'You need an account for the diary. You must be at least 16 years old. Younger people may only use Dialy with the consent of their parents or legal guardian. An account is personal. Keep your password secret and let us know if you suspect misuse.',
+      },
+      {
+        h: '6. Free use and Premium',
+        b: 'The carb calculator, the guide and the sport page are free. Premium costs CHF 3.00 per month (prices incl. VAT, subject to change) and unlocks additional features described in the app.\n\nPremium is purchased and billed as a subscription through the Apple App Store or Google Play; their terms also apply. The subscription renews automatically every month unless you cancel it in your store account settings at least 24 hours before it ends. A cancellation takes effect at the end of the current period. Refunds are governed by the rules of Apple or Google. We announce price changes in good time; they only apply from the next period and only if you do not cancel.',
+      },
+      {
+        h: '7. Availability',
+        b: 'We strive for reliable operation but cannot guarantee uninterrupted availability. Features may be changed, extended or discontinued. Your entries are stored on the device and, with an account, backed up on our server; also keep important values where your diabetes team needs them.',
+      },
+      {
+        h: '8. Liability',
+        b: 'You use Dialy at your own responsibility. We are not liable for decisions about diet, insulin or therapy that you make on the basis of the app, nor for inaccurate nutritional values or data loss. To the extent permitted by law, our liability is limited to intent and gross negligence. Mandatory statutory liability, for example for personal injury or under product liability law, remains unaffected.',
+      },
+      {
+        h: '9. Rights',
+        b: 'The app, its texts and its design belong to the provider or the respective rights holders. You receive a simple, non-transferable right to use Dialy for private purposes. The licences of the sources apply to the nutritional data (see privacy policy, section “Sources”).',
+      },
+      {
+        h: '10. Termination and deletion',
+        b: 'You can stop using Dialy at any time and remove your data in the settings under “Delete data”. You cancel a running Premium subscription separately in the App Store or Google Play. We may suspend or delete accounts in the event of violations of these terms.',
+      },
+      {
+        h: '11. Changes',
+        b: 'We may amend these terms of use, for example for new features or changes in the law. We will inform you about material changes in the app in good time beforehand. If you do not agree, you can stop using the app and delete your account.',
+      },
+      {
+        h: '12. Applicable law and jurisdiction',
+        b: 'Swiss law applies. The place of jurisdiction is the provider’s registered office. If you live in another country as a consumer, you retain the mandatory protective provisions and places of jurisdiction of your country of residence.',
       },
     ],
   },

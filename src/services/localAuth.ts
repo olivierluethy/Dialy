@@ -33,6 +33,9 @@ interface StoredAccount {
   salt: string; // hex
   hash: string; // hex SHA-256 of `${salt}:${password}`
   created_at: string;
+  /** Accepted terms of use (legal/terms) and when; missing on older accounts. */
+  terms_version?: string;
+  terms_accepted_at?: string;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -80,7 +83,7 @@ const toUser = (a: StoredAccount): AuthUser => ({ id: a.id, email: a.email });
  * methods in services/auth.ts so authService can delegate to it transparently.
  */
 export const localAuth = {
-  async signUp(email: string, password: string): Promise<AuthResult> {
+  async signUp(email: string, password: string, termsVersion: string): Promise<AuthResult> {
     const e = normalizeEmail(email);
     if (!EMAIL_RE.test(e)) {
       return { user: null, error: getT().auth.invalidEmail };
@@ -100,6 +103,8 @@ export const localAuth = {
       salt,
       hash,
       created_at: nowIso(),
+      terms_version: termsVersion,
+      terms_accepted_at: nowIso(),
     };
     await writeAccounts([...accounts, account]);
     await AsyncStorage.setItem(SESSION_KEY, account.id);

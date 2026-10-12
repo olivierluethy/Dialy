@@ -7,7 +7,7 @@ import { ScreenTitle, SectionLabel, Card } from '@/components/primitives';
 import { Button } from '@/components/Button';
 import { TextField } from '@/components/TextField';
 import { SelectableChip } from '@/components/Chip';
-import { BgChart } from '@/components/BgChart';
+import { TrendChart } from '@/components/TrendChart';
 import { GateNotice } from '@/components/GateNotice';
 import { radius, spacing, type Colors } from '@/theme/theme';
 import { useThemedStyles } from '@/theme/useTheme';
@@ -15,7 +15,7 @@ import { useAppStore } from '@/state/store';
 import { sportsRepo } from '@/db/repositories/sports';
 import { can } from '@/policy/gating';
 import { useT } from '@/i18n';
-import { estimateBgCurve } from '@/utils/sportCurve';
+import { illustrativeTrend } from '@/utils/sportCurve';
 import type { Activity } from '@/types/models';
 
 // Labels: t.activities.
@@ -43,28 +43,28 @@ export function SportScreen() {
 
   const [activity, setActivity] = useState<Activity>('laufen');
   const [duration, setDuration] = useState('45');
-  const [bgBefore, setBgBefore] = useState('7.4');
+  // The user's own measurement, logged as-is (no default value).
+  const [bgBefore, setBgBefore] = useState('');
 
-  const [carbsBeforeHours, setCarbsBeforeHours] = useState('0.5');
-  const [carbsBeforeG, setCarbsBeforeG] = useState('20');
-  const [carbsAfterHours, setCarbsAfterHours] = useState('1.5');
-  const [carbsAfterG, setCarbsAfterG] = useState('15');
+  // Carbs and pump fields are a log of what the user actually did. They start
+  // empty on purpose: pre-filled numbers would read like a recommendation
+  // (and could make Dialy a medical device).
+  const [carbsBeforeHours, setCarbsBeforeHours] = useState('');
+  const [carbsBeforeG, setCarbsBeforeG] = useState('');
+  const [carbsAfterHours, setCarbsAfterHours] = useState('');
+  const [carbsAfterG, setCarbsAfterG] = useState('');
 
   // Manual pump note ONLY — a value the user records about their own pump
-  // setting. Never a computed recommendation.
-  const [pumpPct, setPumpPct] = useState('30');
-  const [pumpMin, setPumpMin] = useState('60');
+  // setting. Never a computed or suggested value.
+  const [pumpPct, setPumpPct] = useState('');
+  const [pumpMin, setPumpMin] = useState('');
 
   const [saved, setSaved] = useState(false);
 
+  // Generic illustration only — must never depend on the user's glucose value.
   const curve = useMemo(
-    () =>
-      estimateBgCurve({
-        activity,
-        durationMin: num(duration, 0),
-        bgBeforeMmol: num(bgBefore, 7),
-      }),
-    [activity, duration, bgBefore]
+    () => illustrativeTrend({ activity, durationMin: num(duration, 0) }),
+    [activity, duration]
   );
 
   const save = async () => {
@@ -138,7 +138,7 @@ export function SportScreen() {
       {/* Estimated curve */}
       <SectionLabel>{t.sport.curve}</SectionLabel>
       <Card>
-        <BgChart curve={curve} />
+        <TrendChart curve={curve} />
         <Text style={styles.disclaimer}>{t.sport.disclaimer}</Text>
       </Card>
 
@@ -181,7 +181,7 @@ export function SportScreen() {
           title={saved ? t.sport.saved : t.sport.save}
           icon={saved ? 'checkmark' : 'save'}
           onPress={save}
-          disabled={saved}
+          disabled={saved || bgBefore.trim() === ''}
           style={styles.saveBtn}
         />
       ) : (

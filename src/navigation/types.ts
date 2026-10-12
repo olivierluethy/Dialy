@@ -11,6 +11,7 @@ export type LoginStackParamList = {
   Account: undefined;
   Paywall: undefined;
   Privacy: undefined;
+  Terms: undefined;
   Contact: undefined;
   ForgotPassword: undefined;
 };

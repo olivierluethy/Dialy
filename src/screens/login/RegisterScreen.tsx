@@ -10,6 +10,7 @@ import { useThemedStyles } from '@/theme/useTheme';
 import { useAppStore } from '@/state/store';
 import { authService } from '@/services/auth';
 import { useT } from '@/i18n';
+import { TERMS_VERSION } from '@/legal/terms';
 
 export function RegisterScreen() {
   const styles = useThemedStyles(makeStyles);
@@ -36,7 +37,7 @@ export function RegisterScreen() {
       return;
     }
     setLoading(true);
-    const { user, error, notice } = await authService.signUp(email.trim(), password);
+    const { user, error, notice } = await authService.signUp(email.trim(), password, TERMS_VERSION);
     setLoading(false);
     if (error) {
       setError(error);
@@ -83,12 +84,22 @@ export function RegisterScreen() {
         placeholder="••••••••"
       />
 
-      {/* Consent — health data is specially protected (revDSG / GDPR Art. 9). */}
+      {/* Consent — terms of use plus health data, which is specially protected
+          (revDSG / GDPR Art. 9). The accepted terms version is stored at sign-up. */}
       <Text
         style={[styles.consent, consent && styles.consentActive]}
         onPress={() => setConsent((c) => !c)}
       >
         {consent ? '☑' : '☐'}  {t.register.consent}
+      </Text>
+      <Text style={styles.legalLinks}>
+        <Text style={styles.legalLink} onPress={() => navigation.navigate('Terms')}>
+          {t.common.termsOfUse}
+        </Text>
+        {'  ·  '}
+        <Text style={styles.legalLink} onPress={() => navigation.navigate('Privacy')}>
+          {t.common.privacyPolicy}
+        </Text>
       </Text>
 
       {error && <Text style={styles.error}>{error}</Text>}
@@ -117,6 +128,8 @@ const makeStyles = (colors: Colors) =>
       marginBottom: spacing.md,
     },
     consentActive: { color: colors.textPrimary },
+    legalLinks: { fontSize: 14, color: colors.textTertiary, marginBottom: spacing.md },
+    legalLink: { color: colors.accent, textDecorationLine: 'underline' },
     error: { color: colors.danger, fontSize: 14, marginBottom: spacing.md },
     notice: { color: colors.textPrimary, fontSize: 14, lineHeight: 20, marginBottom: spacing.md },
     btn: { marginTop: spacing.sm },

@@ -55,7 +55,7 @@ export type Activity = 'wandern' | 'laufen' | 'rad' | 'schwimmen' | 'kraft';
 
 export interface BgCurvePoint {
   minute: number;
-  value: number; // mmol/l (illustrative estimate)
+  value: number; // unitless generic tendency (utils/sportCurve), never mmol/l
 }
 
 export interface SportEntry extends SyncMeta {

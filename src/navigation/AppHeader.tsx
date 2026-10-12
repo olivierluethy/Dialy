@@ -37,8 +37,9 @@ interface MenuItem {
 const moreItems = (t: Dict): MenuItem[] => [
   { label: t.nav.premium, tab: 'Login', screen: 'Paywall' },
   { label: t.nav.privacy, tab: 'Login', screen: 'Privacy' },
+  { label: t.nav.terms, tab: 'Login', screen: 'Terms' },
 ];
-const MORE_COUNT = 2;
+const MORE_COUNT = 3;
 
 const itemKey = (item: MenuItem) => item.screen ?? item.tab;
 
