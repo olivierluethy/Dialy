@@ -19,9 +19,13 @@
  *     translated from the English name, tab-separated).
  * Only foods with carbohydrates are translated (the others aren't
  * searchable). Curated foods and brand drinks carry their translations in
- * src/data/seedFoods.ts / brandDrinks.ts. Open Food Facts products get the
- * names from offFoods.json (`translations`, written by import:off) where
- * the product has them; the others keep the name they're sold under.
+ * src/data/seedFoods.ts / brandDrinks.ts.
+ *
+ * Open Food Facts products: their own product_name_en/fr/it (offFoods.json
+ * `translations`, written by import:off) are often in the wrong language,
+ * so off-names.tsv comes first — German product name (without the brand in
+ * brackets), English, French, Italian; tab-separated, translated from the
+ * German. The brand suffix " (Migros)" is kept as it is.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -39,6 +43,7 @@ const BLV_FILES = {
 };
 const BLS_FILE = 'BLS_4_0_Daten_2025_DE.xlsx';
 const BLS_FR_IT = 'bls-names-fr-it.tsv';
+const OFF_NAMES = 'off-names.tsv';
 
 const cellValue = (v) => {
   if (v === null || v === undefined) return '';
@@ -108,14 +113,32 @@ if (existsSync(src(BLS_FR_IT))) {
 for (const lang of ['fr', 'it']) for (const id of blsIds) if (!names[lang][id]) missing[lang] += 1;
 
 // ------------------------------------------------------------ Open Food Facts
-let offCount = 0;
 if (existsSync(join(root, 'src', 'data', 'offFoods.json'))) {
-  for (const [id, en, fr, it] of readJson('offFoods.json').translations || []) {
+  const off = readJson('offFoods.json');
+  // Names from Open Food Facts itself, if any (overridden below).
+  for (const [id, en, fr, it] of off.translations || []) {
     for (const [lang, name] of Object.entries({ en, fr, it })) if (name) names[lang][id] = name;
-    offCount += 1;
   }
+  // "Fischstäbchen (Migros)" -> "Fischstäbchen" + " (Migros)"
+  const byGerman = new Map();
+  if (existsSync(src(OFF_NAMES))) {
+    for (const line of readFileSync(src(OFF_NAMES), 'utf8').split(/\r?\n/)) {
+      const [de, en, fr, it] = line.split('\t').map((s) => (s ?? '').trim());
+      if (de && en && fr && it) byGerman.set(de, { en, fr, it });
+    }
+  }
+  let translated = 0;
+  for (const [id, display, , , carbs] of off.foods) {
+    if (!(carbs > 0)) continue;
+    const generic = display.replace(/\s*\([^()]*\)\s*$/, '').trim();
+    const t = byGerman.get(generic);
+    if (!t) continue;
+    const brand = display.slice(generic.length);
+    for (const lang of ['en', 'fr', 'it']) names[lang][id] = t[lang] + brand;
+    translated += 1;
+  }
+  console.log(`Open Food Facts: ${translated} of ${off.foods.length} products translated`);
 }
-console.log(`Open Food Facts: ${offCount} products with names in other languages`);
 
 // ------------------------------------------------------------ write
 mkdirSync(outDir, { recursive: true });
