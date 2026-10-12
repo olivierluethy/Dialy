@@ -289,7 +289,9 @@ export function KHRechnerScreen() {
     }
   };
 
-  const goRegister = () => navigation.navigate('Login', { screen: 'Register' });
+  // Without a subscription: sign in first, or (signed in) get Premium.
+  const goUnlock = () =>
+    navigation.navigate('Login', { screen: user ? 'Paywall' : 'LoginHome' });
   const closeDialog = () => setDialog(null);
 
   return (
@@ -569,17 +571,17 @@ export function KHRechnerScreen() {
       </Dialog>
       <Dialog
         visible={dialog?.kind === 'account'}
-        title={t.khrechner.accountRequired}
-        message={`${t.gate.saveMeal} ${t.khrechner.freeAccountSavesMeals}`}
+        title={t.khrechner.subscriptionRequired}
+        message={t.gate.saveMeal}
         onClose={closeDialog}
         actions={[
           { label: t.common.cancel, onPress: closeDialog },
           {
-            label: t.khrechner.createAccount,
+            label: user ? t.account.viewPremium : t.login.signIn,
             variant: 'primary',
             onPress: () => {
               closeDialog();
-              goRegister();
+              goUnlock();
             },
           },
         ]}

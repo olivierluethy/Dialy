@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/Screen';
 import { ScreenTitle, SectionLabel, Card } from '@/components/primitives';
@@ -36,7 +35,6 @@ const num = (s: string, fallback = 0): number => {
 export function SportScreen() {
   const styles = useThemedStyles(makeStyles);
   const t = useT();
-  const navigation = useNavigation<any>();
   const user = useAppStore((s) => s.user);
   const isPremium = useAppStore((s) => s.isPremium);
   const ctx = { isLoggedIn: user !== null, isPremium };
@@ -86,8 +84,6 @@ export function SportScreen() {
     );
     setSaved(true);
   };
-
-  const goRegister = () => navigation.navigate('Login', { screen: 'Register' });
 
   return (
     <Screen>
@@ -186,7 +182,7 @@ export function SportScreen() {
         />
       ) : (
         <View style={styles.saveBtn}>
-          <GateNotice message={t.gate.saveSport} onRegister={goRegister} />
+          <GateNotice message={t.gate.saveSport} />
         </View>
       )}
     </Screen>

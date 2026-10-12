@@ -78,13 +78,14 @@ const fr: Dict = {
   },
 
   gate: {
-    saveMeal: 'Enregistrer un repas dans le journal nécessite un compte.',
-    saveSport: 'Enregistrer du sport dans le journal nécessite un compte.',
+    saveMeal: 'Enregistrer un repas dans le journal nécessite un compte avec un abonnement.',
+    saveSport: 'Enregistrer du sport dans le journal nécessite un compte avec un abonnement.',
     diaryNeedsAccount:
       'Le journal nécessite un compte avec un abonnement. Ainsi, tes entrées restent en sécurité et disponibles sur tous tes appareils.',
     diaryNeedsPremium:
-      'Le journal complet avec l’historique et les aperçus de la glycémie fait partie de Dialy Premium.',
-    registerCta: 'S’inscrire gratuitement →',
+      'Le journal fait partie de Dialy Premium. Avec l’abonnement, tu enregistres tes repas et ton sport et tu vois ton historique.',
+    loginCta: 'Se connecter →',
+    premiumCta: 'Voir Premium →',
   },
 
   khrechner: {
@@ -109,9 +110,7 @@ const fr: Dict = {
     addToMeal: 'Ajouter au repas',
     mealTitle: 'Repas',
     total: 'Total',
-    accountRequired: 'Compte requis',
-    freeAccountSavesMeals: 'Avec un compte gratuit, tes repas sont enregistrés dans le journal.',
-    createAccount: 'Créer un compte',
+    subscriptionRequired: 'Abonnement requis',
     saved: 'Enregistré',
     savedMessage: (n) =>
       n === 1
@@ -285,7 +284,7 @@ const fr: Dict = {
 
   register: {
     title: 'Créer un compte',
-    subtitle: 'Gratuit. Débloque le journal.',
+    subtitle: 'Gratuit. Le journal nécessite en plus Dialy Premium.',
     mismatch: 'Les mots de passe ne correspondent pas.',
     consentMissing: 'Merci d’accepter les conditions d’utilisation et le traitement de tes données de santé.',
     consent:

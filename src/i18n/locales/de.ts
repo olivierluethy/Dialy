@@ -82,13 +82,14 @@ const de = {
   },
 
   gate: {
-    saveMeal: 'Mahlzeit im Tagebuch speichern erfordert ein Konto.',
-    saveSport: 'Sport im Tagebuch speichern erfordert ein Konto.',
+    saveMeal: 'Mahlzeit im Tagebuch speichern erfordert ein Konto mit einem Abo.',
+    saveSport: 'Sport im Tagebuch speichern erfordert ein Konto mit einem Abo.',
     diaryNeedsAccount:
       'Das Tagebuch erfordert ein Konto mit einem Abo. So bleiben deine Einträge sicher und geräteübergreifend verfügbar.',
     diaryNeedsPremium:
-      'Das vollständige Tagebuch mit Blutzucker-Verlauf und Übersichten ist Teil von Dialy Premium.',
-    registerCta: 'Kostenlos registrieren →',
+      'Das Tagebuch ist Teil von Dialy Premium. Mit dem Abo speicherst du Mahlzeiten und Sport und siehst deinen Verlauf.',
+    loginCta: 'Anmelden →',
+    premiumCta: 'Premium ansehen →',
   },
 
   khrechner: {
@@ -113,9 +114,7 @@ const de = {
     addToMeal: 'Zur Mahlzeit hinzufügen',
     mealTitle: 'Mahlzeit',
     total: 'Total',
-    accountRequired: 'Konto erforderlich',
-    freeAccountSavesMeals: 'Mit einem kostenlosen Konto werden deine Mahlzeiten im Tagebuch gespeichert.',
-    createAccount: 'Konto erstellen',
+    subscriptionRequired: 'Abo erforderlich',
     saved: 'Gespeichert',
     savedMessage: (n: number) =>
       n === 1
@@ -247,7 +246,7 @@ const de = {
 
   register: {
     title: 'Konto erstellen',
-    subtitle: 'Kostenlos. Schaltet das Tagebuch frei.',
+    subtitle: 'Kostenlos. Für das Tagebuch brauchst du zusätzlich Dialy Premium.',
     mismatch: 'Die Passwörter stimmen nicht überein.',
     consentMissing: 'Bitte akzeptiere die Nutzungsbedingungen und stimme der Verarbeitung deiner Gesundheitsdaten zu.',
     consent:

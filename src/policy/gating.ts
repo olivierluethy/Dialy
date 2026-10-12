@@ -6,8 +6,8 @@
  * | Ratgeber (read articles)        | ✅         | ✅   | ✅      |
  * | KH-Rechner (calculate)          | ✅         | ✅   | ✅      |
  * | Sport (plan/preview)            | ✅         | ✅   | ✅      |
- * | Save meal/sport to Tagebuch     | ❌         | ✅   | ✅      |
- * | Full Tagebuch / BZ-analytics    | ❌         | 🔒   | ✅      |
+ * | Save meal/sport to Tagebuch     | ❌         | ❌   | ✅      |
+ * | Tagebuch / BZ-analytics         | ❌         | ❌   | ✅      |
  */
 
 export interface GateContext {
@@ -29,9 +29,8 @@ export function can(cap: Capability, ctx: GateContext): boolean {
     case 'planSport':
       return true; // always free, no account needed
     case 'saveDiaryEntry':
-      return ctx.isLoggedIn; // any account (free or premium)
     case 'fullDiary':
-      return ctx.isLoggedIn && ctx.isPremium; // premium feature
+      return ctx.isLoggedIn && ctx.isPremium; // account with subscription
     default:
       return false;
   }

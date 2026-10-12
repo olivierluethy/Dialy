@@ -51,11 +51,18 @@ interface AppState {
   user: AuthUser | null;
   setUser: (u: AuthUser | null) => void;
 
-  // Premium flag. For THIS build it's a dev toggle (no real IAP). Persisted so
-  // the premium UI can be tested across restarts.
+  // Premium = demo unlock OR a grant from the Dialy-Editor. isPremium is
+  // derived from the two, so read that one.
   isPremium: boolean;
+  // Demo unlock (Paywall / long press in the account view; no real IAP in
+  // this build). Persisted so the premium UI can be tested across restarts.
+  demoPremium: boolean;
   setPremium: (v: boolean) => void;
   togglePremiumDev: () => void;
+  // Account whose Premium grant (public.premium_grants) the last sync found,
+  // or null. Kept per account so it works offline and not for others.
+  grantedPremiumFor: string | null;
+  setGrantedPremiumFor: (userId: string | null) => void;
 
   // Has the DB been seeded/initialised this app session.
   ready: boolean;
@@ -64,6 +71,14 @@ interface AppState {
   // Derived gate context for the policy module.
   gateContext: () => GateContext;
   isLoggedIn: () => boolean;
+}
+
+type PremiumFields = Pick<AppState, 'user' | 'demoPremium' | 'grantedPremiumFor'>;
+
+/** Recomputes the derived isPremium. */
+function withPremium<T extends PremiumFields>(s: T): T & { isPremium: boolean } {
+  const granted = s.user !== null && s.grantedPremiumFor === s.user.id;
+  return { ...s, isPremium: s.demoPremium || granted };
 }
 
 export const useAppStore = create<AppState>()(
@@ -89,11 +104,14 @@ export const useAppStore = create<AppState>()(
       bumpDataRevision: () => set((s) => ({ dataRevision: s.dataRevision + 1 })),
 
       user: null,
-      setUser: (u) => set({ user: u }),
+      setUser: (u) => set((s) => withPremium({ ...s, user: u })),
 
       isPremium: false,
-      setPremium: (v) => set({ isPremium: v }),
-      togglePremiumDev: () => set((s) => ({ isPremium: !s.isPremium })),
+      demoPremium: false,
+      setPremium: (v) => set((s) => withPremium({ ...s, demoPremium: v })),
+      togglePremiumDev: () => set((s) => withPremium({ ...s, demoPremium: !s.demoPremium })),
+      grantedPremiumFor: null,
+      setGrantedPremiumFor: (userId) => set((s) => withPremium({ ...s, grantedPremiumFor: userId })),
 
       ready: false,
       setReady: (v) => set({ ready: v }),
@@ -114,8 +132,17 @@ export const useAppStore = create<AppState>()(
         themeMode: s.themeMode,
         language: s.language,
         lastSyncedAt: s.lastSyncedAt,
-        isPremium: s.isPremium,
+        demoPremium: s.demoPremium,
+        grantedPremiumFor: s.grantedPremiumFor,
       }),
+      // Version 0 stored the demo flag as isPremium.
+      version: 1,
+      migrate: (persisted, version) => {
+        const old = (persisted ?? {}) as { isPremium?: boolean; demoPremium?: boolean };
+        if (version === 0) return { ...old, demoPremium: Boolean(old.isPremium) };
+        return old;
+      },
+      merge: (persisted, current) => withPremium({ ...current, ...(persisted as Partial<AppState>) }),
     }
   )
 );

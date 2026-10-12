@@ -153,7 +153,8 @@ export function TagebuchScreen() {
 
   const goLogin = () => navigation.navigate('Login', { screen: 'LoginHome' });
   const goRegister = () => navigation.navigate('Login', { screen: 'Register' });
-  const unlocked = can('saveDiaryEntry', ctx);
+  const goPremium = () => navigation.navigate('Login', { screen: 'Paywall' });
+  const unlocked = can('fullDiary', ctx);
   const firstEdited = editKeys?.[0] ? itemsByKey.get(editKeys[0]) : undefined;
 
   return (
@@ -171,40 +172,42 @@ export function TagebuchScreen() {
         )}
       </View>
 
-      {/* Logged-out: account-gated locked state. */}
+      {/* Locked without a subscription: sign in, or (signed in) get Premium. */}
       {!unlocked ? (
         <Card style={styles.lockedCard}>
           <IconBubble name="lock-closed" color={colors.warn} bg={colors.bgSurfaceAlt} />
           <Text style={styles.lockedTitle}>{t.tagebuch.locked}</Text>
-          <Text style={styles.lockedText}>{t.gate.diaryNeedsAccount}</Text>
-          <Button
-            title={t.login.signIn}
-            icon="log-in-outline"
-            onPress={goLogin}
-            style={styles.lockedButton}
-          />
-          <Button
-            title={t.login.createAccount}
-            icon="person-add"
-            variant="secondary"
-            onPress={goRegister}
-            style={styles.lockedButtonSecondary}
-          />
+          {user === null ? (
+            <>
+              <Text style={styles.lockedText}>{t.gate.diaryNeedsAccount}</Text>
+              <Button
+                title={t.login.signIn}
+                icon="log-in-outline"
+                onPress={goLogin}
+                style={styles.lockedButton}
+              />
+              <Button
+                title={t.login.createAccount}
+                icon="person-add"
+                variant="secondary"
+                onPress={goRegister}
+                style={styles.lockedButtonSecondary}
+              />
+            </>
+          ) : (
+            <>
+              <Text style={styles.lockedText}>{t.gate.diaryNeedsPremium}</Text>
+              <Button
+                title={t.account.viewPremium}
+                icon="star"
+                onPress={goPremium}
+                style={styles.lockedButton}
+              />
+            </>
+          )}
         </Card>
       ) : (
         <>
-          {/* Logged-in but not premium: nudge toward full diary (non-blocking). */}
-          {!can('fullDiary', ctx) && !selecting && (
-            <Pressable
-              style={styles.premiumBanner}
-              onPress={() => navigation.navigate('Login', { screen: 'Paywall' })}
-            >
-              <Ionicons name="star" size={18} color={colors.accent} />
-              <Text style={styles.premiumText}>{t.gate.diaryNeedsPremium}</Text>
-              <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
-            </Pressable>
-          )}
-
           {selecting && (
             <Card style={styles.selectBar}>
               <Text style={styles.selectCount}>
@@ -511,17 +514,6 @@ const makeStyles = (colors: Colors) =>
     },
     lockedButton: { alignSelf: 'stretch', marginTop: spacing.lg },
     lockedButtonSecondary: { alignSelf: 'stretch', marginTop: spacing.sm },
-    premiumBanner: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: colors.accentSubtle,
-      borderRadius: radius.card,
-      borderWidth: 1,
-      borderColor: colors.border,
-      padding: spacing.md,
-      marginBottom: spacing.lg,
-    },
-    premiumText: { flex: 1, color: colors.textSecondary, fontSize: 13, marginHorizontal: spacing.sm },
     selectBar: { marginBottom: spacing.lg },
     selectCount: { fontSize: 15, color: colors.textSecondary },
     selectButton: { marginTop: spacing.md },

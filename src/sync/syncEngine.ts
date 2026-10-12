@@ -1,6 +1,7 @@
 import { getDb } from '@/db/database';
 import { getSupabase, isNetworkError } from '@/sync/supabaseClient';
 import { Sentry } from '@/services/sentry';
+import { refreshPremiumGrant } from '@/services/premium';
 import { nowIso } from '@/utils/id';
 import { useAppStore } from '@/state/store';
 
@@ -145,6 +146,7 @@ async function runSync(onUser: (uid: string) => void): Promise<SyncResult> {
   const uid = reply.data.user?.id;
   if (!uid) return { pushed: 0, pulled: 0, error: 'no-session' };
   onUser(uid);
+  await refreshPremiumGrant(sb, uid);
   const { pushed, failed } = await pushPending(uid);
   const pulled = await pullRemote(uid);
   if (failed > 0) return { pushed, pulled, error: 'push-failed' };

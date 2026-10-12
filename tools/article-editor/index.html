@@ -125,6 +125,12 @@
   }
   a.btn { text-decoration: none; display: inline-block; }
 
+  /* Benutzer */
+  #user-detail { padding: 24px; min-width: 0; }
+  #user-detail h2 { font-size: 22px; line-height: 1.25; margin: 4px 0 8px; overflow-wrap: anywhere; }
+  #user-detail h3 { font-size: 15px; margin: 22px 0 10px; }
+  .grant-form { max-width: 520px; }
+
   main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); gap: 20px; align-items: start; }
   #form { padding: 22px; }
   .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
@@ -221,6 +227,7 @@
       <button class="tab active" role="tab" data-tab="articles">Artikel</button>
       <button class="tab" role="tab" data-tab="foods">Lebensmittel</button>
       <button class="tab" role="tab" data-tab="messages">Nachrichten<span class="count" id="msg-badge" hidden></span></button>
+      <button class="tab" role="tab" data-tab="users">Benutzer</button>
       <button class="tab" role="tab" data-tab="backup">Backup</button>
     </nav>
     <span class="spacer"></span>
@@ -390,6 +397,23 @@
     <section id="msg-detail" class="card" aria-live="polite"></section>
   </div>
 
+  <div class="layout" id="panel-users" hidden>
+    <aside>
+      <div class="filters">
+        <select id="user-filter" aria-label="Abo">
+          <option value="">Alle</option>
+          <option value="premium">Premium</option>
+          <option value="none">Ohne Abo</option>
+        </select>
+        <button class="btn" id="user-reload" title="Neu laden">↻</button>
+      </div>
+      <input id="user-search" type="search" placeholder="E-Mail suchen …">
+      <ul id="user-list" class="list card"></ul>
+      <div class="muted" id="user-count"></div>
+    </aside>
+    <section id="user-detail" class="card" aria-live="polite"></section>
+  </div>
+
   <div class="backup" id="panel-backup" hidden>
     <section class="card" aria-labelledby="bk-export-title">
       <h2 id="bk-export-title">Backup erstellen</h2>
@@ -398,6 +422,7 @@
         <label class="check"><input type="checkbox" data-table="articles" checked> Ratgeber-Beiträge</label>
         <label class="check"><input type="checkbox" data-table="foods" checked> Lebensmittel-Änderungen</label>
         <label class="check"><input type="checkbox" data-table="contact_messages" checked> Kontakt-Nachrichten</label>
+        <label class="check"><input type="checkbox" data-table="premium_grants" checked> Premium-Freischaltungen</label>
         <label class="check"><input type="checkbox" data-table="users" id="bk-users" checked> Benutzerkonten mit Tagebuch, Blutzucker und Sport</label>
       </div>
       <div class="hint" id="bk-users-hint" hidden>Für Benutzerkonten den Service-Role-Key (Supabase → Settings → API) in .env als <code>SUPABASE_SERVICE_ROLE_KEY=…</code> eintragen und den Editor neu starten.</div>
@@ -561,6 +586,7 @@
     show('editor');
     showTab(TABS.includes(store.get(TAB_KEY)) ? store.get(TAB_KEY) : 'articles');
     loadMessages();
+    loadUsers();
     renderLastBackup();
     foodsReady = loadFoods().then(() => { if (!currentFood && !foodDirty) fillFood(null); });
     await loadArticles();
@@ -568,7 +594,7 @@
   }
 
   // ---------------------------------------------------------------- tabs
-  const TABS = ['articles', 'foods', 'messages', 'backup'];
+  const TABS = ['articles', 'foods', 'messages', 'users', 'backup'];
   function showTab(tab) {
     TABS.forEach((t) => { $('panel-' + t).hidden = t !== tab; });
     document.querySelectorAll('.tab').forEach((b) => {
@@ -743,6 +769,185 @@
     $('msg-badge').textContent = String(open);
     $('msg-badge').hidden = open === 0;
     renderMessages();
+  }
+
+  // ---------------------------------------------------------------- users
+  // All accounts (rpc editor_users) with their Premium grant
+  // (premium_grants, 0012_premium_grants.sql). A grant gives an account
+  // Premium without a store subscription; the app picks it up on its next
+  // sync. Store subscriptions aren't connected yet.
+  let users = [];
+  let grants = new Map(); // user_id -> row of premium_grants
+  let currentUser = null;
+  let usersError = null;
+
+  const grantActive = (g) => !!g && (!g.expires_at || new Date(g.expires_at) > new Date());
+  const formatDay = (iso) => new Date(iso).toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+  async function loadUsers() {
+    $('user-reload').disabled = true;
+    const [list, rows] = await Promise.all([
+      sb.rpc('editor_users'),
+      sb.from('premium_grants').select('*'),
+    ]);
+    $('user-reload').disabled = false;
+    usersError = list.error || rows.error;
+    users = list.error ? [] : list.data;
+    grants = new Map((rows.data || []).map((g) => [g.user_id, g]));
+    if (currentUser) currentUser = users.find((u) => u.user_id === currentUser.user_id) || null;
+    renderUsers();
+  }
+  $('user-reload').addEventListener('click', loadUsers);
+
+  function visibleUsers() {
+    const q = fold($('user-search').value.trim());
+    const filter = $('user-filter').value;
+    return users.filter((u) =>
+      (!filter || (filter === 'premium') === grantActive(grants.get(u.user_id))) &&
+      (!q || fold(u.email || '').includes(q)));
+  }
+
+  function renderUsers() {
+    const visible = visibleUsers();
+    if (!currentUser || !users.includes(currentUser)) currentUser = visible[0] || null;
+    $('user-list').replaceChildren(...visible.map((u) => {
+      const g = grants.get(u.user_id);
+      const li = el('li', { className: currentUser === u ? 'active' : '' },
+        el('div', { className: 't', textContent: u.email || '(ohne E-Mail)' }),
+        el('div', { className: 'm' },
+          grantActive(g) ? badge('Premium', 'done') : g ? badge('abgelaufen', 'del') : null,
+          `seit ${formatDay(u.created_at)}`));
+      li.addEventListener('click', () => { currentUser = u; renderUsers(); });
+      return li;
+    }));
+    if (visible.length === 0 && !usersError) {
+      $('user-list').append(el('li', { className: 'muted', textContent: 'Keine Benutzer.' }));
+    }
+    const premium = users.filter((u) => grantActive(grants.get(u.user_id))).length;
+    $('user-count').textContent = usersError ? '' : `${users.length} Benutzer · ${premium} mit Premium`;
+    renderUserDetail();
+  }
+  ['user-filter', 'user-search'].forEach((id) => $(id).addEventListener('input', () => {
+    currentUser = null;
+    renderUsers();
+  }));
+
+  function renderUserDetail() {
+    const box = $('user-detail');
+    if (usersError) {
+      box.replaceChildren(
+        el('h2', { textContent: 'Benutzer nicht verfügbar' }),
+        el('p', {
+          textContent: /editor_users|premium_grants|schema cache|does not exist/i.test(usersError.message)
+            ? 'Die Benutzerverwaltung ist in Supabase noch nicht eingerichtet. Führe im SQL Editor supabase/migrations/0012_premium_grants.sql aus.'
+            : errorText(usersError),
+        }));
+      return;
+    }
+    const u = currentUser;
+    if (!u) {
+      box.replaceChildren(el('p', { className: 'muted', textContent: 'Kein Benutzer ausgewählt.' }));
+      return;
+    }
+    const g = grants.get(u.user_id) || null;
+    const active = grantActive(g);
+    const facts = el('dl', { className: 'facts' });
+    const fact = (label, value) => facts.append(el('dt', { textContent: label }), el('dd', {}, value));
+    fact('Registriert', formatDateTime(u.created_at));
+    fact('Letzte Anmeldung', u.last_sign_in_at ? formatDateTime(u.last_sign_in_at) : 'noch nie');
+    fact('E-Mail bestätigt', u.email_confirmed_at ? formatDateTime(u.email_confirmed_at) : 'nein');
+    fact('Abo', active
+      ? `Premium (im Editor freigeschaltet), ${g.expires_at ? 'bis ' + formatDay(g.expires_at) : 'unbegrenzt'}`
+      : g ? `Kein Abo – Freischaltung abgelaufen am ${formatDay(g.expires_at)}` : 'Kein Abo');
+    if (g) {
+      const by = users.find((x) => x.user_id === g.granted_by);
+      fact('Freigeschaltet', `${formatDateTime(g.created_at)}${by ? ' von ' + by.email : ''}`);
+      if (g.note) fact('Notiz', g.note);
+    }
+
+    // Grant form: optional end date (inclusive) and a note.
+    const until = el('input', { type: 'date', id: 'grant-until', value: g && g.expires_at ? toDay(g.expires_at) : '' });
+    const note = el('input', { id: 'grant-note', maxLength: 500, value: g ? g.note : '', placeholder: 'z. B. Tester, Kulanz …' });
+    const save = el('button', {
+      className: 'btn primary', type: 'submit',
+      textContent: active ? 'Freischaltung speichern' : 'Premium freischalten',
+    });
+    const revoke = g ? el('button', { className: 'btn danger', type: 'button', textContent: 'Premium entziehen' }) : null;
+    const form = el('form', { className: 'grant-form' },
+      el('div', { className: 'grid' },
+        el('div', {}, el('label', { htmlFor: 'grant-until', textContent: 'Gültig bis (leer = unbegrenzt)' }), until),
+        el('div', {}, el('label', { htmlFor: 'grant-note', textContent: 'Notiz' }), note)),
+      el('div', { className: 'actions' }, save, revoke, el('span', { id: 'grant-status' })));
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      saveGrant(u, until.value, note.value.trim(), save);
+    });
+    if (revoke) revoke.addEventListener('click', () => revokeGrant(u, revoke));
+
+    box.replaceChildren(
+      el('div', { className: 'p-cat', textContent: 'BENUTZER' }),
+      el('h2', { textContent: u.email || '(ohne E-Mail)' }),
+      el('div', { className: 'muted' },
+        active ? badge('Premium', 'done') : badge('kein Abo'), `ID ${u.user_id}`),
+      facts,
+      el('h3', { textContent: 'Premium ohne Abo' }),
+      el('p', {
+        className: 'muted',
+        textContent: 'Schaltet Premium für dieses Konto frei, ohne Kauf im App Store oder bei Google Play. ' +
+          'Die App übernimmt das bei der nächsten Synchronisierung (Start, Rückkehr in die App oder Anmelden).',
+      }),
+      form);
+  }
+
+  // yyyy-mm-dd in local time, for <input type="date">.
+  function toDay(iso) {
+    const d = new Date(iso);
+    // expires_at is stored as the end of the chosen day; show that day.
+    d.setMilliseconds(d.getMilliseconds() - 1);
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  }
+
+  function setGrantStatus(text, kind) {
+    $('grant-status').textContent = text;
+    $('grant-status').className = kind === 'err' ? 'error' : '';
+    $('grant-status').style.color = kind === 'ok' ? 'var(--accent)' : '';
+  }
+
+  async function saveGrant(u, day, note, button) {
+    // Valid through the whole chosen day (local time).
+    let expires = null;
+    if (day) {
+      const [y, m, d] = day.split('-').map(Number);
+      expires = new Date(y, m - 1, d + 1).toISOString();
+      if (new Date(expires) <= new Date()) {
+        setGrantStatus('Das Datum liegt in der Vergangenheit.', 'err');
+        return;
+      }
+    }
+    button.disabled = true;
+    const { error } = await sb.from('premium_grants')
+      .upsert({ user_id: u.user_id, expires_at: expires, note }, { onConflict: 'user_id' });
+    button.disabled = false;
+    if (error) {
+      setGrantStatus(errorText(error), 'err');
+      return;
+    }
+    await loadUsers();
+    setGrantStatus('Gespeichert ✓', 'ok');
+  }
+
+  async function revokeGrant(u, button) {
+    if (!confirm(`Premium für ${u.email} entziehen? Die App sperrt das Tagebuch bei der nächsten Synchronisierung.`)) return;
+    button.disabled = true;
+    const { error } = await sb.from('premium_grants').delete().eq('user_id', u.user_id);
+    button.disabled = false;
+    if (error) {
+      setGrantStatus(errorText(error), 'err');
+      return;
+    }
+    await loadUsers();
+    setGrantStatus('Premium entzogen.', 'ok');
   }
 
   // ---------------------------------------------------------------- list
@@ -1305,6 +1510,7 @@
         'sugar_per_100g', 'fat_per_100g', 'glycemic_index', 'portions', 'active'],
     },
     contact_messages: { label: 'Kontakt-Nachrichten', restore: null },
+    premium_grants: { label: 'Premium-Freischaltungen', restore: null, key: 'user_id' },
     users: { label: 'Benutzerkonten', server: true },
     profiles: { label: 'Profile', server: true },
     meal_entries: { label: 'Mahlzeiten', server: true },
@@ -1346,9 +1552,10 @@
   };
 
   async function fetchAll(table) {
+    const key = (BACKUP_TABLES[table] && BACKUP_TABLES[table].key) || 'id';
     const rows = [];
     for (let from = 0; ; from += 1000) {
-      const { data, error } = await sb.from(table).select('*').order('id').range(from, from + 999);
+      const { data, error } = await sb.from(table).select('*').order(key).range(from, from + 999);
       if (error) throw error;
       rows.push(...data);
       if (data.length < 1000) break;
