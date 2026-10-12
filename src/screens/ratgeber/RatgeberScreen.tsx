@@ -4,7 +4,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/Screen';
-import { TypeSegmentedControl } from '@/components/SegmentedControl';
+import { DiabetesTypeControl } from '@/components/SegmentedControl';
 import { ScreenTitle, IconBubble } from '@/components/primitives';
 import { FadeIn, staggerDelay } from '@/components/FadeIn';
 import { radius, spacing, type Colors } from '@/theme/theme';
@@ -32,6 +32,7 @@ const CATEGORY_ICON: Record<string, keyof typeof Ionicons.glyphMap> = {
 export function RatgeberScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  // Shared with the settings: the last choice is shown next time.
   const type = useAppStore((s) => s.diabetesType);
   const t = useT();
   const language = useLanguage();
@@ -67,7 +68,7 @@ export function RatgeberScreen() {
 
   return (
     <Screen>
-      <TypeSegmentedControl />
+      <DiabetesTypeControl />
       <ScreenTitle>{t.ratgeber.title}</ScreenTitle>
 
       {loading ? (

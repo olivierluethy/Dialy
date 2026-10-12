@@ -21,9 +21,16 @@ export type PasswordRecovery =
   | { state: 'expired'; message: string };
 
 interface AppState {
-  // Global Typ-1/Typ-2 selection — persists across tabs and restarts.
+  // Global Typ-1/Typ-2 selection (settings + Ratgeber) — persists across
+  // restarts and is saved in the account (services/userSettings.ts).
   diabetesType: DiabetesType;
   setDiabetesType: (t: DiabetesType) => void;
+  // When it was last chosen on this device, and the account it was last
+  // reconciled with.
+  diabetesTypeChangedAt: string | null;
+  diabetesTypeSyncedFor: string | null;
+  setDiabetesTypeFromAccount: (t: DiabetesType, changedAt: string | null, userId: string) => void;
+  setDiabetesTypeSyncedFor: (userId: string) => void;
 
   // Appearance: dark (default), light, or follow the OS.
   themeMode: ThemeMode;
@@ -85,7 +92,12 @@ export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
       diabetesType: 't1',
-      setDiabetesType: (t) => set({ diabetesType: t }),
+      setDiabetesType: (t) => set({ diabetesType: t, diabetesTypeChangedAt: new Date().toISOString() }),
+      diabetesTypeChangedAt: null,
+      diabetesTypeSyncedFor: null,
+      setDiabetesTypeFromAccount: (t, changedAt, userId) =>
+        set({ diabetesType: t, diabetesTypeChangedAt: changedAt, diabetesTypeSyncedFor: userId }),
+      setDiabetesTypeSyncedFor: (userId) => set({ diabetesTypeSyncedFor: userId }),
 
       themeMode: 'dark',
       setThemeMode: (m) => set({ themeMode: m }),
@@ -129,6 +141,8 @@ export const useAppStore = create<AppState>()(
       // Supabase on launch, and runtime flags (`ready`) shouldn't persist.
       partialize: (s) => ({
         diabetesType: s.diabetesType,
+        diabetesTypeChangedAt: s.diabetesTypeChangedAt,
+        diabetesTypeSyncedFor: s.diabetesTypeSyncedFor,
         themeMode: s.themeMode,
         language: s.language,
         lastSyncedAt: s.lastSyncedAt,

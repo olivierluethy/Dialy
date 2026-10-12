@@ -3,24 +3,42 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { radius, spacing, type Colors, type ThemeMode } from '@/theme/theme';
 import { useThemedStyles } from '@/theme/useTheme';
 import { useAppStore } from '@/state/store';
+import { syncEngine } from '@/sync/syncEngine';
 import { LANGUAGES, useLanguage, useT, type Language } from '@/i18n';
 import type { DiabetesType } from '@/types/models';
 
 /**
- * Typ-1 / Typ-2 segmented control shown at the top of the Ratgeber (it
- * filters the articles; no other screen uses the type). Selection lives in
- * the Zustand store and persists across restarts. Selected segment is filled accent-green; unselected is a surface
- * with muted text.
+ * Typ-1 / Typ-2 segmented control. Selected segment is filled accent-green;
+ * unselected is a surface with muted text.
  */
-export function TypeSegmentedControl() {
-  const type = useAppStore((s) => s.diabetesType);
-  const setType = useAppStore((s) => s.setDiabetesType);
+export function TypeSegmentedControl({
+  value,
+  onChange,
+}: {
+  value: DiabetesType;
+  onChange: (type: DiabetesType) => void;
+}) {
   const t = useT();
   const options: Array<{ value: DiabetesType; label: string }> = [
     { value: 't1', label: t.diabetesType.t1 },
     { value: 't2', label: t.diabetesType.t2 },
   ];
-  return <Segmented options={options} value={type} onChange={setType} />;
+  return <Segmented options={options} value={value} onChange={onChange} />;
+}
+
+/**
+ * The user's diabetes type (settings and Ratgeber share it). Persisted in the
+ * store and, when signed in, saved to the account on the next sync.
+ */
+export function DiabetesTypeControl() {
+  const type = useAppStore((s) => s.diabetesType);
+  const setType = useAppStore((s) => s.setDiabetesType);
+  const onChange = (value: DiabetesType) => {
+    if (value === type) return;
+    setType(value);
+    if (useAppStore.getState().user) syncEngine.scheduleSync();
+  };
+  return <TypeSegmentedControl value={type} onChange={onChange} />;
 }
 
 /** Appearance picker: Dunkel / Hell / System. Persisted in the store. */

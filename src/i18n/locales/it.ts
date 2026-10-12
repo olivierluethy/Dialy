@@ -22,6 +22,7 @@ const it: Dict = {
     termsOfUse: 'Condizioni d’uso',
     appearance: 'Aspetto',
     language: 'Lingua',
+    diabetesType: 'Tipo di diabete',
     requiredHint: '* Campo obbligatorio',
     notAvailable: 'n.d.',
   },

@@ -4,7 +4,7 @@ import { useNavigation, useRoute, type RouteProp } from '@react-navigation/nativ
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '@/components/Screen';
 import { IconBubble, SectionLabel } from '@/components/primitives';
-import { LanguageControl, ThemeModeControl } from '@/components/SegmentedControl';
+import { DiabetesTypeControl, LanguageControl, ThemeModeControl } from '@/components/SegmentedControl';
 import { Button } from '@/components/Button';
 import { TextField } from '@/components/TextField';
 import { spacing, type Colors } from '@/theme/theme';
@@ -110,7 +110,9 @@ function LoginForm() {
         </Text>
       </Text>
 
-      <SectionLabel style={styles.appearanceLabel}>{t.common.appearance}</SectionLabel>
+      <SectionLabel style={styles.appearanceLabel}>{t.common.diabetesType}</SectionLabel>
+      <DiabetesTypeControl />
+      <SectionLabel>{t.common.appearance}</SectionLabel>
       <ThemeModeControl />
       <SectionLabel>{t.common.language}</SectionLabel>
       <LanguageControl />

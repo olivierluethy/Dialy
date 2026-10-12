@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/Screen';
 import { IconBubble, Card, SectionLabel } from '@/components/primitives';
-import { LanguageControl, ThemeModeControl } from '@/components/SegmentedControl';
+import { DiabetesTypeControl, LanguageControl, ThemeModeControl } from '@/components/SegmentedControl';
 import { Button } from '@/components/Button';
 import { radius, spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
@@ -97,7 +97,10 @@ export function AccountView() {
         </Card>
       </Pressable>
 
-      <SectionLabel style={styles.spaced}>{t.common.language}</SectionLabel>
+      <SectionLabel style={styles.spaced}>{t.common.diabetesType}</SectionLabel>
+      <DiabetesTypeControl />
+
+      <SectionLabel>{t.common.language}</SectionLabel>
       <LanguageControl />
 
       <SectionLabel>{t.common.appearance}</SectionLabel>

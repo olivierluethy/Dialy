@@ -23,6 +23,7 @@ const de = {
     termsOfUse: 'Nutzungsbedingungen',
     appearance: 'Darstellung',
     language: 'Sprache',
+    diabetesType: 'Diabetes-Typ',
     requiredHint: '* Pflichtfeld',
     notAvailable: 'k.A.',
   },

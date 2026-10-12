@@ -22,6 +22,7 @@ const fr: Dict = {
     termsOfUse: 'Conditions d’utilisation',
     appearance: 'Affichage',
     language: 'Langue',
+    diabetesType: 'Type de diabète',
     requiredHint: '* Champ obligatoire',
     notAvailable: 'n.d.',
   },

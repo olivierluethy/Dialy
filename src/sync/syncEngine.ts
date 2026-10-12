@@ -2,6 +2,7 @@ import { getDb } from '@/db/database';
 import { getSupabase, isNetworkError } from '@/sync/supabaseClient';
 import { Sentry } from '@/services/sentry';
 import { refreshPremiumGrant } from '@/services/premium';
+import { syncDiabetesType } from '@/services/userSettings';
 import { nowIso } from '@/utils/id';
 import { useAppStore } from '@/state/store';
 
@@ -147,6 +148,7 @@ async function runSync(onUser: (uid: string) => void): Promise<SyncResult> {
   if (!uid) return { pushed: 0, pulled: 0, error: 'no-session' };
   onUser(uid);
   await refreshPremiumGrant(sb, uid);
+  await syncDiabetesType(sb, reply.data.user!);
   const { pushed, failed } = await pushPending(uid);
   const pulled = await pullRemote(uid);
   if (failed > 0) return { pushed, pulled, error: 'push-failed' };
