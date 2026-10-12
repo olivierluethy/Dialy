@@ -182,7 +182,7 @@ export function SportScreen() {
         />
       ) : (
         <View style={styles.saveBtn}>
-          <GateNotice message={t.gate.saveSport} />
+          <GateNotice message={t.gate.saveSport} returnTo="Sport" />
         </View>
       )}
     </Screen>

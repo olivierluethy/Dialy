@@ -151,8 +151,11 @@ export function TagebuchScreen() {
     setReloadTick((n) => n + 1);
   };
 
-  const goLogin = () => navigation.navigate('Login', { screen: 'LoginHome' });
-  const goRegister = () => navigation.navigate('Login', { screen: 'Register' });
+  // After signing in / registering, come back here (not the account view).
+  const goLogin = () =>
+    navigation.navigate('Login', { screen: 'LoginHome', params: { returnTo: 'Tagebuch' } });
+  const goRegister = () =>
+    navigation.navigate('Login', { screen: 'Register', params: { returnTo: 'Tagebuch' } });
   const goPremium = () => navigation.navigate('Login', { screen: 'Paywall' });
   const unlocked = can('fullDiary', ctx);
   const firstEdited = editKeys?.[0] ? itemsByKey.get(editKeys[0]) : undefined;

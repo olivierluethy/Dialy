@@ -291,7 +291,9 @@ export function KHRechnerScreen() {
 
   // Without a subscription: sign in first, or (signed in) get Premium.
   const goUnlock = () =>
-    navigation.navigate('Login', { screen: user ? 'Paywall' : 'LoginHome' });
+    user
+      ? navigation.navigate('Login', { screen: 'Paywall' })
+      : navigation.navigate('Login', { screen: 'LoginHome', params: { returnTo: 'KHRechner' } });
   const closeDialog = () => setDialog(null);
 
   return (

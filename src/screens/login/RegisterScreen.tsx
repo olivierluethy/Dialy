@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { Screen } from '@/components/Screen';
 import { IconBubble } from '@/components/primitives';
 import { Button } from '@/components/Button';
@@ -11,11 +11,13 @@ import { useAppStore } from '@/state/store';
 import { authService } from '@/services/auth';
 import { useT } from '@/i18n';
 import { TERMS_VERSION } from '@/legal/terms';
+import type { LoginStackParamList } from '@/navigation/types';
 
 export function RegisterScreen() {
   const styles = useThemedStyles(makeStyles);
   const t = useT();
   const navigation = useNavigation<any>();
+  const returnTo = useRoute<RouteProp<LoginStackParamList, 'Register'>>().params?.returnTo;
   const setUser = useAppStore((s) => s.setUser);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -50,6 +52,8 @@ export function RegisterScreen() {
     }
     setUser(user);
     navigation.goBack();
+    // Came from a locked tab: back there instead of the account view.
+    if (returnTo) navigation.getParent()?.navigate(returnTo);
   };
 
   return (

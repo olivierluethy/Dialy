@@ -3,6 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useAppStore } from '@/state/store';
+import type { LoginReturnTo } from '@/navigation/types';
 import { radius, spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import { useT } from '@/i18n';
@@ -12,7 +13,7 @@ import { useT } from '@/i18n';
  * action (save to diary). Logged out it leads to sign-in, signed in to
  * Premium.
  */
-export function GateNotice({ message }: { message: string }) {
+export function GateNotice({ message, returnTo }: { message: string; returnTo: LoginReturnTo }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const t = useT();
@@ -25,7 +26,9 @@ export function GateNotice({ message }: { message: string }) {
         <Text style={styles.message}>{message}</Text>
         <Pressable
           onPress={() =>
-            navigation.navigate('Login', { screen: loggedIn ? 'Paywall' : 'LoginHome' })
+            loggedIn
+              ? navigation.navigate('Login', { screen: 'Paywall' })
+              : navigation.navigate('Login', { screen: 'LoginHome', params: { returnTo } })
           }
           accessibilityRole="link"
         >

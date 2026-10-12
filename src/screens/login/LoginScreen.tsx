@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '@/components/Screen';
 import { IconBubble, SectionLabel } from '@/components/primitives';
@@ -27,6 +27,7 @@ function LoginForm() {
   const styles = useThemedStyles(makeStyles);
   const t = useT();
   const navigation = useNavigation<NativeStackNavigationProp<LoginStackParamList>>();
+  const returnTo = useRoute<RouteProp<LoginStackParamList, 'LoginHome'>>().params?.returnTo;
   const setUser = useAppStore((s) => s.setUser);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -45,6 +46,11 @@ function LoginForm() {
     setUser(user);
     // Reconcile local + remote data right after login (best-effort).
     void syncEngine.syncNow();
+    // Came from a locked tab: back there instead of the account view.
+    if (returnTo) {
+      navigation.setParams({ returnTo: undefined });
+      navigation.getParent()?.navigate(returnTo);
+    }
   };
 
   return (
@@ -91,7 +97,7 @@ function LoginForm() {
       <Button
         title={t.login.createAccount}
         variant="secondary"
-        onPress={() => navigation.navigate('Register')}
+        onPress={() => navigation.navigate('Register', { returnTo })}
       />
 
       <Text style={styles.legalLinks}>

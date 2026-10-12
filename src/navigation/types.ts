@@ -5,9 +5,12 @@ export type RatgeberStackParamList = {
   ArticleDetail: { id: string };
 };
 
+/** Tab to go back to after signing in or registering (instead of the account view). */
+export type LoginReturnTo = 'Tagebuch' | 'KHRechner' | 'Sport';
+
 export type LoginStackParamList = {
-  LoginHome: undefined;
-  Register: undefined;
+  LoginHome: { returnTo?: LoginReturnTo } | undefined;
+  Register: { returnTo?: LoginReturnTo } | undefined;
   Account: undefined;
   Paywall: undefined;
   Privacy: undefined;
