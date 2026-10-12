@@ -6,6 +6,7 @@ import {
   Pressable,
   ActivityIndicator,
   ScrollView,
+  Modal,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,7 +18,6 @@ import { TextField } from '@/components/TextField';
 import { SelectableChip } from '@/components/Chip';
 import { NutrientBar } from '@/components/NutrientBar';
 import { Dialog } from '@/components/Dialog';
-import { FadeIn } from '@/components/FadeIn';
 import { radius, spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import { foodsRepo } from '@/db/repositories/foods';
@@ -173,20 +173,8 @@ export function KHRechnerScreen() {
     );
   }, [dataRevision]);
 
-  // Scroll the calculation card into view when a food is picked. On first
-  // show the card's position is only known after layout, so the scroll is
-  // deferred to its onLayout; if it's already shown it scrolls right away.
-  const scrollRef = useRef<ScrollView>(null);
-  const cardY = useRef<number | null>(null);
-  const pendingScroll = useRef(false);
-  const scrollToCard = () => {
-    if (cardY.current === null) return;
-    scrollRef.current?.scrollTo({ y: Math.max(0, cardY.current - spacing.sm), animated: true });
-  };
-
+  // Picking a food opens the calculation popup.
   const selectFood = (food: Food) => {
-    if (selected && cardY.current !== null) scrollToCard();
-    else pendingScroll.current = true;
     setSelected(food);
     // Default to the first preset portion, or 100 g.
     setGramsExternal(food.portions[0]?.grams ?? 100);
@@ -195,7 +183,6 @@ export function KHRechnerScreen() {
   // isn't left in the old language.
   useEffect(() => {
     setSelected(null);
-    cardY.current = null;
   }, [language]);
 
   // Latest handler for the memoised result rows below.
@@ -243,10 +230,7 @@ export function KHRechnerScreen() {
   };
 
   // Close the food editor without adding anything.
-  const closeFood = () => {
-    setSelected(null);
-    cardY.current = null;
-  };
+  const closeFood = () => setSelected(null);
 
   const clearMeal = () => setMeal([]);
 
@@ -302,7 +286,7 @@ export function KHRechnerScreen() {
   const closeDialog = () => setDialog(null);
 
   return (
-    <Screen scrollRef={scrollRef}>
+    <Screen>
       <View style={styles.titleRow}>
         <ScreenTitle style={styles.title}>{t.khrechner.title}</ScreenTitle>
         <View style={styles.totalRow}>
@@ -414,146 +398,156 @@ export function KHRechnerScreen() {
         </>
       )}
 
-      {selected && nutrients && (
-        <View
-          onLayout={(e) => {
-            cardY.current = e.nativeEvent.layout.y;
-            if (pendingScroll.current) {
-              pendingScroll.current = false;
-              scrollToCard();
-            }
-          }}
-        >
-          <FadeIn key={selected.id}>
-            <Card style={styles.selectedCard}>
-              {/* Header */}
-              <View style={styles.foodHeader}>
-                <View style={styles.foodHeaderText}>
-                  <Text style={styles.foodName}>{selected.name}</Text>
-                  {/* "Quelle: <nutrients> | <usual portion>"; the full source
-                      names are listed in the privacy screen. */}
-                  {foodSourceText(selected, t) && (
-                    <Text style={styles.foodSource}>{foodSourceText(selected, t)}</Text>
-                  )}
-                </View>
-                <Pressable
-                  onPress={closeFood}
-                  accessibilityRole="button"
-                  accessibilityLabel={t.khrechner.closeFoodA11y}
-                  hitSlop={8}
-                  style={styles.closeBtn}
-                >
-                  <Ionicons name="close" size={22} color={colors.textTertiary} />
-                </Pressable>
-              </View>
-
-              {/* Portion presets (BLV foods have none: grams only) */}
-              {selected.portions.length > 0 && (
-                <>
-                  <SectionLabel>{t.khrechner.portionSize}</SectionLabel>
-                  <View style={styles.chipRow}>
-                    {selected.portions.map((p) => (
-                      <SelectableChip
-                        key={p.label}
-                        label={localizedPortionLabel(p.label, t)}
-                        selected={Math.round(grams) === p.grams}
-                        onPress={() => setGramsExternal(p.grams)}
-                      />
-                    ))}
+      {/* Calculation for the picked food, as a popup over the results. Tap
+          beside it (or the close button / Android back) to close. */}
+      <Modal
+        visible={selected !== null && nutrients !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={closeFood}
+      >
+        <View style={styles.modalBackdrop}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={closeFood}
+            accessibilityLabel={t.common.close}
+          />
+          {selected && nutrients && (
+            <ScrollView
+              style={styles.modalScroll}
+              contentContainerStyle={styles.modalContent}
+              keyboardShouldPersistTaps="handled"
+            >
+              <Card>
+                {/* Header */}
+                <View style={styles.foodHeader}>
+                  <View style={styles.foodHeaderText}>
+                    <Text style={styles.foodName}>{selected.name}</Text>
+                    {/* "Quelle: <nutrients> | <usual portion>"; the full source
+                        names are listed in the privacy screen. */}
+                    {foodSourceText(selected, t) && (
+                      <Text style={styles.foodSource}>{foodSourceText(selected, t)}</Text>
+                    )}
                   </View>
-                </>
-              )}
+                  <Pressable
+                    onPress={closeFood}
+                    accessibilityRole="button"
+                    accessibilityLabel={t.khrechner.closeFoodA11y}
+                    hitSlop={8}
+                    style={styles.closeBtn}
+                  >
+                    <Ionicons name="close" size={22} color={colors.textTertiary} />
+                  </Pressable>
+                </View>
 
-              {/* Gram field + slider, two-way bound */}
-              <View style={styles.gramRow}>
-                <TextField
-                  value={String(Math.round(grams))}
-                  onChangeText={(v) => {
-                    const n = parseInt(v.replace(/[^0-9]/g, ''), 10);
-                    setGramsExternal(Number.isNaN(n) ? 0 : Math.min(n, MAX_GRAMS));
+                {/* Portion presets (BLV foods have none: grams only) */}
+                {selected.portions.length > 0 && (
+                  <>
+                    <SectionLabel>{t.khrechner.portionSize}</SectionLabel>
+                    <View style={styles.chipRow}>
+                      {selected.portions.map((p) => (
+                        <SelectableChip
+                          key={p.label}
+                          label={localizedPortionLabel(p.label, t)}
+                          selected={Math.round(grams) === p.grams}
+                          onPress={() => setGramsExternal(p.grams)}
+                        />
+                      ))}
+                    </View>
+                  </>
+                )}
+
+                {/* Gram field + slider, two-way bound */}
+                <View style={styles.gramRow}>
+                  <TextField
+                    value={String(Math.round(grams))}
+                    onChangeText={(v) => {
+                      const n = parseInt(v.replace(/[^0-9]/g, ''), 10);
+                      setGramsExternal(Number.isNaN(n) ? 0 : Math.min(n, MAX_GRAMS));
+                    }}
+                    keyboardType="number-pad"
+                    containerStyle={styles.gramField}
+                    style={styles.gramInput}
+                  />
+                  <Text style={styles.gramUnit}>{t.khrechner.grams}</Text>
+                </View>
+                <Slider
+                  minimumValue={0}
+                  maximumValue={MAX_GRAMS}
+                  step={1}
+                  value={sliderValue}
+                  onValueChange={(v) => {
+                    // Coalesce the burst of drag events into one commit per frame so
+                    // the nutrient math + re-render can keep up (issue #1).
+                    pendingGramsRef.current = v;
+                    if (rafRef.current !== null) return;
+                    rafRef.current = requestAnimationFrame(() => {
+                      rafRef.current = null;
+                      setGrams(Math.round(pendingGramsRef.current));
+                    });
                   }}
-                  keyboardType="number-pad"
-                  containerStyle={styles.gramField}
-                  style={styles.gramInput}
+                  onSlidingComplete={(v) => {
+                    if (rafRef.current !== null) {
+                      cancelAnimationFrame(rafRef.current);
+                      rafRef.current = null;
+                    }
+                    // Sync the slider's own value once the drag is over, so a later
+                    // external set to the previous value still moves the thumb.
+                    setGrams(Math.round(v));
+                    setSliderValue(Math.round(v));
+                  }}
+                  minimumTrackTintColor={colors.accent}
+                  maximumTrackTintColor={colors.bgInput}
+                  thumbTintColor={colors.accent}
                 />
-                <Text style={styles.gramUnit}>{t.khrechner.grams}</Text>
-              </View>
-              <Slider
-                minimumValue={0}
-                maximumValue={MAX_GRAMS}
-                step={1}
-                value={sliderValue}
-                onValueChange={(v) => {
-                  // Coalesce the burst of drag events into one commit per frame so
-                  // the nutrient math + re-render can keep up (issue #1).
-                  pendingGramsRef.current = v;
-                  if (rafRef.current !== null) return;
-                  rafRef.current = requestAnimationFrame(() => {
-                    rafRef.current = null;
-                    setGrams(Math.round(pendingGramsRef.current));
-                  });
-                }}
-                onSlidingComplete={(v) => {
-                  if (rafRef.current !== null) {
-                    cancelAnimationFrame(rafRef.current);
-                    rafRef.current = null;
-                  }
-                  // Sync the slider's own value once the drag is over, so a later
-                  // external set to the previous value still moves the thumb.
-                  setGrams(Math.round(v));
-                  setSliderValue(Math.round(v));
-                }}
-                minimumTrackTintColor={colors.accent}
-                maximumTrackTintColor={colors.bgInput}
-                thumbTintColor={colors.accent}
-              />
 
-              {/* Nutrient bars */}
-              <SectionLabel style={styles.nutrientLabel}>{t.khrechner.nutrients}</SectionLabel>
-              <NutrientBar
-                label={t.khrechner.carbs}
-                value={`${Math.round(nutrients.carbs)} g`}
-                fraction={nutrients.carbs / BAR_MAX.carbs}
-                color={colors.dataCarb}
-              />
-              <NutrientBar
-                label={t.khrechner.sugar}
-                value={`${Math.round(nutrients.sugar)} g`}
-                fraction={nutrients.sugar / BAR_MAX.sugar}
-                color={colors.dataSugar}
-              />
-              <NutrientBar
-                label={t.khrechner.gi}
-                value={nutrients.gi === null ? t.common.notAvailable : `${Math.round(nutrients.gi)}`}
-                fraction={(nutrients.gi ?? 0) / BAR_MAX.gi}
-                color={colors.dataGlyc}
-              />
-              <NutrientBar
-                label={t.khrechner.fat}
-                value={`${Math.round(nutrients.fat)} g`}
-                fraction={nutrients.fat / BAR_MAX.fat}
-                color={colors.dataFat}
-              />
+                {/* Nutrient bars */}
+                <SectionLabel style={styles.nutrientLabel}>{t.khrechner.nutrients}</SectionLabel>
+                <NutrientBar
+                  label={t.khrechner.carbs}
+                  value={`${Math.round(nutrients.carbs)} g`}
+                  fraction={nutrients.carbs / BAR_MAX.carbs}
+                  color={colors.dataCarb}
+                />
+                <NutrientBar
+                  label={t.khrechner.sugar}
+                  value={`${Math.round(nutrients.sugar)} g`}
+                  fraction={nutrients.sugar / BAR_MAX.sugar}
+                  color={colors.dataSugar}
+                />
+                <NutrientBar
+                  label={t.khrechner.gi}
+                  value={nutrients.gi === null ? t.common.notAvailable : `${Math.round(nutrients.gi)}`}
+                  fraction={(nutrients.gi ?? 0) / BAR_MAX.gi}
+                  color={colors.dataGlyc}
+                />
+                <NutrientBar
+                  label={t.khrechner.fat}
+                  value={`${Math.round(nutrients.fat)} g`}
+                  fraction={nutrients.fat / BAR_MAX.fat}
+                  color={colors.dataFat}
+                />
 
-              {/* Carbs of this portion */}
-              <View style={styles.summaryChip}>
-                <Text style={styles.summaryText}>
-                  {t.khrechner.thisPortion(formatCarbs(nutrients.carbs))}
-                </Text>
-              </View>
+                {/* Carbs of this portion */}
+                <View style={styles.summaryChip}>
+                  <Text style={styles.summaryText}>
+                    {t.khrechner.thisPortion(formatCarbs(nutrients.carbs))}
+                  </Text>
+                </View>
 
-              {/* Collect into the meal (saved to the diary via the title icon). */}
-              <Button
-                title={t.khrechner.addToMeal}
-                icon="add"
-                onPress={addToMeal}
-                disabled={grams <= 0}
-                style={styles.spacedBtn}
-              />
-            </Card>
-          </FadeIn>
+                {/* Collect into the meal (saved to the diary via the title icon). */}
+                <Button
+                  title={t.khrechner.addToMeal}
+                  icon="add"
+                  onPress={addToMeal}
+                  disabled={grams <= 0}
+                  style={styles.spacedBtn}
+                />
+              </Card>
+            </ScrollView>
+          )}
         </View>
-      )}
+      </Modal>
 
       {/* Foods collected into the meal so far. */}
       <Dialog
@@ -680,7 +674,15 @@ const makeStyles = (colors: Colors) =>
     // Bleed to the screen edges so chips scroll under the side padding.
     categoryScroll: { marginHorizontal: -spacing.lg, marginBottom: spacing.md },
     categoryRow: { gap: spacing.sm, paddingHorizontal: spacing.lg },
-    selectedCard: { marginTop: spacing.lg },
+    modalBackdrop: {
+      flex: 1,
+      backgroundColor: colors.overlay,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: spacing.lg,
+    },
+    modalScroll: { width: '100%', maxWidth: 480, maxHeight: '100%', flexGrow: 0 },
+    modalContent: { flexGrow: 0 },
     // flex-start keeps the close button top right when the name wraps.
     foodHeader: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: spacing.lg },
     // flex: 1 lets long names and the source line wrap instead of overflowing.
