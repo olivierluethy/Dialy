@@ -22,9 +22,11 @@ import { radius, spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import { foodsRepo } from '@/db/repositories/foods';
 import { FOOD_CATEGORIES, USUAL_PORTION_LABEL } from '@/data/foodCategories';
+import { useLanguage, useT, type Dict } from '@/i18n';
+import { foodCategoryLabel, localizedPortionLabel } from '@/i18n/foods';
 import { mealsRepo } from '@/db/repositories/meals';
 import { useAppStore } from '@/state/store';
-import { can, gateCopy } from '@/policy/gating';
+import { can } from '@/policy/gating';
 import { carbsToBe, formatCarbs } from '@/utils/format';
 import { nowIso, uuidv4 } from '@/utils/id';
 import type { Food } from '@/types/models';
@@ -53,9 +55,9 @@ type DialogState =
  * "Quelle: BLV | menuCH" — where the nutrients and (after "|") the usual
  * portion come from. Null for the curated foods.
  */
-function foodSourceText(food: Food): string | null {
-  if (food.id.startsWith('brand-')) return 'Quelle: Herstellerangaben (Stand Oktober 2026)';
-  if (food.id.startsWith('off-')) return 'Quelle: Open Food Facts (ODbL)';
+function foodSourceText(food: Food, t: Dict): string | null {
+  if (food.id.startsWith('brand-')) return t.khrechner.source(t.khrechner.sourceManufacturer);
+  if (food.id.startsWith('off-')) return t.khrechner.source('Open Food Facts (ODbL)');
   const nutrients = food.id.startsWith('blv-')
     ? 'BLV'
     : food.id.startsWith('bls-')
@@ -63,7 +65,7 @@ function foodSourceText(food: Food): string | null {
       : null;
   if (!nutrients) return null;
   const fromMenuch = food.portions[0]?.label.startsWith(USUAL_PORTION_LABEL);
-  return `Quelle: ${nutrients}${fromMenuch ? ' | menuCH' : ''}`;
+  return t.khrechner.source(`${nutrients}${fromMenuch ? ' | menuCH' : ''}`);
 }
 
 // GI is a property of the food, not scaled by portion.
@@ -80,11 +82,14 @@ function portionNutrients(food: Food, grams: number) {
 export function KHRechnerScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
+  // Search results carry names in the UI language: search again on a change.
+  const language = useLanguage();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Food[]>([]);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [category, setCategory] = useState<string | null>(null);
-  const [categories, setCategories] = useState<typeof FOOD_CATEGORIES>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Food | null>(null);
   const [grams, setGrams] = useState(0);
@@ -154,12 +159,12 @@ export function KHRechnerScreen() {
     return () => {
       active = false;
     };
-  }, [query, category, dataRevision]);
+  }, [query, category, dataRevision, language]);
 
   // Filter chips: only categories that actually contain foods.
   useEffect(() => {
     foodsRepo.categories().then((present) =>
-      setCategories(FOOD_CATEGORIES.filter((c) => present.has(c.name)))
+      setCategories(FOOD_CATEGORIES.filter((c) => present.has(c)))
     );
   }, [dataRevision]);
 
@@ -181,6 +186,13 @@ export function KHRechnerScreen() {
     // Default to the first preset portion, or 100 g.
     setGramsExternal(food.portions[0]?.grams ?? 100);
   };
+  // A new language renames the foods: close the open one so its name
+  // isn't left in the old language.
+  useEffect(() => {
+    setSelected(null);
+    cardY.current = null;
+  }, [language]);
+
   // Latest handler for the memoised result rows below.
   const selectFoodRef = useRef(selectFood);
   selectFoodRef.current = selectFood;
@@ -283,7 +295,7 @@ export function KHRechnerScreen() {
   return (
     <Screen scrollRef={scrollRef}>
       <View style={styles.titleRow}>
-        <ScreenTitle style={styles.title}>KH-Rechner</ScreenTitle>
+        <ScreenTitle style={styles.title}>{t.khrechner.title}</ScreenTitle>
         <View style={styles.totalRow}>
           {/* Tap the total to see which foods it's made of. */}
           <Pressable
@@ -291,11 +303,11 @@ export function KHRechnerScreen() {
             disabled={meal.length === 0}
             style={({ pressed }) => [styles.total, pressed && styles.totalPressed]}
             accessibilityRole="button"
-            accessibilityLabel={`Zwischentotal ${formatCarbs(mealCarbs)}, Lebensmittel anzeigen`}
+            accessibilityLabel={t.khrechner.totalA11y(formatCarbs(mealCarbs))}
             hitSlop={6}
           >
             <Text style={styles.totalValue}>{Math.round(mealCarbs)} g</Text>
-            <Text style={styles.totalUnit}>KH</Text>
+            <Text style={styles.totalUnit}>{t.units.carbs}</Text>
           </Pressable>
           {/* Greyed out without an account, but still tappable to explain why. */}
           <Pressable
@@ -307,7 +319,7 @@ export function KHRechnerScreen() {
               (!canSaveDiary || meal.length === 0) && styles.iconBtnDimmed,
             ]}
             accessibilityRole="button"
-            accessibilityLabel="Mahlzeit im Tagebuch speichern"
+            accessibilityLabel={t.khrechner.saveMealA11y}
             hitSlop={4}
           >
             {saving ? (
@@ -329,7 +341,7 @@ export function KHRechnerScreen() {
               meal.length === 0 && styles.iconBtnDimmed,
             ]}
             accessibilityRole="button"
-            accessibilityLabel="Zwischentotal auf null setzen"
+            accessibilityLabel={t.khrechner.clearA11y}
             hitSlop={4}
           >
             <Ionicons name="trash-outline" size={20} color={colors.danger} />
@@ -341,7 +353,7 @@ export function KHRechnerScreen() {
       <View style={styles.searchRow}>
         <Ionicons name="search" size={18} color={colors.textTertiary} />
         <TextField
-          placeholder="Lebensmittel suchen…"
+          placeholder={t.khrechner.searchPlaceholder}
           value={query}
           onChangeText={setQuery}
           containerStyle={styles.searchField}
@@ -358,13 +370,13 @@ export function KHRechnerScreen() {
         contentContainerStyle={styles.categoryRow}
         keyboardShouldPersistTaps="handled"
       >
-        <SelectableChip label="Alle" selected={category === null} onPress={() => setCategory(null)} />
+        <SelectableChip label={t.khrechner.all} selected={category === null} onPress={() => setCategory(null)} />
         {categories.map((c) => (
           <SelectableChip
-            key={c.name}
-            label={c.label}
-            selected={category === c.name}
-            onPress={() => setCategory((cur) => (cur === c.name ? null : c.name))}
+            key={c}
+            label={foodCategoryLabel(c, t)}
+            selected={category === c}
+            onPress={() => setCategory((cur) => (cur === c ? null : c))}
           />
         ))}
       </ScrollView>
@@ -375,12 +387,12 @@ export function KHRechnerScreen() {
       ) : (
         <>
           <Text style={styles.resultCount}>
-            {results.length === 0 ? 'Keine Treffer' : `${results.length} Lebensmittel`}
+            {results.length === 0 ? t.khrechner.noResults : t.khrechner.resultCount(results.length)}
           </Text>
           {resultRows}
           {remaining > 0 && (
             <Button
-              title={`Weitere anzeigen (${remaining})`}
+              title={t.khrechner.showMore(remaining)}
               variant="secondary"
               onPress={() => setVisibleCount((n) => n + PAGE_SIZE)}
               style={styles.spacedBtn}
@@ -407,14 +419,14 @@ export function KHRechnerScreen() {
                   <Text style={styles.foodName}>{selected.name}</Text>
                   {/* "Quelle: <nutrients> | <usual portion>"; the full source
                       names are listed in the privacy screen. */}
-                  {foodSourceText(selected) && (
-                    <Text style={styles.foodSource}>{foodSourceText(selected)}</Text>
+                  {foodSourceText(selected, t) && (
+                    <Text style={styles.foodSource}>{foodSourceText(selected, t)}</Text>
                   )}
                 </View>
                 <Pressable
                   onPress={closeFood}
                   accessibilityRole="button"
-                  accessibilityLabel="Lebensmittel schliessen"
+                  accessibilityLabel={t.khrechner.closeFoodA11y}
                   hitSlop={8}
                   style={styles.closeBtn}
                 >
@@ -425,12 +437,12 @@ export function KHRechnerScreen() {
               {/* Portion presets (BLV foods have none: grams only) */}
               {selected.portions.length > 0 && (
                 <>
-                  <SectionLabel>Portionsgrösse</SectionLabel>
+                  <SectionLabel>{t.khrechner.portionSize}</SectionLabel>
                   <View style={styles.chipRow}>
                     {selected.portions.map((p) => (
                       <SelectableChip
                         key={p.label}
-                        label={p.label}
+                        label={localizedPortionLabel(p.label, t)}
                         selected={Math.round(grams) === p.grams}
                         onPress={() => setGramsExternal(p.grams)}
                       />
@@ -443,15 +455,15 @@ export function KHRechnerScreen() {
               <View style={styles.gramRow}>
                 <TextField
                   value={String(Math.round(grams))}
-                  onChangeText={(t) => {
-                    const n = parseInt(t.replace(/[^0-9]/g, ''), 10);
+                  onChangeText={(v) => {
+                    const n = parseInt(v.replace(/[^0-9]/g, ''), 10);
                     setGramsExternal(Number.isNaN(n) ? 0 : Math.min(n, MAX_GRAMS));
                   }}
                   keyboardType="number-pad"
                   containerStyle={styles.gramField}
                   style={styles.gramInput}
                 />
-                <Text style={styles.gramUnit}>Gramm</Text>
+                <Text style={styles.gramUnit}>{t.khrechner.grams}</Text>
               </View>
               <Slider
                 minimumValue={0}
@@ -484,27 +496,27 @@ export function KHRechnerScreen() {
               />
 
               {/* Nutrient bars */}
-              <SectionLabel style={styles.nutrientLabel}>Nährwerte</SectionLabel>
+              <SectionLabel style={styles.nutrientLabel}>{t.khrechner.nutrients}</SectionLabel>
               <NutrientBar
-                label="Kohlenhydrate"
+                label={t.khrechner.carbs}
                 value={`${Math.round(nutrients.carbs)} g`}
                 fraction={nutrients.carbs / BAR_MAX.carbs}
                 color={colors.dataCarb}
               />
               <NutrientBar
-                label="Zucker"
+                label={t.khrechner.sugar}
                 value={`${Math.round(nutrients.sugar)} g`}
                 fraction={nutrients.sugar / BAR_MAX.sugar}
                 color={colors.dataSugar}
               />
               <NutrientBar
-                label="Glyk. Index"
-                value={nutrients.gi === null ? 'k.A.' : `${Math.round(nutrients.gi)}`}
+                label={t.khrechner.gi}
+                value={nutrients.gi === null ? t.common.notAvailable : `${Math.round(nutrients.gi)}`}
                 fraction={(nutrients.gi ?? 0) / BAR_MAX.gi}
                 color={colors.dataGlyc}
               />
               <NutrientBar
-                label="Fett"
+                label={t.khrechner.fat}
                 value={`${Math.round(nutrients.fat)} g`}
                 fraction={nutrients.fat / BAR_MAX.fat}
                 color={colors.dataFat}
@@ -513,13 +525,13 @@ export function KHRechnerScreen() {
               {/* Carbs of this portion */}
               <View style={styles.summaryChip}>
                 <Text style={styles.summaryText}>
-                  Diese Portion: {formatCarbs(nutrients.carbs)}
+                  {t.khrechner.thisPortion(formatCarbs(nutrients.carbs))}
                 </Text>
               </View>
 
               {/* Collect into the meal (saved to the diary via the title icon). */}
               <Button
-                title="Zur Mahlzeit hinzufügen"
+                title={t.khrechner.addToMeal}
                 icon="add"
                 onPress={addToMeal}
                 disabled={grams <= 0}
@@ -533,9 +545,9 @@ export function KHRechnerScreen() {
       {/* Foods collected into the meal so far. */}
       <Dialog
         visible={dialog?.kind === 'meal'}
-        title="Mahlzeit"
+        title={t.khrechner.mealTitle}
         onClose={closeDialog}
-        actions={[{ label: 'Schliessen', onPress: closeDialog }]}
+        actions={[{ label: t.common.close, onPress: closeDialog }]}
       >
         <View style={styles.mealList}>
           {meal.map((item) => (
@@ -550,20 +562,20 @@ export function KHRechnerScreen() {
             </View>
           ))}
           <View style={styles.mealRow}>
-            <Text style={styles.mealTotalLabel}>Total</Text>
+            <Text style={styles.mealTotalLabel}>{t.khrechner.total}</Text>
             <Text style={styles.mealCarbs}>{formatCarbs(mealCarbs)}</Text>
           </View>
         </View>
       </Dialog>
       <Dialog
         visible={dialog?.kind === 'account'}
-        title="Konto erforderlich"
-        message={`${gateCopy.saveMeal} Mit einem kostenlosen Konto werden deine Mahlzeiten im Tagebuch gespeichert.`}
+        title={t.khrechner.accountRequired}
+        message={`${t.gate.saveMeal} ${t.khrechner.freeAccountSavesMeals}`}
         onClose={closeDialog}
         actions={[
-          { label: 'Abbrechen', onPress: closeDialog },
+          { label: t.common.cancel, onPress: closeDialog },
           {
-            label: 'Konto erstellen',
+            label: t.khrechner.createAccount,
             variant: 'primary',
             onPress: () => {
               closeDialog();
@@ -574,17 +586,13 @@ export function KHRechnerScreen() {
       />
       <Dialog
         visible={dialog?.kind === 'saved'}
-        title="Gespeichert"
-        message={
-          dialog?.kind === 'saved' && dialog.count === 1
-            ? '1 Lebensmittel wurde im Tagebuch eingetragen.'
-            : `${dialog?.kind === 'saved' ? dialog.count : 0} Lebensmittel wurden im Tagebuch eingetragen.`
-        }
+        title={t.khrechner.saved}
+        message={t.khrechner.savedMessage(dialog?.kind === 'saved' ? dialog.count : 0)}
         onClose={closeDialog}
         actions={[
-          { label: 'OK', onPress: closeDialog },
+          { label: t.common.ok, onPress: closeDialog },
           {
-            label: 'Zum Tagebuch',
+            label: t.khrechner.toDiary,
             variant: 'primary',
             onPress: () => {
               closeDialog();
@@ -595,10 +603,10 @@ export function KHRechnerScreen() {
       />
       <Dialog
         visible={dialog?.kind === 'error'}
-        title="Speichern fehlgeschlagen"
-        message="Nicht alle Lebensmittel konnten gespeichert werden. Die übrigen sind noch in der Mahlzeit – bitte versuche es erneut."
+        title={t.khrechner.saveFailed}
+        message={t.khrechner.saveFailedMessage}
         onClose={closeDialog}
-        actions={[{ label: 'OK', variant: 'primary', onPress: closeDialog }]}
+        actions={[{ label: t.common.ok, variant: 'primary', onPress: closeDialog }]}
       />
     </Screen>
   );

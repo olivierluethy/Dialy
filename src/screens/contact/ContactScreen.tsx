@@ -12,6 +12,7 @@ import { spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import { foodsRepo } from '@/db/repositories/foods';
 import { config } from '@/config';
+import { useLanguage, useT } from '@/i18n';
 import { contactErrorText, sendContactMessage, type ContactError } from '@/services/contact';
 import type { Food } from '@/types/models';
 
@@ -35,6 +36,8 @@ function parseGrams(v: string): number | null {
 export function ContactScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
+  const language = useLanguage();
   const [kind, setKind] = useState<Kind>('new');
 
   // Neues Lebensmittel
@@ -67,7 +70,7 @@ export function ContactScreen() {
     return () => {
       active = false;
     };
-  }, [query]);
+  }, [query, language]);
 
   const values = { carbs: parseGrams(carbs), sugar: parseGrams(sugar), fat: parseGrams(fat) };
   const valuesValid = Object.values(values).every((v) => !Number.isNaN(v));
@@ -130,24 +133,21 @@ export function ContactScreen() {
 
   return (
     <Screen contentStyle={styles.content}>
-      <Text style={styles.intro}>
-        Fehlt ein Lebensmittel, stimmt ein Wert nicht oder hast du ein anderes Anliegen? Schreib
-        uns – wir prüfen jeden Hinweis.
-      </Text>
+      <Text style={styles.intro}>{t.contact.intro}</Text>
 
       <View style={styles.kindRow}>
         <SelectableChip
-          label="Neues Lebensmittel"
+          label={t.contact.kindNew}
           selected={kind === 'new'}
           onPress={() => setKind('new')}
         />
         <SelectableChip
-          label="Fehler melden"
+          label={t.contact.kindFix}
           selected={kind === 'fix'}
           onPress={() => setKind('fix')}
         />
         <SelectableChip
-          label="Sonstiges"
+          label={t.contact.kindOther}
           selected={kind === 'other'}
           onPress={() => setKind('other')}
         />
@@ -156,29 +156,29 @@ export function ContactScreen() {
       {kind === 'new' ? (
         <>
           <TextField
-            label="Name des Lebensmittels *"
+            label={t.contact.foodName}
             value={name}
             onChangeText={setName}
-            placeholder="z. B. Dinkel-Vollkornbrötli"
+            placeholder={t.contact.foodNamePlaceholder}
           />
-          <SectionLabel>Nährwerte pro 100 g (falls bekannt)</SectionLabel>
+          <SectionLabel>{t.contact.valuesLabel}</SectionLabel>
           <View style={styles.valuesRow}>
             <TextField
-              label="KH (g)"
+              label={t.contact.carbs}
               value={carbs}
               onChangeText={setCarbs}
               keyboardType="decimal-pad"
               containerStyle={styles.valueField}
             />
             <TextField
-              label="Zucker (g)"
+              label={t.contact.sugar}
               value={sugar}
               onChangeText={setSugar}
               keyboardType="decimal-pad"
               containerStyle={styles.valueField}
             />
             <TextField
-              label="Fett (g)"
+              label={t.contact.fat}
               value={fat}
               onChangeText={setFat}
               keyboardType="decimal-pad"
@@ -186,13 +186,13 @@ export function ContactScreen() {
             />
           </View>
           {!valuesValid && (
-            <Text style={styles.error}>Nährwerte bitte als Zahl zwischen 0 und 100 angeben.</Text>
+            <Text style={styles.error}>{t.contact.valuesInvalid}</Text>
           )}
           <TextField
-            label="Bemerkung / Quelle"
+            label={t.contact.remark}
             value={message}
             onChangeText={setMessage}
-            placeholder="z. B. Werte von der Verpackung"
+            placeholder={t.contact.remarkPlaceholder}
             multiline
             style={styles.multiline}
           />
@@ -200,17 +200,17 @@ export function ContactScreen() {
       ) : kind === 'other' ? (
         <>
           <TextField
-            label="Betreff *"
+            label={t.contact.subject}
             value={subject}
             onChangeText={setSubject}
-            placeholder="z. B. Frage zum Tagebuch"
+            placeholder={t.contact.subjectPlaceholder}
             maxLength={200}
           />
           <TextField
-            label="Nachricht *"
+            label={t.contact.message}
             value={message}
             onChangeText={setMessage}
-            placeholder="Was möchtest du uns mitteilen?"
+            placeholder={t.contact.messagePlaceholder}
             multiline
             maxLength={4000}
             style={styles.multiline}
@@ -218,21 +218,20 @@ export function ContactScreen() {
         </>
       ) : (
         <>
-          <SectionLabel>Welches Lebensmittel ist falsch? *</SectionLabel>
+          <SectionLabel>{t.contact.whichFood}</SectionLabel>
           {food ? (
             <Card style={styles.selectedFood}>
               <View style={styles.selectedRow}>
                 <View style={styles.flex}>
                   <Text style={styles.foodName}>{food.name}</Text>
                   <Text style={styles.foodValues}>
-                    {food.carbs_per_100g} g KH · {food.sugar_per_100g} g Zucker ·{' '}
-                    {food.fat_per_100g} g Fett pro 100 g
+                    {t.contact.foodValues(food.carbs_per_100g, food.sugar_per_100g, food.fat_per_100g)}
                   </Text>
                 </View>
                 <Pressable
                   onPress={() => setFood(null)}
                   accessibilityRole="button"
-                  accessibilityLabel="Anderes Lebensmittel wählen"
+                  accessibilityLabel={t.contact.otherFoodA11y}
                   hitSlop={8}
                 >
                   <Ionicons name="close-circle" size={22} color={colors.textTertiary} />
@@ -244,7 +243,7 @@ export function ContactScreen() {
               <TextField
                 value={query}
                 onChangeText={setQuery}
-                placeholder="Lebensmittel suchen…"
+                placeholder={t.khrechner.searchPlaceholder}
                 autoCorrect={false}
               />
               {results.map((f) => (
@@ -263,10 +262,10 @@ export function ContactScreen() {
             </>
           )}
           <TextField
-            label="Korrekturvorschlag *"
+            label={t.contact.correction}
             value={message}
             onChangeText={setMessage}
-            placeholder="z. B. Laut Verpackung 48 g KH pro 100 g"
+            placeholder={t.contact.correctionPlaceholder}
             multiline
             style={styles.multiline}
             containerStyle={styles.spaced}
@@ -275,32 +274,32 @@ export function ContactScreen() {
       )}
 
       <Button
-        title="Senden"
+        title={t.contact.send}
         icon="send"
         onPress={send}
         disabled={!canSend}
         loading={sending}
         style={styles.spaced}
       />
-      <Text style={styles.hint}>* Pflichtfeld</Text>
+      <Text style={styles.hint}>{t.common.requiredHint}</Text>
 
       <Dialog
         visible={dialog === 'sent'}
-        title="Danke!"
-        message="Deine Nachricht ist bei uns angekommen. Danke für deine Hilfe!"
+        title={t.contact.thanks}
+        message={t.contact.sentMessage}
         onClose={() => setDialog(null)}
-        actions={[{ label: 'OK', variant: 'primary', onPress: () => setDialog(null) }]}
+        actions={[{ label: t.common.ok, variant: 'primary', onPress: () => setDialog(null) }]}
       />
       <Dialog
         visible={dialog !== null && dialog !== 'sent'}
-        title="Nicht gesendet"
+        title={t.contact.notSent}
         message={
           dialog !== null && dialog !== 'sent'
-            ? `${contactErrorText(dialog)} Du kannst uns auch an ${config.contactEmail} schreiben.`
+            ? `${contactErrorText(dialog)} ${t.contact.writeTo(config.contactEmail)}`
             : undefined
         }
         onClose={() => setDialog(null)}
-        actions={[{ label: 'OK', variant: 'primary', onPress: () => setDialog(null) }]}
+        actions={[{ label: t.common.ok, variant: 'primary', onPress: () => setDialog(null) }]}
       />
     </Screen>
   );

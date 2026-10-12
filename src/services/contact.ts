@@ -1,4 +1,5 @@
 import { getSupabase, isNetworkError } from '@/sync/supabaseClient';
+import { getT } from '@/i18n';
 
 /**
  * Kontakt form: messages are written to the Supabase table
@@ -45,10 +46,10 @@ export async function sendContactMessage(
 export function contactErrorText(error: ContactError): string {
   switch (error) {
     case 'offline':
-      return 'Keine Internetverbindung. Bitte versuche es später noch einmal – deine Eingaben bleiben erhalten.';
+      return getT().contact.errorOffline;
     case 'not-configured':
-      return 'Das Kontaktformular braucht eine Verbindung zum Dialy-Server, der hier nicht eingerichtet ist.';
+      return getT().contact.errorNotConfigured;
     default:
-      return 'Die Nachricht konnte gerade nicht gesendet werden. Bitte versuche es später noch einmal.';
+      return getT().contact.errorUnavailable;
   }
 }

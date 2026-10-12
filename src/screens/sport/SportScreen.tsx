@@ -13,16 +13,18 @@ import { radius, spacing, type Colors } from '@/theme/theme';
 import { useThemedStyles } from '@/theme/useTheme';
 import { useAppStore } from '@/state/store';
 import { sportsRepo } from '@/db/repositories/sports';
-import { can, gateCopy } from '@/policy/gating';
+import { can } from '@/policy/gating';
+import { useT } from '@/i18n';
 import { estimateBgCurve } from '@/utils/sportCurve';
 import type { Activity } from '@/types/models';
 
-const ACTIVITIES: Array<{ value: Activity; label: string; icon: keyof typeof Ionicons.glyphMap }> = [
-  { value: 'wandern', label: 'Wandern', icon: 'trail-sign' },
-  { value: 'laufen', label: 'Laufen', icon: 'walk' },
-  { value: 'rad', label: 'Rad', icon: 'bicycle' },
-  { value: 'schwimmen', label: 'Schwimmen', icon: 'water' },
-  { value: 'kraft', label: 'Kraft', icon: 'barbell' },
+// Labels: t.activities.
+const ACTIVITIES: Array<{ value: Activity; icon: keyof typeof Ionicons.glyphMap }> = [
+  { value: 'wandern', icon: 'trail-sign' },
+  { value: 'laufen', icon: 'walk' },
+  { value: 'rad', icon: 'bicycle' },
+  { value: 'schwimmen', icon: 'water' },
+  { value: 'kraft', icon: 'barbell' },
 ];
 
 // Small numeric helper that tolerates empty / partial input.
@@ -33,6 +35,7 @@ const num = (s: string, fallback = 0): number => {
 
 export function SportScreen() {
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
   const navigation = useNavigation<any>();
   const user = useAppStore((s) => s.user);
   const isPremium = useAppStore((s) => s.isPremium);
@@ -88,15 +91,15 @@ export function SportScreen() {
 
   return (
     <Screen>
-      <ScreenTitle>Sport planen</ScreenTitle>
+      <ScreenTitle>{t.sport.title}</ScreenTitle>
 
       {/* Activity */}
-      <SectionLabel>Sportart</SectionLabel>
+      <SectionLabel>{t.sport.activity}</SectionLabel>
       <View style={styles.activityRow}>
         {ACTIVITIES.map((a) => (
           <SelectableChip
             key={a.value}
-            label={a.label}
+            label={t.activities[a.value]}
             icon={a.icon}
             selected={activity === a.value}
             onPress={() => {
@@ -109,20 +112,20 @@ export function SportScreen() {
 
       <View style={styles.twoCol}>
         <TextField
-          label="Dauer (Minuten)"
+          label={t.sport.duration}
           value={duration}
-          onChangeText={(t) => {
-            setDuration(t.replace(/[^0-9]/g, ''));
+          onChangeText={(v) => {
+            setDuration(v.replace(/[^0-9]/g, ''));
             setSaved(false);
           }}
           keyboardType="number-pad"
           containerStyle={styles.col}
         />
         <TextField
-          label="Blutzucker vor Sport"
+          label={t.sport.bgBefore}
           value={bgBefore}
-          onChangeText={(t) => {
-            setBgBefore(t);
+          onChangeText={(v) => {
+            setBgBefore(v);
             setSaved(false);
           }}
           keyboardType="decimal-pad"
@@ -133,55 +136,49 @@ export function SportScreen() {
       </View>
 
       {/* Estimated curve */}
-      <SectionLabel>Geschätzter BZ-Verlauf</SectionLabel>
+      <SectionLabel>{t.sport.curve}</SectionLabel>
       <Card>
         <BgChart curve={curve} />
-        <Text style={styles.disclaimer}>
-          ⚠️ Schätzung, keine medizinische Empfehlung. Dialy berechnet keine
-          Insulindosen.
-        </Text>
+        <Text style={styles.disclaimer}>{t.sport.disclaimer}</Text>
       </Card>
 
       {/* Carbs before / after */}
-      <SectionLabel style={styles.spacedLabel}>Kohlenhydrate vor Sport</SectionLabel>
+      <SectionLabel style={styles.spacedLabel}>{t.sport.carbsBefore}</SectionLabel>
       <Card>
         <Text style={styles.sentence}>
-          Vor Sport{' '}
-          <InlineInput value={carbsBeforeHours} onChange={setCarbsBeforeHours} width={48} /> Std.
-          → <InlineInput value={carbsBeforeG} onChange={setCarbsBeforeG} width={56} /> g KH
+          {t.sport.beforePrefix}{' '}
+          <InlineInput value={carbsBeforeHours} onChange={setCarbsBeforeHours} width={48} />{' '}
+          {t.units.hoursShort} → <InlineInput value={carbsBeforeG} onChange={setCarbsBeforeG} width={56} />{' '}
+          g {t.units.carbs}
         </Text>
       </Card>
 
-      <SectionLabel style={styles.spacedLabel}>Kohlenhydrate nach Sport</SectionLabel>
+      <SectionLabel style={styles.spacedLabel}>{t.sport.carbsAfter}</SectionLabel>
       <Card>
         <Text style={styles.sentence}>
-          Nach{' '}
-          <InlineInput value={carbsAfterHours} onChange={setCarbsAfterHours} width={48} /> Std.
-          → <InlineInput value={carbsAfterG} onChange={setCarbsAfterG} width={56} /> g KH
+          {t.sport.afterPrefix}{' '}
+          <InlineInput value={carbsAfterHours} onChange={setCarbsAfterHours} width={48} />{' '}
+          {t.units.hoursShort} → <InlineInput value={carbsAfterG} onChange={setCarbsAfterG} width={56} />{' '}
+          g {t.units.carbs}
         </Text>
-        <Text style={styles.hint}>
-          Nach dem Sport bleibt die Insulinempfindlichkeit erhöht, während die
-          Glykogenspeicher wieder aufgefüllt werden.
-        </Text>
+        <Text style={styles.hint}>{t.sport.afterHint}</Text>
       </Card>
 
       {/* Pump reduction — manual note only */}
-      <SectionLabel style={styles.spacedLabel}>Insulinrate reduzieren (Pumpe)</SectionLabel>
+      <SectionLabel style={styles.spacedLabel}>{t.sport.pump}</SectionLabel>
       <Card>
         <Text style={styles.sentence}>
-          Reduktion <InlineInput value={pumpPct} onChange={setPumpPct} width={56} /> % für{' '}
-          <InlineInput value={pumpMin} onChange={setPumpMin} width={56} /> min
+          {t.sport.reduction} <InlineInput value={pumpPct} onChange={setPumpPct} width={56} /> %{' '}
+          {t.sport.for} <InlineInput value={pumpMin} onChange={setPumpMin} width={56} />{' '}
+          {t.units.minutes}
         </Text>
-        <Text style={styles.hint}>
-          Nur eine Notiz zu deiner eigenen Pumpeneinstellung. Dialy gibt keine
-          Empfehlung ab und berechnet nichts.
-        </Text>
+        <Text style={styles.hint}>{t.sport.pumpHint}</Text>
       </Card>
 
       {/* Save / gating */}
       {can('saveDiaryEntry', ctx) ? (
         <Button
-          title={saved ? 'Im Tagebuch gespeichert ✓' : 'Sport speichern'}
+          title={saved ? t.sport.saved : t.sport.save}
           icon={saved ? 'checkmark' : 'save'}
           onPress={save}
           disabled={saved}
@@ -189,7 +186,7 @@ export function SportScreen() {
         />
       ) : (
         <View style={styles.saveBtn}>
-          <GateNotice message={gateCopy.saveSport} onRegister={goRegister} />
+          <GateNotice message={t.gate.saveSport} onRegister={goRegister} />
         </View>
       )}
     </Screen>

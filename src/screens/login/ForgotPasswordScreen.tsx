@@ -7,6 +7,7 @@ import { TextField } from '@/components/TextField';
 import { spacing, type Colors } from '@/theme/theme';
 import { useThemedStyles } from '@/theme/useTheme';
 import { authService } from '@/services/auth';
+import { useT } from '@/i18n';
 
 /**
  * "Passwort vergessen": sends a reset link by e-mail. The reply is the same
@@ -15,6 +16,7 @@ import { authService } from '@/services/auth';
  */
 export function ForgotPasswordScreen() {
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
@@ -34,37 +36,28 @@ export function ForgotPasswordScreen() {
     <Screen>
       <View style={styles.header}>
         <IconBubble name="key" size={26} />
-        <Text style={styles.title}>Passwort vergessen</Text>
+        <Text style={styles.title}>{t.forgot.title}</Text>
       </View>
 
       {!available ? (
-        <Text style={styles.text}>
-          Ohne Server kann das Passwort nicht zurückgesetzt werden: Lokale Konten haben
-          keine bestätigte E-Mail-Adresse. Erstelle bei Bedarf ein neues Konto.
-        </Text>
+        <Text style={styles.text}>{t.forgot.unavailable}</Text>
       ) : sent ? (
-        <Text style={styles.text}>
-          Wenn ein Konto mit dieser E-Mail-Adresse existiert, haben wir dir einen Link
-          geschickt. Öffne ihn auf diesem Gerät, um ein neues Passwort festzulegen.
-        </Text>
+        <Text style={styles.text}>{t.forgot.sent}</Text>
       ) : (
         <>
-          <Text style={styles.text}>
-            Gib die E-Mail-Adresse deines Kontos ein. Wir schicken dir einen Link, mit
-            dem du ein neues Passwort festlegen kannst.
-          </Text>
+          <Text style={styles.text}>{t.forgot.intro}</Text>
           <TextField
-            label="E-Mail-Adresse"
+            label={t.common.emailLabel}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
             keyboardType="email-address"
             autoCorrect={false}
-            placeholder="name@beispiel.ch"
+            placeholder={t.common.emailPlaceholder}
           />
           {error && <Text style={styles.error}>{error}</Text>}
           <Button
-            title="Link senden"
+            title={t.forgot.send}
             icon="mail"
             onPress={send}
             loading={loading}

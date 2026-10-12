@@ -4,12 +4,13 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '@/components/Screen';
 import { IconBubble, SectionLabel } from '@/components/primitives';
-import { ThemeModeControl } from '@/components/SegmentedControl';
+import { LanguageControl, ThemeModeControl } from '@/components/SegmentedControl';
 import { Button } from '@/components/Button';
 import { TextField } from '@/components/TextField';
 import { spacing, type Colors } from '@/theme/theme';
 import { useThemedStyles } from '@/theme/useTheme';
 import { useAppStore } from '@/state/store';
+import { useT } from '@/i18n';
 import { authService } from '@/services/auth';
 import { syncEngine } from '@/sync/syncEngine';
 import { AccountView } from '@/screens/login/AccountView';
@@ -24,6 +25,7 @@ export function LoginScreen() {
 
 function LoginForm() {
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
   const navigation = useNavigation<NativeStackNavigationProp<LoginStackParamList>>();
   const setUser = useAppStore((s) => s.setUser);
   const [email, setEmail] = useState('');
@@ -49,20 +51,20 @@ function LoginForm() {
     <Screen>
       <View style={styles.header}>
         <IconBubble name="person" size={28} />
-        <Text style={styles.title}>Willkommen</Text>
+        <Text style={styles.title}>{t.login.welcome}</Text>
       </View>
 
       <TextField
-        label="E-Mail-Adresse"
+        label={t.common.emailLabel}
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
         keyboardType="email-address"
         autoCorrect={false}
-        placeholder="name@beispiel.ch"
+        placeholder={t.common.emailPlaceholder}
       />
       <TextField
-        label="Passwort"
+        label={t.common.passwordLabel}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -73,21 +75,21 @@ function LoginForm() {
         onPress={() => navigation.navigate('ForgotPassword')}
         accessibilityRole="link"
       >
-        Passwort vergessen?
+        {t.login.forgot}
       </Text>
 
       {error && <Text style={styles.error}>{error}</Text>}
 
-      <Button title="Anmelden" onPress={signIn} loading={loading} style={styles.btn} />
+      <Button title={t.login.signIn} onPress={signIn} loading={loading} style={styles.btn} />
 
       <View style={styles.dividerRow}>
         <View style={styles.divider} />
-        <Text style={styles.dividerText}>oder</Text>
+        <Text style={styles.dividerText}>{t.common.or}</Text>
         <View style={styles.divider} />
       </View>
 
       <Button
-        title="Konto erstellen"
+        title={t.login.createAccount}
         variant="secondary"
         onPress={() => navigation.navigate('Register')}
       />
@@ -96,11 +98,13 @@ function LoginForm() {
         style={styles.privacyLink}
         onPress={() => navigation.navigate('Privacy')}
       >
-        Datenschutzerklärung
+        {t.common.privacyPolicy}
       </Text>
 
-      <SectionLabel style={styles.appearanceLabel}>Darstellung</SectionLabel>
+      <SectionLabel style={styles.appearanceLabel}>{t.common.appearance}</SectionLabel>
       <ThemeModeControl />
+      <SectionLabel>{t.common.language}</SectionLabel>
+      <LanguageControl />
     </Screen>
   );
 }

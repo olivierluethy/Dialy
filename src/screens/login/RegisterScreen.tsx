@@ -9,9 +9,11 @@ import { spacing, type Colors } from '@/theme/theme';
 import { useThemedStyles } from '@/theme/useTheme';
 import { useAppStore } from '@/state/store';
 import { authService } from '@/services/auth';
+import { useT } from '@/i18n';
 
 export function RegisterScreen() {
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
   const navigation = useNavigation<any>();
   const setUser = useAppStore((s) => s.setUser);
   const [email, setEmail] = useState('');
@@ -26,11 +28,11 @@ export function RegisterScreen() {
     setError(null);
     setNotice(null);
     if (password !== confirm) {
-      setError('Die Passwörter stimmen nicht überein.');
+      setError(t.register.mismatch);
       return;
     }
     if (!consent) {
-      setError('Bitte stimme der Verarbeitung deiner Gesundheitsdaten zu.');
+      setError(t.register.consentMissing);
       return;
     }
     setLoading(true);
@@ -53,30 +55,28 @@ export function RegisterScreen() {
     <Screen>
       <View style={styles.header}>
         <IconBubble name="person-add" size={26} />
-        <Text style={styles.title}>Konto erstellen</Text>
-        <Text style={styles.subtitle}>
-          Kostenlos. Schaltet das Tagebuch frei.
-        </Text>
+        <Text style={styles.title}>{t.register.title}</Text>
+        <Text style={styles.subtitle}>{t.register.subtitle}</Text>
       </View>
 
       <TextField
-        label="E-Mail-Adresse"
+        label={t.common.emailLabel}
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
         keyboardType="email-address"
         autoCorrect={false}
-        placeholder="name@beispiel.ch"
+        placeholder={t.common.emailPlaceholder}
       />
       <TextField
-        label="Passwort"
+        label={t.common.passwordLabel}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
-        placeholder="mind. 6 Zeichen"
+        placeholder={t.common.minChars(6)}
       />
       <TextField
-        label="Passwort bestätigen"
+        label={t.common.confirmPasswordLabel}
         value={confirm}
         onChangeText={setConfirm}
         secureTextEntry
@@ -88,15 +88,13 @@ export function RegisterScreen() {
         style={[styles.consent, consent && styles.consentActive]}
         onPress={() => setConsent((c) => !c)}
       >
-        {consent ? '☑' : '☐'}  Ich stimme zu, dass meine Eingaben (inkl.
-        Gesundheitsdaten wie Blutzuckerwerte) zur Bereitstellung des Tagebuchs
-        verarbeitet werden. Es findet keine Werbe- oder Analysenutzung statt.
+        {consent ? '☑' : '☐'}  {t.register.consent}
       </Text>
 
       {error && <Text style={styles.error}>{error}</Text>}
       {notice && <Text style={styles.notice}>{notice}</Text>}
 
-      <Button title="Registrieren" onPress={register} loading={loading} style={styles.btn} />
+      <Button title={t.register.submit} onPress={register} loading={loading} style={styles.btn} />
     </Screen>
   );
 }

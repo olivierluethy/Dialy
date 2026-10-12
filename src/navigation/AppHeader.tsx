@@ -16,6 +16,7 @@ import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { radius, spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import { useAppStore } from '@/state/store';
+import { useT, type Dict } from '@/i18n';
 import { USE_NATIVE_DRIVER, useReducedMotion } from '@/components/FadeIn';
 import type { LoginStackParamList, RootTabParamList } from '@/navigation/types';
 
@@ -33,10 +34,11 @@ interface MenuItem {
   screen?: keyof LoginStackParamList;
 }
 
-const MORE: MenuItem[] = [
-  { label: 'Premium', tab: 'Login', screen: 'Paywall' },
-  { label: 'Datenschutz', tab: 'Login', screen: 'Privacy' },
+const moreItems = (t: Dict): MenuItem[] => [
+  { label: t.nav.premium, tab: 'Login', screen: 'Paywall' },
+  { label: t.nav.privacy, tab: 'Login', screen: 'Privacy' },
 ];
+const MORE_COUNT = 2;
 
 const itemKey = (item: MenuItem) => item.screen ?? item.tab;
 
@@ -45,21 +47,22 @@ export function AppHeader({ navigation, route }: BottomTabHeaderProps) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const user = useAppStore((s) => s.user);
+  const t = useT();
   const [open, setOpen] = useState(false);
 
   // Section order is fixed (§3): Ratgeber, KH-Rechner, Tagebuch, Sport,
   // then Login and Kontakt (both screens of the Login stack).
   const sections: MenuItem[] = [
-    { label: 'Ratgeber', tab: 'Ratgeber' },
-    { label: 'KH-Rechner', tab: 'KHRechner' },
-    { label: 'Tagebuch', tab: 'Tagebuch' },
-    { label: 'Sport', tab: 'Sport' },
-    { label: user ? 'Konto' : 'Anmelden', tab: 'Login', screen: 'LoginHome' },
-    { label: 'Kontakt', tab: 'Login', screen: 'Contact' },
+    { label: t.nav.ratgeber, tab: 'Ratgeber' },
+    { label: t.nav.khrechner, tab: 'KHRechner' },
+    { label: t.nav.tagebuch, tab: 'Tagebuch' },
+    { label: t.nav.sport, tab: 'Sport' },
+    { label: user ? t.nav.settings : t.nav.login, tab: 'Login', screen: 'LoginHome' },
+    { label: t.nav.contact, tab: 'Login', screen: 'Contact' },
   ];
 
   // Highlight the section matching the focused screen; within the Login stack
-  // that's Kontakt on its screen and Anmelden/Konto everywhere else.
+  // that's Kontakt on its screen and Anmelden/Einstellungen everywhere else.
   const focused = getFocusedRouteNameFromRoute(route);
   const inTab = sections.filter((s) => s.tab === route.name);
   const activeItem =
@@ -76,20 +79,20 @@ export function AppHeader({ navigation, route }: BottomTabHeaderProps) {
   return (
     <View style={[styles.bar, { paddingTop: insets.top }]}>
       <View style={styles.row}>
-        <Pressable
+          <Pressable
           onPress={() => navigation.navigate('Ratgeber', { screen: 'RatgeberList' })}
           style={styles.brand}
           accessibilityRole="link"
-          accessibilityLabel="Dialy – zum Ratgeber"
+          accessibilityLabel={t.nav.brandA11y}
           hitSlop={8}
         >
           <Ionicons name="water" size={22} color={colors.accent} />
           <Text style={styles.brandText}>Dialy</Text>
         </Pressable>
-        <Pressable
+          <Pressable
           onPress={() => setOpen(true)}
           accessibilityRole="button"
-          accessibilityLabel="Menü öffnen"
+          accessibilityLabel={t.nav.openMenu}
           hitSlop={12}
         >
           <Ionicons name="reorder-two-outline" size={28} color={colors.textPrimary} />
@@ -124,12 +127,14 @@ function MenuOverlay({
   const { scheme, colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const setThemeMode = useAppStore((s) => s.setThemeMode);
+  const t = useT();
+  const more = moreItems(t);
   const nextScheme = scheme === 'dark' ? 'light' : 'dark';
   const reducedMotion = useReducedMotion();
 
   // One animated value per row (sections + secondary links), staggered in.
   const anims = useRef(
-    Array.from({ length: sections.length + MORE.length }, () => new Animated.Value(0))
+    Array.from({ length: sections.length + MORE_COUNT }, () => new Animated.Value(0))
   ).current;
 
   useEffect(() => {
@@ -166,7 +171,7 @@ function MenuOverlay({
           <Pressable
             onPress={onClose}
             accessibilityRole="button"
-            accessibilityLabel="Menü schliessen"
+            accessibilityLabel={t.nav.closeMenu}
             hitSlop={12}
           >
             <Ionicons name="close-outline" size={30} color={colors.textPrimary} />
@@ -200,11 +205,12 @@ function MenuOverlay({
           })}
         </ScrollView>
 
-        {/* Footer: secondary links bottom-left, appearance toggle bottom-right. */}
+        {/* Footer: secondary links bottom-left, appearance toggle bottom-right
+            (language: Einstellungen / Anmelden). */}
         <View style={styles.menuFooter}>
           <View>
-            {MORE.map((item, i) => (
-              <Animated.View key={item.label} style={rowAnim(sections.length + i)}>
+            {more.map((item, i) => (
+              <Animated.View key={itemKey(item)} style={rowAnim(sections.length + i)}>
                 <Pressable
                   onPress={() => onSelect(item)}
                   style={styles.moreItem}
@@ -226,9 +232,7 @@ function MenuOverlay({
             onPress={() => setThemeMode(nextScheme)}
             style={({ pressed }) => [styles.themeToggle, pressed && styles.themeTogglePressed]}
             accessibilityRole="button"
-            accessibilityLabel={
-              nextScheme === 'light' ? 'Zum hellen Modus wechseln' : 'Zum dunklen Modus wechseln'
-            }
+            accessibilityLabel={nextScheme === 'light' ? t.nav.toLight : t.nav.toDark}
           >
             <Ionicons
               name={nextScheme === 'light' ? 'sunny-outline' : 'moon-outline'}
@@ -236,7 +240,7 @@ function MenuOverlay({
               color={colors.textPrimary}
             />
             <Text style={styles.themeToggleText}>
-              {nextScheme === 'light' ? 'Hell' : 'Dunkel'}
+              {nextScheme === 'light' ? t.theme.light : t.theme.dark}
             </Text>
           </Pressable>
         </View>

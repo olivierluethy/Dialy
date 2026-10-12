@@ -4,6 +4,7 @@ import { LineChart } from 'react-native-gifted-charts';
 import { radius, spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import type { BgCurvePoint } from '@/types/models';
+import { useT } from '@/i18n';
 
 /**
  * Themed line chart for the illustrative blood-sugar trend.
@@ -22,6 +23,7 @@ export function BgChart({ curve }: { curve: BgCurvePoint[] }) {
   const { width } = useWindowDimensions();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
   const chartWidth = width - spacing.lg * 2 - spacing.lg * 2; // screen pad + card pad
 
   const data = useMemo(
@@ -42,7 +44,7 @@ export function BgChart({ curve }: { curve: BgCurvePoint[] }) {
   if (curve.length === 0) {
     return (
       <View style={styles.empty}>
-        <Text style={styles.emptyText}>Gib Werte ein, um den Verlauf zu sehen.</Text>
+        <Text style={styles.emptyText}>{t.chart.empty}</Text>
       </View>
     );
   }
@@ -92,10 +94,10 @@ export function BgChart({ curve }: { curve: BgCurvePoint[] }) {
       />
       <View style={styles.legendRow}>
         <Legend color={colors.danger} label={`Hyper ≥ ${HYPER_MMOL.toFixed(1)}`} />
-        <Legend color={colors.accent} label="Sport-Start" />
+        <Legend color={colors.accent} label={t.chart.sportStart} />
         <Legend color={colors.hypo} label={`Hypo ≤ ${HYPO_MMOL.toFixed(1)}`} />
       </View>
-      <Text style={styles.axisCaption}>Zeit in Minuten</Text>
+      <Text style={styles.axisCaption}>{t.chart.timeAxis}</Text>
     </View>
   );
 }

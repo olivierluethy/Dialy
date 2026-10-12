@@ -3,7 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { radius, spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
-import { gateCopy } from '@/policy/gating';
+import { useT } from '@/i18n';
 
 /**
  * Inline gating note shown when a logged-out user tries a gated action
@@ -18,13 +18,14 @@ export function GateNotice({
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
   return (
     <View style={styles.container}>
       <Ionicons name="lock-closed" size={18} color={colors.warn} style={styles.icon} />
       <View style={styles.flex}>
         <Text style={styles.message}>{message}</Text>
         <Pressable onPress={onRegister} accessibilityRole="link">
-          <Text style={styles.cta}>{gateCopy.registerCta}</Text>
+          <Text style={styles.cta}>{t.gate.registerCta}</Text>
         </Pressable>
       </View>
     </View>

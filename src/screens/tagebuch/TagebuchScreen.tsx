@@ -15,7 +15,9 @@ import { useAppStore } from '@/state/store';
 import { mealsRepo } from '@/db/repositories/meals';
 import { sportsRepo } from '@/db/repositories/sports';
 import type { EntryChanges } from '@/db/repositories/base';
-import { can, gateCopy } from '@/policy/gating';
+import { foodsRepo } from '@/db/repositories/foods';
+import { can } from '@/policy/gating';
+import { useLanguage, useT, type Dict } from '@/i18n';
 import {
   dayKey,
   formatCarbs,
@@ -39,25 +41,33 @@ interface DayGroup {
   sportCount: number;
 }
 
-const ACTIVITY_LABEL: Record<string, string> = {
-  wandern: 'Wandern',
-  laufen: 'Laufen',
-  rad: 'Rad',
-  schwimmen: 'Schwimmen',
-  kraft: 'Kraft',
-};
-
 /** Stable key of a feed item across both entry tables. */
 const itemKey = (item: FeedItem): string => `${item.kind}:${item.data.id}`;
 
-const itemTitle = (item: FeedItem): string =>
+const itemTitle = (item: FeedItem, t: Dict): string =>
   item.kind === 'meal'
     ? item.data.name
-    : `${ACTIVITY_LABEL[item.data.activity] ?? item.data.activity} · ${item.data.duration_min} min`;
+    : `${t.activities[item.data.activity] ?? item.data.activity} · ${item.data.duration_min} ${t.units.minutes}`;
+
+/**
+ * Meals with the food's name in the UI language. An entry keeps the name it
+ * was logged with, which may be another language (or a food since removed).
+ */
+async function withLocalizedNames(meals: MealEntry[]): Promise<MealEntry[]> {
+  const ids = meals.flatMap((m) => (m.food_id ? [m.food_id] : []));
+  const names = await foodsRepo.namesFor(ids);
+  return meals.map((m) => {
+    const name = m.food_id ? names.get(m.food_id) : undefined;
+    return name && name !== m.name ? { ...m, name } : m;
+  });
+}
 
 export function TagebuchScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
+  // Day headers and food names depend on the language: reload on a change.
+  const language = useLanguage();
   const navigation = useNavigation<any>();
   const user = useAppStore((s) => s.user);
   const isPremium = useAppStore((s) => s.isPremium);
@@ -85,7 +95,10 @@ export function TagebuchScreen() {
         return;
       }
       setLoading(true);
-      Promise.all([mealsRepo.listAll(userId), sportsRepo.listAll(userId)]).then(
+      Promise.all([
+        mealsRepo.listAll(userId).then(withLocalizedNames),
+        sportsRepo.listAll(userId),
+      ]).then(
         ([meals, sports]) => {
           if (active) {
             setGroups(buildGroups(meals, sports));
@@ -96,7 +109,7 @@ export function TagebuchScreen() {
       return () => {
         active = false;
       };
-    }, [userId, reloadTick, dataRevision])
+    }, [userId, reloadTick, dataRevision, language])
   );
 
   const itemsByKey = useMemo(() => {
@@ -137,7 +150,7 @@ export function TagebuchScreen() {
     await sportsRepo.update(ids('sport'), userId, changes);
     setEditKeys(null);
     exitSelection();
-    setReloadTick((t) => t + 1);
+    setReloadTick((n) => n + 1);
   };
 
   const goRegister = () => navigation.navigate('Login', { screen: 'Register' });
@@ -147,14 +160,14 @@ export function TagebuchScreen() {
   return (
     <Screen>
       <View style={styles.titleRow}>
-        <ScreenTitle style={styles.title}>Tagebuch</ScreenTitle>
+        <ScreenTitle style={styles.title}>{t.tagebuch.title}</ScreenTitle>
         {unlocked && groups.length > 0 && (
           <Pressable
             onPress={() => (selecting ? exitSelection() : setSelecting(true))}
             accessibilityRole="button"
             hitSlop={8}
           >
-            <Text style={styles.titleAction}>{selecting ? 'Fertig' : 'Auswählen'}</Text>
+            <Text style={styles.titleAction}>{selecting ? t.tagebuch.done : t.tagebuch.select}</Text>
           </Pressable>
         )}
       </View>
@@ -163,10 +176,10 @@ export function TagebuchScreen() {
       {!unlocked ? (
         <Card style={styles.lockedCard}>
           <IconBubble name="lock-closed" color={colors.warn} bg={colors.bgSurfaceAlt} />
-          <Text style={styles.lockedTitle}>Tagebuch gesperrt</Text>
-          <Text style={styles.lockedText}>{gateCopy.diaryNeedsAccount}</Text>
+          <Text style={styles.lockedTitle}>{t.tagebuch.locked}</Text>
+          <Text style={styles.lockedText}>{t.gate.diaryNeedsAccount}</Text>
           <Button
-            title="Kostenlos registrieren"
+            title={t.tagebuch.registerFree}
             icon="person-add"
             onPress={goRegister}
             style={{ marginTop: spacing.lg }}
@@ -181,7 +194,7 @@ export function TagebuchScreen() {
               onPress={() => navigation.navigate('Login', { screen: 'Paywall' })}
             >
               <Ionicons name="star" size={18} color={colors.accent} />
-              <Text style={styles.premiumText}>{gateCopy.diaryNeedsPremium}</Text>
+              <Text style={styles.premiumText}>{t.gate.diaryNeedsPremium}</Text>
               <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
             </Pressable>
           )}
@@ -190,11 +203,11 @@ export function TagebuchScreen() {
             <Card style={styles.selectBar}>
               <Text style={styles.selectCount}>
                 {selected.size === 0
-                  ? 'Einträge antippen, um sie zu markieren.'
-                  : `${selected.size} ${selected.size === 1 ? 'Eintrag' : 'Einträge'} ausgewählt`}
+                  ? t.tagebuch.tapToMark
+                  : t.tagebuch.selectedCount(selected.size)}
               </Text>
               <Button
-                title="Datum & Zeit ändern"
+                title={t.tagebuch.changeDateTime}
                 icon="time-outline"
                 onPress={() => setEditKeys([...selected])}
                 disabled={selected.size === 0}
@@ -206,9 +219,7 @@ export function TagebuchScreen() {
           {loading ? (
             <ActivityIndicator color={colors.accent} style={{ marginTop: spacing.xl }} />
           ) : groups.length === 0 ? (
-            <Text style={styles.empty}>
-              Noch keine Einträge. Füge im KH-Rechner oder im Sport-Planer etwas hinzu.
-            </Text>
+            <Text style={styles.empty}>{t.tagebuch.empty}</Text>
           ) : (
             groups.map((g, i) => (
               <FadeIn key={g.key} delay={staggerDelay(i)} style={styles.dayBlock}>
@@ -228,9 +239,9 @@ export function TagebuchScreen() {
                 </Card>
                 {/* Daily summary chips */}
                 <View style={styles.summaryRow}>
-                  <SummaryChip label="KH total" value={`${Math.round(g.carbTotal)} g`} />
-                  <SummaryChip label="Mahlzeiten" value={`${g.mealCount}`} />
-                  <SummaryChip label="Sport" value={`${g.sportCount}×`} />
+                  <SummaryChip label={t.tagebuch.carbTotal} value={`${Math.round(g.carbTotal)} g`} />
+                  <SummaryChip label={t.tagebuch.meals} value={`${g.mealCount}`} />
+                  <SummaryChip label={t.tagebuch.sport} value={`${g.sportCount}×`} />
                 </View>
               </FadeIn>
             ))
@@ -243,9 +254,9 @@ export function TagebuchScreen() {
         multiple={(editKeys?.length ?? 0) > 1}
         subtitle={
           editKeys && editKeys.length > 1
-            ? `${editKeys.length} Einträge erhalten dasselbe Datum und dieselbe Uhrzeit.`
+            ? t.tagebuch.sameDateTime(editKeys.length)
             : firstEdited
-              ? itemTitle(firstEdited)
+              ? itemTitle(firstEdited, t)
               : ''
         }
         initialIso={firstEdited?.data.logged_at ?? new Date().toISOString()}
@@ -274,6 +285,7 @@ function FeedRow({
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
   const time = formatTime(item.data.logged_at);
   return (
     <Pressable
@@ -288,7 +300,7 @@ function FeedRow({
       ]}
       accessibilityRole="button"
       accessibilityState={selecting ? { selected } : undefined}
-      accessibilityHint={selecting ? 'Markieren' : 'Eintrag bearbeiten'}
+      accessibilityHint={selecting ? t.tagebuch.markHint : t.tagebuch.editHint}
     >
       {selecting && (
         <Ionicons
@@ -301,11 +313,11 @@ function FeedRow({
       <Text style={styles.time}>{time}</Text>
       <IconBubble name={item.kind === 'meal' ? 'restaurant' : 'walk'} size={18} />
       <View style={styles.rowBody}>
-        <Text style={styles.rowTitle}>{itemTitle(item)}</Text>
+        <Text style={styles.rowTitle}>{itemTitle(item, t)}</Text>
         {item.kind === 'meal' ? (
           <Text style={styles.rowMeta}>{formatCarbs(item.data.carbs_g)}</Text>
         ) : (
-          <Text style={styles.rowSub}>BZ-Verlauf gespeichert</Text>
+          <Text style={styles.rowSub}>{t.tagebuch.bgCurveSaved}</Text>
         )}
         {item.data.note ? (
           <Text style={styles.rowNote} numberOfLines={3}>
@@ -341,6 +353,7 @@ function EditEntryDialog({
   onSave: (changes: EntryChanges) => Promise<void>;
 }) {
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [note, setNote] = useState('');
@@ -364,7 +377,7 @@ function EditEntryDialog({
   const save = async () => {
     const loggedAt = parseLocalDateTime(date, time);
     if (!loggedAt) {
-      setError('Bitte Datum als TT.MM.JJJJ und Uhrzeit als HH:MM eingeben.');
+      setError(t.tagebuch.invalidDateTime);
       return;
     }
     if (multiple) {
@@ -378,49 +391,49 @@ function EditEntryDialog({
   return (
     <Dialog
       visible={visible}
-      title={multiple ? 'Datum & Uhrzeit ändern' : 'Eintrag bearbeiten'}
+      title={multiple ? t.tagebuch.editDateTimeTitle : t.tagebuch.editEntryTitle}
       message={subtitle}
       onClose={onCancel}
       actions={[
-        { label: 'Abbrechen', onPress: onCancel },
-        { label: 'Speichern', variant: 'primary', onPress: save },
+        { label: t.common.cancel, onPress: onCancel },
+        { label: t.common.save, variant: 'primary', onPress: save },
       ]}
     >
       <View style={styles.editFields}>
         <TextField
-          label="Datum"
+          label={t.tagebuch.date}
           value={date}
-          onChangeText={(t) => {
-            setDate(t);
+          onChangeText={(v) => {
+            setDate(v);
             setError(null);
           }}
-          placeholder="TT.MM.JJJJ"
+          placeholder={t.date.datePlaceholder}
           keyboardType="numbers-and-punctuation"
           containerStyle={styles.dateField}
         />
         <TextField
-          label="Uhrzeit"
+          label={t.tagebuch.time}
           value={time}
-          onChangeText={(t) => {
-            setTime(t);
+          onChangeText={(v) => {
+            setTime(v);
             setError(null);
           }}
-          placeholder="HH:MM"
+          placeholder={t.date.timePlaceholder}
           keyboardType="numbers-and-punctuation"
           containerStyle={styles.timeField}
         />
       </View>
       <View style={styles.quickRow}>
-        <SelectableChip label="Heute" selected={false} onPress={() => shiftDays(0)} />
-        <SelectableChip label="Gestern" selected={false} onPress={() => shiftDays(1)} />
+        <SelectableChip label={t.tagebuch.today} selected={false} onPress={() => shiftDays(0)} />
+        <SelectableChip label={t.tagebuch.yesterday} selected={false} onPress={() => shiftDays(1)} />
       </View>
       {error && <Text style={styles.editError}>{error}</Text>}
       {!multiple && (
         <TextField
-          label="Kommentar"
+          label={t.tagebuch.comment}
           value={note}
           onChangeText={setNote}
-          placeholder="z. B. vor dem Sport, Hypo danach …"
+          placeholder={t.tagebuch.commentPlaceholder}
           multiline
           maxLength={NOTE_MAX}
           style={styles.noteInput}

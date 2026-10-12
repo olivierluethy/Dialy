@@ -8,6 +8,7 @@ import { spacing, type Colors } from '@/theme/theme';
 import { useThemedStyles } from '@/theme/useTheme';
 import { useAppStore } from '@/state/store';
 import { authService } from '@/services/auth';
+import { useT } from '@/i18n';
 
 const MIN_PASSWORD = 6;
 
@@ -18,6 +19,7 @@ const MIN_PASSWORD = 6;
  */
 export function NewPasswordModal() {
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
   const insets = useSafeAreaInsets();
   const recovery = useAppStore((s) => s.passwordRecovery);
   const setRecovery = useAppStore((s) => s.setPasswordRecovery);
@@ -40,11 +42,11 @@ export function NewPasswordModal() {
   const save = async () => {
     setError(null);
     if (password.length < MIN_PASSWORD) {
-      setError(`Das Passwort braucht mindestens ${MIN_PASSWORD} Zeichen.`);
+      setError(t.newPassword.tooShort(MIN_PASSWORD));
       return;
     }
     if (password !== confirm) {
-      setError('Die Passwörter stimmen nicht überein.');
+      setError(t.register.mismatch);
       return;
     }
     setLoading(true);
@@ -60,40 +62,40 @@ export function NewPasswordModal() {
         <View style={styles.header}>
           <IconBubble name="key" size={26} />
           <Text style={styles.title}>
-            {recovery.state === 'expired' ? 'Link ungültig' : 'Neues Passwort'}
+            {recovery.state === 'expired' ? t.newPassword.invalidLink : t.newPassword.title}
           </Text>
         </View>
 
         {recovery.state === 'expired' ? (
           <>
             <Text style={styles.text}>{recovery.message}</Text>
-            <Button title="OK" onPress={close} />
+            <Button title={t.common.ok} onPress={close} />
           </>
         ) : done ? (
           <>
-            <Text style={styles.text}>Dein Passwort wurde geändert. Du bist angemeldet.</Text>
-            <Button title="Weiter" onPress={close} />
+            <Text style={styles.text}>{t.newPassword.changed}</Text>
+            <Button title={t.common.next} onPress={close} />
           </>
         ) : (
           <>
-            <Text style={styles.text}>Lege ein neues Passwort für dein Konto fest.</Text>
+            <Text style={styles.text}>{t.newPassword.intro}</Text>
             <TextField
-              label="Neues Passwort"
+              label={t.newPassword.label}
               value={password}
               onChangeText={setPassword}
               secureTextEntry
-              placeholder={`mind. ${MIN_PASSWORD} Zeichen`}
+              placeholder={t.common.minChars(MIN_PASSWORD)}
             />
             <TextField
-              label="Passwort bestätigen"
+              label={t.common.confirmPasswordLabel}
               value={confirm}
               onChangeText={setConfirm}
               secureTextEntry
               placeholder="••••••••"
             />
             {error && <Text style={styles.error}>{error}</Text>}
-            <Button title="Passwort speichern" onPress={save} loading={loading} />
-            <Button title="Später" variant="secondary" onPress={close} style={styles.later} />
+            <Button title={t.newPassword.save} onPress={save} loading={loading} />
+            <Button title={t.common.later} variant="secondary" onPress={close} style={styles.later} />
           </>
         )}
       </View>

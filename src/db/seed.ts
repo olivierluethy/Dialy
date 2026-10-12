@@ -6,7 +6,7 @@ import BLV_FOODS from '@/data/blvFoods.json';
 import BLS_FOODS from '@/data/blsFoods.json';
 import OFF_FOODS from '@/data/offFoods.json';
 import MENUCH from '@/data/menuchPortions.json';
-import { USUAL_PORTION_LABEL } from '@/data/foodCategories';
+import { PACKAGE_PORTION_LABEL, USUAL_PORTION_LABEL } from '@/data/foodCategories';
 import { applyFoodEdits } from '@/services/foodEdits';
 import { nowIso } from '@/utils/id';
 import type { Portion } from '@/types/models';
@@ -123,7 +123,7 @@ function seedOffFoods(): Promise<void> {
   const servings = new Map(
     (OFF_FOODS.portions as Array<[string, number, string]>).map(([id, amount, unit]) => [
       id,
-      { label: `Portion laut Packung (${amount} ${unit})`, grams: amount },
+      { label: `${PACKAGE_PORTION_LABEL} (${amount} ${unit})`, grams: amount },
     ])
   );
   return seedImportedFoods('off', OFF_FOODS, (id) => servings.get(id) ?? null);

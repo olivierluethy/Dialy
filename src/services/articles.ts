@@ -1,4 +1,5 @@
 import { getSupabase, isNetworkError } from '@/sync/supabaseClient';
+import { getT } from '@/i18n';
 import type { Article, DiabetesType } from '@/types/models';
 
 /**
@@ -69,10 +70,10 @@ export const articlesService = {
 export function articlesErrorText(error: ArticlesError): string {
   switch (error) {
     case 'offline':
-      return 'Der Ratgeber ist nur mit Internetverbindung verfügbar.';
+      return getT().ratgeber.errorOffline;
     case 'not-configured':
-      return 'Der Ratgeber braucht eine Verbindung zum Dialy-Server, der hier nicht eingerichtet ist.';
+      return getT().ratgeber.errorNotConfigured;
     default:
-      return 'Die Artikel konnten gerade nicht geladen werden.';
+      return getT().ratgeber.errorUnavailable;
   }
 }

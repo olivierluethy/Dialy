@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/Screen';
 import { IconBubble, Card, SectionLabel } from '@/components/primitives';
-import { ThemeModeControl } from '@/components/SegmentedControl';
+import { LanguageControl, ThemeModeControl } from '@/components/SegmentedControl';
 import { Button } from '@/components/Button';
 import { radius, spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
@@ -13,11 +13,13 @@ import { authService } from '@/services/auth';
 import { syncEngine } from '@/sync/syncEngine';
 import { isSupabaseConfigured } from '@/config';
 import { formatDate, formatTime } from '@/utils/format';
+import { useT, type Dict } from '@/i18n';
 
-/** Account state shown on the Login tab once signed in. */
+/** Einstellungen: account, language, appearance — the Login tab once signed in. */
 export function AccountView() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
   const navigation = useNavigation<any>();
   const user = useAppStore((s) => s.user);
   const setUser = useAppStore((s) => s.setUser);
@@ -31,7 +33,7 @@ export function AccountView() {
     const id = setInterval(() => setNow(Date.now()), 30_000);
     return () => clearInterval(id);
   }, []);
-  const sync = describeSync(isSupabaseConfigured(), syncStatus, lastSyncedAt, now);
+  const sync = describeSync(isSupabaseConfigured(), syncStatus, lastSyncedAt, now, t);
 
   const logout = async () => {
     await authService.signOut();
@@ -41,21 +43,19 @@ export function AccountView() {
 
   const deleteData = () => {
     Alert.alert(
-      'Daten löschen',
-      'Möchtest du wirklich alle deine Einträge (Mahlzeiten, Sport, Blutzucker) unwiderruflich löschen?',
+      t.account.deleteData,
+      t.account.deleteConfirm,
       [
-        { text: 'Abbrechen', style: 'cancel' },
+        { text: t.common.cancel, style: 'cancel' },
         {
-          text: 'Löschen',
+          text: t.common.delete,
           style: 'destructive',
           onPress: async () => {
             if (!user) return;
             const { error } = await authService.deleteAccountData(user.id);
             Alert.alert(
-              error ? 'Teilweise gelöscht' : 'Gelöscht',
-              error
-                ? 'Lokale Daten wurden gelöscht. Die Server-Löschung folgt beim nächsten Sync.'
-                : 'Alle deine Einträge wurden gelöscht.'
+              error ? t.account.partlyDeleted : t.account.deleted,
+              error ? t.account.partlyDeletedMessage : t.account.deletedMessage
             );
           },
         },
@@ -67,58 +67,57 @@ export function AccountView() {
     <Screen>
       <View style={styles.header}>
         <IconBubble name="person-circle" size={30} />
-        <Text style={styles.email}>{user?.email || 'Angemeldet'}</Text>
+        <Text style={styles.email}>{user?.email || t.account.signedIn}</Text>
         <View style={[styles.badge, isPremium ? styles.badgePremium : styles.badgeFree]}>
           <Text style={[styles.badgeText, isPremium && styles.badgeTextPremium]}>
-            {isPremium ? 'Premium' : 'Kostenloses Konto'}
+            {isPremium ? t.account.premium : t.account.freeAccount}
           </Text>
         </View>
       </View>
 
       {/* Dev-only premium toggle (no real IAP in this build). Long-press the
           row to flip the premium flag and test the premium UI. */}
-      <SectionLabel>Premium</SectionLabel>
+      <SectionLabel>{t.account.premium}</SectionLabel>
       <Pressable onLongPress={togglePremiumDev} delayLongPress={500}>
         <Card>
           <View style={styles.row}>
             <Ionicons name="star" size={20} color={colors.accent} />
             <View style={styles.rowBody}>
-              <Text style={styles.rowTitle}>Dialy Premium (CHF 3.00 / Monat)</Text>
-              <Text style={styles.rowSub}>
-                Vollständiges Tagebuch & Blutzucker-Auswertung.
-              </Text>
+              <Text style={styles.rowTitle}>{t.account.premiumTitle}</Text>
+              <Text style={styles.rowSub}>{t.account.premiumSub}</Text>
             </View>
           </View>
           <Button
-            title="Premium ansehen"
+            title={t.account.viewPremium}
             variant="secondary"
             onPress={() => navigation.navigate('Paywall')}
             style={{ marginTop: spacing.md }}
           />
-          <Text style={styles.devHint}>
-            Dev: Diese Karte lange drücken, um Premium zum Testen umzuschalten.
-          </Text>
+          <Text style={styles.devHint}>{t.account.devHint}</Text>
         </Card>
       </Pressable>
 
-      <SectionLabel style={styles.spaced}>Darstellung</SectionLabel>
+      <SectionLabel style={styles.spaced}>{t.common.language}</SectionLabel>
+      <LanguageControl />
+
+      <SectionLabel>{t.common.appearance}</SectionLabel>
       <ThemeModeControl />
 
-      <SectionLabel style={styles.spaced}>Datenschutz</SectionLabel>
+      <SectionLabel style={styles.spaced}>{t.account.privacy}</SectionLabel>
       <Card>
         <Pressable style={styles.linkRow} onPress={() => navigation.navigate('Privacy')}>
-          <Text style={styles.linkText}>Datenschutzerklärung</Text>
+          <Text style={styles.linkText}>{t.common.privacyPolicy}</Text>
           <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
         </Pressable>
         <Pressable style={styles.linkRow} onPress={deleteData}>
-          <Text style={[styles.linkText, { color: colors.danger }]}>Daten löschen</Text>
+          <Text style={[styles.linkText, { color: colors.danger }]}>{t.account.deleteData}</Text>
           <Ionicons name="trash" size={18} color={colors.danger} />
         </Pressable>
       </Card>
 
       {/* Sync runs automatically (after every change, on start and foreground,
           retrying while offline); this only shows how it's going. */}
-      <SectionLabel style={styles.spaced}>Synchronisierung</SectionLabel>
+      <SectionLabel style={styles.spaced}>{t.account.sync}</SectionLabel>
       <Card>
         <View style={styles.row} accessibilityLiveRegion="polite">
           <Ionicons name={sync.icon} size={20} color={sync.warn ? colors.warn : colors.accent} />
@@ -127,7 +126,7 @@ export function AccountView() {
       </Card>
 
       <Button
-        title="Abmelden"
+        title={t.account.signOut}
         icon="log-out"
         variant="secondary"
         onPress={logout}
@@ -172,52 +171,49 @@ function describeSync(
   configured: boolean,
   status: SyncStatus,
   lastSyncedAt: string | null,
-  now: number
+  now: number,
+  t: Dict
 ): { icon: keyof typeof Ionicons.glyphMap; text: string; warn: boolean } {
   if (!configured || status.state === 'disabled') {
     return {
       icon: 'phone-portrait-outline',
-      text: 'Offline-Modus: Es ist kein Server konfiguriert. Alle Daten bleiben lokal auf dem Gerät.',
+      text: t.account.syncLocalOnly,
       warn: false,
     };
   }
   const n = status.pending;
-  const waiting = n === 1 ? '1 Änderung wartet' : `${n} Änderungen warten`;
   switch (status.state) {
     case 'syncing':
-      return { icon: 'sync-outline', text: 'Synchronisiere …', warn: false };
+      return { icon: 'sync-outline', text: t.account.syncing, warn: false };
     case 'offline':
       return {
         icon: 'cloud-offline-outline',
-        text:
-          n > 0
-            ? `Keine Verbindung – ${waiting} und ${n === 1 ? 'wird' : 'werden'} automatisch nachgeschickt.`
-            : 'Keine Verbindung – deine Einträge sind auf dem Gerät gespeichert.',
+        text: n > 0 ? t.account.offlinePending(n) : t.account.offlineSaved,
         warn: true,
       };
     case 'error':
       return {
         icon: 'alert-circle-outline',
-        text: 'Synchronisierung fehlgeschlagen – wird automatisch erneut versucht.',
+        text: t.account.syncFailed,
         warn: true,
       };
     default:
-      if (n > 0) return { icon: 'time-outline', text: `${waiting} auf die Synchronisierung.`, warn: false };
+      if (n > 0) return { icon: 'time-outline', text: t.account.pending(n), warn: false };
       return {
         icon: 'cloud-done-outline',
         text: lastSyncedAt
-          ? `Alles synchronisiert · ${sinceText(lastSyncedAt, now)}`
-          : 'Noch nicht synchronisiert.',
+          ? t.account.allSynced(sinceText(lastSyncedAt, now, t))
+          : t.account.notSynced,
         warn: false,
       };
   }
 }
 
 /** "gerade eben", "vor 5 Min.", "heute, 14:05" or "3. Oktober 2026, 14:05". */
-function sinceText(iso: string, now: number): string {
+function sinceText(iso: string, now: number, t: Dict): string {
   const minutes = Math.floor((now - new Date(iso).getTime()) / 60_000);
-  if (minutes < 1) return 'gerade eben';
-  if (minutes < 60) return `vor ${minutes} Min.`;
+  if (minutes < 1) return t.account.justNow;
+  if (minutes < 60) return t.account.minutesAgo(minutes);
   const sameDay = new Date(iso).toDateString() === new Date(now).toDateString();
-  return `${sameDay ? 'heute' : formatDate(iso)}, ${formatTime(iso)}`;
+  return `${sameDay ? t.account.today : formatDate(iso)}, ${formatTime(iso)}`;
 }

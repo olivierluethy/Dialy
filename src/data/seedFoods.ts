@@ -7,7 +7,8 @@ import type { Food } from '@/types/models';
  * NOT scaled by portion size.
  *
  * `id` values are stable string keys so seeding is idempotent. Sync metadata
- * is filled in by the seeding routine.
+ * is filled in by the seeding routine. `name` is German (stored); `names`
+ * holds the translations shown in the other UI languages.
  */
 export type FoodSeed = Pick<
   Food,
@@ -20,12 +21,13 @@ export type FoodSeed = Pick<
   | 'fat_per_100g'
   | 'glycemic_index'
   | 'portions'
->;
+> & { names: { en: string; fr: string; it: string } };
 
 export const SEED_FOODS: FoodSeed[] = [
   {
     id: 'food-vollkornbrot',
     name: 'Vollkornbrot',
+    names: { en: 'Wholemeal bread', fr: 'Pain complet', it: 'Pane integrale' },
     food_group: 'Brot & Getreide',
     categories: ['Brote, Flocken und Frühstückscerealien'],
     carbs_per_100g: 41,
@@ -41,6 +43,7 @@ export const SEED_FOODS: FoodSeed[] = [
   {
     id: 'food-weissbrot',
     name: 'Weissbrot (Ruchbrot)',
+    names: { en: 'White bread (Ruchbrot)', fr: 'Pain blanc (pain bis)', it: 'Pane bianco (pane semibianco)' },
     food_group: 'Brot & Getreide',
     categories: ['Brote, Flocken und Frühstückscerealien'],
     carbs_per_100g: 48,
@@ -56,6 +59,7 @@ export const SEED_FOODS: FoodSeed[] = [
   {
     id: 'food-haferflocken',
     name: 'Haferflocken',
+    names: { en: 'Rolled oats', fr: 'Flocons d’avoine', it: 'Fiocchi d’avena' },
     food_group: 'Brot & Getreide',
     categories: ['Brote, Flocken und Frühstückscerealien'],
     carbs_per_100g: 59,
@@ -71,6 +75,7 @@ export const SEED_FOODS: FoodSeed[] = [
   {
     id: 'food-mueesli',
     name: 'Birchermüesli',
+    names: { en: 'Bircher muesli', fr: 'Birchermüesli', it: 'Birchermüesli' },
     food_group: 'Brot & Getreide',
     categories: ['Brote, Flocken und Frühstückscerealien'],
     carbs_per_100g: 22,
@@ -85,6 +90,7 @@ export const SEED_FOODS: FoodSeed[] = [
   {
     id: 'food-reis-gekocht',
     name: 'Reis (gekocht)',
+    names: { en: 'Rice (cooked)', fr: 'Riz (cuit)', it: 'Riso (cotto)' },
     food_group: 'Beilagen',
     categories: ['Getreideprodukte, Hülsenfrüchte und Kartoffeln'],
     carbs_per_100g: 28,
@@ -100,6 +106,7 @@ export const SEED_FOODS: FoodSeed[] = [
   {
     id: 'food-pasta-gekocht',
     name: 'Teigwaren (gekocht)',
+    names: { en: 'Pasta (cooked)', fr: 'Pâtes (cuites)', it: 'Pasta (cotta)' },
     food_group: 'Beilagen',
     categories: ['Getreideprodukte, Hülsenfrüchte und Kartoffeln'],
     carbs_per_100g: 30,
@@ -115,6 +122,7 @@ export const SEED_FOODS: FoodSeed[] = [
   {
     id: 'food-kartoffeln',
     name: 'Kartoffeln (gekocht)',
+    names: { en: 'Potatoes (boiled)', fr: 'Pommes de terre (cuites)', it: 'Patate (bollite)' },
     food_group: 'Beilagen',
     categories: ['Getreideprodukte, Hülsenfrüchte und Kartoffeln'],
     carbs_per_100g: 17,
@@ -130,6 +138,7 @@ export const SEED_FOODS: FoodSeed[] = [
   {
     id: 'food-pommes',
     name: 'Pommes frites',
+    names: { en: 'French fries', fr: 'Frites', it: 'Patatine fritte' },
     food_group: 'Beilagen',
     categories: ['Getreideprodukte, Hülsenfrüchte und Kartoffeln'],
     carbs_per_100g: 36,
@@ -144,6 +153,7 @@ export const SEED_FOODS: FoodSeed[] = [
   {
     id: 'food-apfel',
     name: 'Apfel',
+    names: { en: 'Apple', fr: 'Pomme', it: 'Mela' },
     food_group: 'Früchte',
     categories: ['Früchte'],
     carbs_per_100g: 14,
@@ -158,6 +168,7 @@ export const SEED_FOODS: FoodSeed[] = [
   {
     id: 'food-banane',
     name: 'Banane',
+    names: { en: 'Banana', fr: 'Banane', it: 'Banana' },
     food_group: 'Früchte',
     categories: ['Früchte'],
     carbs_per_100g: 23,
@@ -172,6 +183,7 @@ export const SEED_FOODS: FoodSeed[] = [
   {
     id: 'food-beeren',
     name: 'Beeren gemischt',
+    names: { en: 'Mixed berries', fr: 'Baies mélangées', it: 'Frutti di bosco misti' },
     food_group: 'Früchte',
     categories: ['Früchte'],
     carbs_per_100g: 8,
@@ -186,6 +198,7 @@ export const SEED_FOODS: FoodSeed[] = [
   {
     id: 'food-orange',
     name: 'Orange',
+    names: { en: 'Orange', fr: 'Orange', it: 'Arancia' },
     food_group: 'Früchte',
     categories: ['Früchte'],
     carbs_per_100g: 9,
@@ -199,6 +212,7 @@ export const SEED_FOODS: FoodSeed[] = [
   {
     id: 'food-joghurt-natur',
     name: 'Joghurt nature',
+    names: { en: 'Plain yoghurt', fr: 'Yogourt nature', it: 'Yogurt naturale' },
     food_group: 'Milchprodukte',
     categories: ['Milch und Milchprodukte'],
     carbs_per_100g: 5,
@@ -213,6 +227,7 @@ export const SEED_FOODS: FoodSeed[] = [
   {
     id: 'food-joghurt-frucht',
     name: 'Fruchtjoghurt',
+    names: { en: 'Fruit yoghurt', fr: 'Yogourt aux fruits', it: 'Yogurt alla frutta' },
     food_group: 'Milchprodukte',
     categories: ['Milch und Milchprodukte'],
     carbs_per_100g: 13,
@@ -226,6 +241,7 @@ export const SEED_FOODS: FoodSeed[] = [
   {
     id: 'food-milch',
     name: 'Milch (Vollmilch)',
+    names: { en: 'Milk (whole)', fr: 'Lait (entier)', it: 'Latte (intero)' },
     food_group: 'Milchprodukte',
     categories: ['Milch und Milchprodukte'],
     carbs_per_100g: 4.8,
@@ -240,6 +256,7 @@ export const SEED_FOODS: FoodSeed[] = [
   {
     id: 'food-kaese-hartkaese',
     name: 'Hartkäse (Gruyère)',
+    names: { en: 'Hard cheese (Gruyère)', fr: 'Fromage à pâte dure (Gruyère)', it: 'Formaggio a pasta dura (Gruyère)' },
     food_group: 'Milchprodukte',
     categories: ['Milch und Milchprodukte'],
     carbs_per_100g: 0.4,
@@ -254,6 +271,7 @@ export const SEED_FOODS: FoodSeed[] = [
   {
     id: 'food-ei',
     name: 'Ei (gekocht)',
+    names: { en: 'Egg (boiled)', fr: 'Œuf (cuit)', it: 'Uovo (sodo)' },
     food_group: 'Eier & Proteine',
     categories: ['Eier'],
     carbs_per_100g: 0.6,
@@ -268,6 +286,7 @@ export const SEED_FOODS: FoodSeed[] = [
   {
     id: 'food-poulet',
     name: 'Pouletbrust',
+    names: { en: 'Chicken breast', fr: 'Blanc de poulet', it: 'Petto di pollo' },
     food_group: 'Eier & Proteine',
     categories: ['Fleisch und Innereien'],
     carbs_per_100g: 0,
@@ -281,6 +300,7 @@ export const SEED_FOODS: FoodSeed[] = [
   {
     id: 'food-linsen',
     name: 'Linsen (gekocht)',
+    names: { en: 'Lentils (cooked)', fr: 'Lentilles (cuites)', it: 'Lenticchie (cotte)' },
     food_group: 'Hülsenfrüchte',
     categories: ['Getreideprodukte, Hülsenfrüchte und Kartoffeln'],
     carbs_per_100g: 16,
@@ -294,6 +314,7 @@ export const SEED_FOODS: FoodSeed[] = [
   {
     id: 'food-kichererbsen',
     name: 'Kichererbsen (gekocht)',
+    names: { en: 'Chickpeas (cooked)', fr: 'Pois chiches (cuits)', it: 'Ceci (cotti)' },
     food_group: 'Hülsenfrüchte',
     categories: ['Getreideprodukte, Hülsenfrüchte und Kartoffeln'],
     carbs_per_100g: 18,
@@ -307,6 +328,7 @@ export const SEED_FOODS: FoodSeed[] = [
   {
     id: 'food-roesti',
     name: 'Rösti',
+    names: { en: 'Rösti', fr: 'Rösti', it: 'Rösti' },
     food_group: 'Beilagen',
     categories: ['Getreideprodukte, Hülsenfrüchte und Kartoffeln'],
     carbs_per_100g: 20,
@@ -320,6 +342,7 @@ export const SEED_FOODS: FoodSeed[] = [
   {
     id: 'food-gipfeli',
     name: 'Gipfeli (Butter)',
+    names: { en: 'Croissant (butter)', fr: 'Croissant (au beurre)', it: 'Cornetto (al burro)' },
     food_group: 'Gebäck',
     categories: ['Brote, Flocken und Frühstückscerealien'],
     carbs_per_100g: 46,
@@ -333,6 +356,7 @@ export const SEED_FOODS: FoodSeed[] = [
   {
     id: 'food-schokolade',
     name: 'Milchschokolade',
+    names: { en: 'Milk chocolate', fr: 'Chocolat au lait', it: 'Cioccolato al latte' },
     food_group: 'Süsses',
     categories: ['Süssigkeiten'],
     carbs_per_100g: 57,
@@ -347,6 +371,7 @@ export const SEED_FOODS: FoodSeed[] = [
   {
     id: 'food-orangensaft',
     name: 'Orangensaft',
+    names: { en: 'Orange juice', fr: 'Jus d’orange', it: 'Succo d’arancia' },
     food_group: 'Getränke',
     categories: ['Früchte', 'Alkoholfreie Getränke'],
     carbs_per_100g: 10,
@@ -360,6 +385,7 @@ export const SEED_FOODS: FoodSeed[] = [
   {
     id: 'food-cola',
     name: 'Cola',
+    names: { en: 'Cola', fr: 'Cola', it: 'Cola' },
     food_group: 'Getränke',
     categories: ['Alkoholfreie Getränke'],
     carbs_per_100g: 10.6,
@@ -374,6 +400,7 @@ export const SEED_FOODS: FoodSeed[] = [
   {
     id: 'food-traubenzucker',
     name: 'Traubenzucker',
+    names: { en: 'Dextrose', fr: 'Dextrose (sucre de raisin)', it: 'Destrosio (zucchero d’uva)' },
     food_group: 'Süsses',
     categories: ['Süssigkeiten'],
     carbs_per_100g: 100,

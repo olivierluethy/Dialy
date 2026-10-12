@@ -8,6 +8,7 @@ import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import { OfflineNotice } from '@/components/OfflineNotice';
 import { articlesErrorText, articlesService, type ArticlesError } from '@/services/articles';
 import { formatDate } from '@/utils/format';
+import { useT } from '@/i18n';
 import type { Article } from '@/types/models';
 import type { RatgeberStackParamList } from '@/navigation/types';
 
@@ -18,6 +19,7 @@ export function ArticleDetailScreen({
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
   const { id } = route.params;
   const [article, setArticle] = useState<Article | null>(null);
   const [error, setError] = useState<ArticlesError | null>(null);
@@ -56,7 +58,7 @@ export function ArticleDetailScreen({
       <Screen>
         <OfflineNotice
           message={articlesErrorText(error)}
-          onRetry={error === 'offline' ? () => setReloadTick((t) => t + 1) : undefined}
+          onRetry={error === 'offline' ? () => setReloadTick((n) => n + 1) : undefined}
         />
       </Screen>
     );
@@ -65,7 +67,7 @@ export function ArticleDetailScreen({
   if (!article) {
     return (
       <Screen>
-        <Text style={styles.body}>Artikel nicht gefunden.</Text>
+        <Text style={styles.body}>{t.ratgeber.notFound}</Text>
       </Screen>
     );
   }
@@ -73,7 +75,9 @@ export function ArticleDetailScreen({
   return (
     <Screen>
       <IconBubble name="book" />
-      <Text style={styles.category}>{article.category.toUpperCase()}</Text>
+      <Text style={styles.category}>
+        {(t.ratgeber.categories[article.category] ?? article.category).toUpperCase()}
+      </Text>
       <Text style={styles.title}>{article.title}</Text>
       <Text style={styles.meta}>
         {article.read_minutes} min · {formatDate(article.published_at)}

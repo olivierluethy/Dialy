@@ -8,21 +8,17 @@ import { Button } from '@/components/Button';
 import { radius, spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import { useAppStore } from '@/state/store';
+import { useT } from '@/i18n';
 
 /**
  * MOCK paywall. There is NO real payment / in-app-purchase SDK in this build.
  * The "Premium freischalten" button flips the dev premium flag so the premium
  * UI can be tested end-to-end without a purchase.
  */
-const FEATURES = [
-  'Vollständiges Tagebuch mit Verlauf',
-  'Blutzucker-Tracking & Auswertung',
-  'Geräteübergreifende Synchronisation',
-];
-
 export function PaywallScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
   const navigation = useNavigation<any>();
   const isPremium = useAppStore((s) => s.isPremium);
   const setPremium = useAppStore((s) => s.setPremium);
@@ -32,11 +28,11 @@ export function PaywallScreen() {
       <View style={styles.header}>
         <IconBubble name="star" size={30} />
         <Text style={styles.title}>Dialy Premium</Text>
-        <Text style={styles.price}>CHF 3.00 / Monat</Text>
+        <Text style={styles.price}>{t.paywall.price}</Text>
       </View>
 
       <Card>
-        {FEATURES.map((f) => (
+        {t.paywall.features.map((f) => (
           <View key={f} style={styles.featureRow}>
             <Ionicons name="checkmark-circle" size={20} color={colors.accent} />
             <Text style={styles.featureText}>{f}</Text>
@@ -44,14 +40,11 @@ export function PaywallScreen() {
         ))}
       </Card>
 
-      <Text style={styles.mockNote}>
-        Hinweis: In diesem Build ist die Bezahlung nur eine Vorschau. Es ist kein
-        echtes Zahlungssystem hinterlegt.
-      </Text>
+      <Text style={styles.mockNote}>{t.paywall.mockNote}</Text>
 
       {isPremium ? (
         <Button
-          title="Premium ist aktiv ✓"
+          title={t.paywall.active}
           icon="checkmark"
           onPress={() => navigation.goBack()}
           disabled
@@ -59,7 +52,7 @@ export function PaywallScreen() {
         />
       ) : (
         <Button
-          title="Premium freischalten (Demo)"
+          title={t.paywall.unlock}
           icon="star"
           onPress={() => {
             setPremium(true);

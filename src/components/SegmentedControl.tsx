@@ -3,18 +3,8 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { radius, spacing, type Colors, type ThemeMode } from '@/theme/theme';
 import { useThemedStyles } from '@/theme/useTheme';
 import { useAppStore } from '@/state/store';
+import { LANGUAGES, useLanguage, useT, type Language } from '@/i18n';
 import type { DiabetesType } from '@/types/models';
-
-const TYPE_OPTIONS: Array<{ value: DiabetesType; label: string }> = [
-  { value: 't1', label: 'Typ 1' },
-  { value: 't2', label: 'Typ 2' },
-];
-
-const THEME_OPTIONS: Array<{ value: ThemeMode; label: string }> = [
-  { value: 'dark', label: 'Dunkel' },
-  { value: 'light', label: 'Hell' },
-  { value: 'system', label: 'System' },
-];
 
 /**
  * Typ-1 / Typ-2 segmented control shown at the top of the Ratgeber (it
@@ -25,14 +15,39 @@ const THEME_OPTIONS: Array<{ value: ThemeMode; label: string }> = [
 export function TypeSegmentedControl() {
   const type = useAppStore((s) => s.diabetesType);
   const setType = useAppStore((s) => s.setDiabetesType);
-  return <Segmented options={TYPE_OPTIONS} value={type} onChange={setType} />;
+  const t = useT();
+  const options: Array<{ value: DiabetesType; label: string }> = [
+    { value: 't1', label: t.diabetesType.t1 },
+    { value: 't2', label: t.diabetesType.t2 },
+  ];
+  return <Segmented options={options} value={type} onChange={setType} />;
 }
 
 /** Appearance picker: Dunkel / Hell / System. Persisted in the store. */
 export function ThemeModeControl() {
   const mode = useAppStore((s) => s.themeMode);
   const setMode = useAppStore((s) => s.setThemeMode);
-  return <Segmented options={THEME_OPTIONS} value={mode} onChange={setMode} />;
+  const t = useT();
+  const options: Array<{ value: ThemeMode; label: string }> = [
+    { value: 'dark', label: t.theme.dark },
+    { value: 'light', label: t.theme.light },
+    { value: 'system', label: t.theme.system },
+  ];
+  return <Segmented options={options} value={mode} onChange={setMode} />;
+}
+
+/**
+ * Language picker: DE / FR / IT / EN. Until the user picks one, the device
+ * language is used (and shown as selected). Persisted in the store.
+ */
+export function LanguageControl() {
+  const language = useLanguage();
+  const setLanguage = useAppStore((s) => s.setLanguage);
+  const options: Array<{ value: Language; label: string }> = LANGUAGES.map((l) => ({
+    value: l.code,
+    label: l.short,
+  }));
+  return <Segmented options={options} value={language} onChange={setLanguage} />;
 }
 
 function Segmented<T extends string>({

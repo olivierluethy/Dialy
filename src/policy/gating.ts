@@ -37,13 +37,5 @@ export function can(cap: Capability, ctx: GateContext): boolean {
   }
 }
 
-/** German gating copy shown when a capability is locked. */
-export const gateCopy = {
-  saveMeal: 'Mahlzeit im Tagebuch speichern erfordert ein Konto.',
-  saveSport: 'Sport im Tagebuch speichern erfordert ein Konto.',
-  diaryNeedsAccount:
-    'Das Tagebuch benötigt ein (kostenloses) Konto. So bleiben deine Einträge sicher und geräteübergreifend verfügbar.',
-  diaryNeedsPremium:
-    'Das vollständige Tagebuch mit Blutzucker-Verlauf und Auswertung ist Teil von Dialy Premium.',
-  registerCta: 'Kostenlos registrieren →',
-} as const;
+// The copy shown when a capability is locked is in the UI dictionaries
+// (src/i18n/locales, section `gate`).

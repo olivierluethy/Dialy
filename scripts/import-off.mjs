@@ -21,6 +21,9 @@
  *     drinks, BLV, BLS) and isn't a duplicate within OFF (same name + brand:
  *     the most scanned one wins).
  * Counts per rule and samples go to data-sources/off-import-report.txt.
+ * The product's English, French and Italian names (product_name_en/fr/it),
+ * where Open Food Facts has them, are kept for the app's other languages
+ * (`translations`, merged by `npm run import:names`).
  *
  * License: Open Food Facts is under the Open Database License (ODbL 1.0).
  * src/data/offFoods.json is a derived database and therefore also ODbL —
@@ -179,7 +182,8 @@ for await (const line of rl) {
   if ((p.data_quality_errors_tags || []).length) { reject('Qualitätsfehler laut Open Food Facts', info); continue; }
   if (carbs === 0) { reject('0 g KH (im KH-Rechner ausgeblendet)', info); continue; }
 
-  const display = brand && !nameKey(name).includes(nameKey(brand)) ? `${name} (${brand})` : name;
+  const withBrand = (n) => (brand && !nameKey(n).includes(nameKey(brand)) ? `${n} (${brand})` : n);
+  const display = withBrand(name);
   if (existing.has(nameKey(name)) || existing.has(nameKey(display))) { reject('schon vorhanden (gleicher Name)', info); continue; }
   // The brand may only be in the brand field ("Das Original", brand Rivella).
   if (BRAND_DRINK.test(`${name} ${brand}`) && DRINK_WORD.test(`${name} ${brand}`)) { reject('Markengetränk schon kuratiert', info); continue; }
@@ -194,6 +198,13 @@ for await (const line of rl) {
     name,
     branded: !!brand,
     display,
+    // Same product name in the other app languages, if different.
+    names: Object.fromEntries(
+      ['en', 'fr', 'it']
+        .map((lang) => [lang, cleanName(p[`product_name_${lang}`] || '')])
+        .filter(([, n]) => n.length >= 3 && nameKey(n) !== nameKey(name))
+        .map(([lang, n]) => [lang, withBrand(n)])
+    ),
     group: brand || 'Open Food Facts',
     category: categoryOf(p.categories_tags || []),
     carbs: round1(carbs),
@@ -248,6 +259,10 @@ const out = {
   ]),
   // [id, amount, "g" | "ml"]: serving as declared on the package.
   portions,
+  // [id, en, fr, it] ("" = none): names in the other app languages.
+  translations: kept
+    .filter((f) => Object.keys(f.names).length > 0)
+    .map((f) => [f.id, f.names.en || '', f.names.fr || '', f.names.it || '']),
 };
 writeFileSync(outPath, JSON.stringify(out));
 

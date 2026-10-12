@@ -43,8 +43,17 @@ if (!config.url || !config.key) {
  */
 async function bundledFoods() {
   const load = (file) => import(pathToFileURL(join(root, 'src', 'data', file)).href);
-  const [{ SEED_FOODS }, { BRAND_DRINKS }, { FOOD_CATEGORIES, USUAL_PORTION_LABEL }] =
-    await Promise.all([load('seedFoods.ts'), load('brandDrinks.ts'), load('foodCategories.ts')]);
+  const [
+    { SEED_FOODS },
+    { BRAND_DRINKS },
+    { FOOD_CATEGORIES, USUAL_PORTION_LABEL, PACKAGE_PORTION_LABEL },
+    { default: de },
+  ] = await Promise.all([
+    load('seedFoods.ts'),
+    load('brandDrinks.ts'),
+    load('foodCategories.ts'),
+    import(pathToFileURL(join(root, 'src', 'i18n', 'locales', 'de.ts')).href),
+  ]);
   const json = (file) => JSON.parse(readFileSync(join(root, 'src', 'data', file), 'utf8'));
   const usual = json('menuchPortions.json').portions;
   const menuch = (id) =>
@@ -57,7 +66,7 @@ async function bundledFoods() {
     sources.push([off, (id) => {
       const serving = servings.get(id);
       return serving
-        ? { label: `Portion laut Packung (${serving[0]} ${serving[1]})`, grams: serving[0] }
+        ? { label: `${PACKAGE_PORTION_LABEL} (${serving[0]} ${serving[1]})`, grams: serving[0] }
         : null;
     }]);
   }
@@ -65,7 +74,8 @@ async function bundledFoods() {
   // Same name key as seed.ts.
   const nameKey = (name) => name.toLowerCase().replace(/[^a-zäöüéèàß0-9]+/g, ' ').trim();
   const curatedNames = new Set(SEED_FOODS.map((f) => nameKey(f.name)));
-  const foods = [...SEED_FOODS, ...BRAND_DRINKS];
+  // The editor works on the stored (German) data; translations stay in the app.
+  const foods = [...SEED_FOODS, ...BRAND_DRINKS].map(({ names, ...food }) => food);
   for (const [source, portionFor] of sources) {
     for (const [id, name, group, categoryIdx, carbs, sugar, fat] of source.foods) {
       if (curatedNames.has(nameKey(name))) continue;
@@ -83,7 +93,9 @@ async function bundledFoods() {
       });
     }
   }
-  return { categories: FOOD_CATEGORIES, foods };
+  // Chip labels as in the German app.
+  const categories = FOOD_CATEGORIES.map((name) => ({ name, label: de.foodCategories[name] ?? name }));
+  return { categories, foods };
 }
 
 const files = {

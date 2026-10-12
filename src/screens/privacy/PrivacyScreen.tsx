@@ -3,49 +3,16 @@ import { Text, StyleSheet } from 'react-native';
 import { Screen } from '@/components/Screen';
 import { spacing, type Colors } from '@/theme/theme';
 import { useThemedStyles } from '@/theme/useTheme';
+import { useT } from '@/i18n';
 
-/** Placeholder privacy policy (German). Replace with the final legal text. */
-const SECTIONS: Array<{ h: string; b: string }> = [
-  {
-    h: 'Überblick',
-    b: 'Dialy ist ein Begleiter für den Alltag mit Diabetes. Die App dokumentiert Werte, die du selbst eingibst, und schätzt Kohlenhydrate sowie einen illustrativen Blutzucker-Trend. Dialy ist kein Medizinprodukt und gibt keine Therapie- oder Dosierungsempfehlungen.',
-  },
-  {
-    h: 'Welche Daten wir verarbeiten',
-    b: 'Mahlzeiten, sportliche Aktivitäten und Blutzuckerwerte, die du eingibst. Diese Gesundheitsdaten gelten als besonders schützenswert (DSGVO Art. 9 / revDSG Art. 5). Sie werden ausschliesslich zur Bereitstellung des Tagebuchs verwendet.',
-  },
-  {
-    h: 'Keine Werbe- oder Analysenutzung',
-    b: 'Deine Gesundheitsdaten werden nicht für Werbung, Marketing oder Data-Mining verwendet und nicht an Dritte verkauft.',
-  },
-  {
-    h: 'Speicherung',
-    b: 'Deine Daten werden lokal auf deinem Gerät gespeichert. Mit einem Konto werden sie verschlüsselt mit unserem Server synchronisiert, damit sie auf mehreren Geräten verfügbar sind. Der Zugriff ist durch Row-Level-Security auf dein Konto beschränkt.',
-  },
-  {
-    h: 'Kontaktformular',
-    b: 'Nachrichten aus dem Kontaktformular (Lebensmittel vorschlagen oder Fehler melden) werden auf unserem Server gespeichert, um die Lebensmitteldaten zu verbessern. Bist du angemeldet, wird die Nachricht mit deinem Konto verknüpft, damit wir bei Rückfragen antworten können.',
-  },
-  {
-    h: 'Deine Rechte',
-    b: 'Du kannst deine Daten jederzeit in den Kontoeinstellungen unter «Daten löschen» vollständig entfernen. Die Löschung wird auch auf den Server übertragen.',
-  },
-  {
-    h: 'Quellen',
-    b: 'Nährwerte der meisten Lebensmittel im KH-Rechner: Schweizer Nährwertdatenbank, Bundesamt für Lebensmittelsicherheit und Veterinärwesen (BLV), naehrwertdaten.ch. Übliche Portionsgrössen: BLV, Nationale Ernährungserhebung menuCH 2014-15. Weitere Lebensmittel und Gerichte: Max Rubner-Institut (2025), Bundeslebensmittelschlüssel (BLS) Version 4.0, Lizenz CC BY 4.0. Markengetränke (z. B. Rivella, Coca-Cola): Angaben der Hersteller für die Schweiz, Stand Oktober 2026. Markenprodukte: Open Food Facts (openfoodfacts.org), Open Database License (ODbL) – von Freiwilligen erfasst, Angaben auf der Verpackung haben Vorrang.',
-  },
-  {
-    h: 'Kontakt',
-    b: 'Bei Fragen zum Datenschutz erreichst du uns unter datenschutz@dialy.example. (Platzhalter)',
-  },
-];
-
+/** Privacy policy (placeholder; replace with the final legal text). Copy: t.privacy. */
 export function PrivacyScreen() {
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
   return (
     <Screen>
-      <Text style={styles.title}>Datenschutzerklärung</Text>
-      {SECTIONS.map((s) => (
+      <Text style={styles.title}>{t.privacy.title}</Text>
+      {t.privacy.sections.map((s) => (
         <React.Fragment key={s.h}>
           <Text style={styles.h}>{s.h}</Text>
           <Text style={styles.b}>{s.b}</Text>

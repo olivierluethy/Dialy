@@ -13,6 +13,7 @@ import { useAppStore } from '@/state/store';
 import { OfflineNotice } from '@/components/OfflineNotice';
 import { articlesErrorText, articlesService, type ArticlesError } from '@/services/articles';
 import { formatDate } from '@/utils/format';
+import { useLanguage, useT } from '@/i18n';
 import type { Article } from '@/types/models';
 import type { RatgeberStackParamList } from '@/navigation/types';
 
@@ -32,6 +33,8 @@ export function RatgeberScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const type = useAppStore((s) => s.diabetesType);
+  const t = useT();
+  const language = useLanguage();
   const [articles, setArticles] = useState<Article[]>([]);
   const [error, setError] = useState<ArticlesError | null>(null);
   const [loading, setLoading] = useState(true);
@@ -65,19 +68,22 @@ export function RatgeberScreen() {
   return (
     <Screen>
       <TypeSegmentedControl />
-      <ScreenTitle>Ratgeber</ScreenTitle>
+      <ScreenTitle>{t.ratgeber.title}</ScreenTitle>
 
       {loading ? (
         <ActivityIndicator color={colors.accent} style={{ marginTop: spacing.xl }} />
       ) : error ? (
         <OfflineNotice
           message={articlesErrorText(error)}
-          onRetry={error === 'not-configured' ? undefined : () => setReloadTick((t) => t + 1)}
+          onRetry={error === 'not-configured' ? undefined : () => setReloadTick((n) => n + 1)}
         />
       ) : articles.length === 0 ? (
-        <Text style={styles.empty}>Noch keine Artikel vorhanden.</Text>
+        <Text style={styles.empty}>{t.ratgeber.empty}</Text>
       ) : (
-        articles.map((a, i) => (
+        <>
+        {/* Articles are written in German only (so far). */}
+        {language !== 'de' && <Text style={styles.germanOnly}>{t.ratgeber.germanOnly}</Text>}
+        {articles.map((a, i) => (
           <FadeIn key={a.id} delay={staggerDelay(i)}>
             <Pressable
               style={styles.card}
@@ -86,7 +92,9 @@ export function RatgeberScreen() {
             >
               <IconBubble name={CATEGORY_ICON[a.category] ?? 'book'} />
               <View style={styles.cardBody}>
-                <Text style={styles.category}>{a.category.toUpperCase()}</Text>
+                <Text style={styles.category}>
+                  {(t.ratgeber.categories[a.category] ?? a.category).toUpperCase()}
+                </Text>
                 <Text style={styles.title} numberOfLines={2}>
                   {a.title}
                 </Text>
@@ -97,7 +105,8 @@ export function RatgeberScreen() {
               <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
             </Pressable>
           </FadeIn>
-        ))
+        ))}
+        </>
       )}
     </Screen>
   );
@@ -117,6 +126,7 @@ const makeStyles = (colors: Colors) =>
     },
     cardBody: { flex: 1, marginHorizontal: spacing.md },
     empty: { color: colors.textTertiary, fontSize: 15, marginTop: spacing.lg },
+    germanOnly: { color: colors.textTertiary, fontSize: 13, marginBottom: spacing.md },
     category: {
       fontSize: 11,
       fontWeight: '700',

@@ -5,6 +5,7 @@ import type { DiabetesType } from '@/types/models';
 import type { ThemeMode } from '@/theme/theme';
 import type { AuthUser } from '@/services/auth';
 import type { GateContext } from '@/policy/gating';
+import type { LanguageSetting } from '@/i18n';
 
 /** What the account screen shows about syncing (see sync/syncEngine.ts). */
 export type SyncState = 'disabled' | 'idle' | 'syncing' | 'offline' | 'error';
@@ -27,6 +28,10 @@ interface AppState {
   // Appearance: dark (default), light, or follow the OS.
   themeMode: ThemeMode;
   setThemeMode: (m: ThemeMode) => void;
+
+  // UI language: 'system' (default) follows the device, else de/en/fr/it.
+  language: LanguageSetting;
+  setLanguage: (l: LanguageSetting) => void;
 
   // Password reset: 'active' after opening a valid reset link (set a new
   // password), 'expired' for an invalid one. Not persisted.
@@ -70,6 +75,9 @@ export const useAppStore = create<AppState>()(
       themeMode: 'dark',
       setThemeMode: (m) => set({ themeMode: m }),
 
+      language: 'system',
+      setLanguage: (l) => set({ language: l }),
+
       passwordRecovery: { state: 'idle' },
       setPasswordRecovery: (v) => set({ passwordRecovery: v }),
 
@@ -104,6 +112,7 @@ export const useAppStore = create<AppState>()(
       partialize: (s) => ({
         diabetesType: s.diabetesType,
         themeMode: s.themeMode,
+        language: s.language,
         lastSyncedAt: s.lastSyncedAt,
         isPremium: s.isPremium,
       }),

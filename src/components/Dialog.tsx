@@ -3,6 +3,7 @@ import { View, Text, Modal, Pressable, StyleSheet } from 'react-native';
 import { Button } from '@/components/Button';
 import { radius, spacing, type Colors } from '@/theme/theme';
 import { useThemedStyles } from '@/theme/useTheme';
+import { useT } from '@/i18n';
 
 export interface DialogAction {
   label: string;
@@ -32,9 +33,10 @@ export function Dialog({
   onClose: () => void;
 }) {
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Schliessen">
+      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel={t.common.close}>
         {/* Inner Pressable swallows taps so they don't close the dialog. */}
         <Pressable style={styles.box} onPress={() => {}} accessibilityRole="alert">
           <Text style={styles.title}>{title}</Text>

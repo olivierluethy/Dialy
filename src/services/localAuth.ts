@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Crypto from 'expo-crypto';
 import { uuidv4, nowIso } from '@/utils/id';
 import type { AuthResult, AuthUser } from '@/services/auth';
+import { getT } from '@/i18n';
 
 /**
  * Offline, on-device account store — the fallback used when no Supabase backend
@@ -82,17 +83,14 @@ export const localAuth = {
   async signUp(email: string, password: string): Promise<AuthResult> {
     const e = normalizeEmail(email);
     if (!EMAIL_RE.test(e)) {
-      return { user: null, error: 'Bitte gib eine gültige E-Mail-Adresse ein.' };
+      return { user: null, error: getT().auth.invalidEmail };
     }
     if (password.length < MIN_PASSWORD) {
-      return {
-        user: null,
-        error: 'Das Passwort erfüllt die Anforderungen nicht (mind. 6 Zeichen).',
-      };
+      return { user: null, error: getT().auth.weakPassword };
     }
     const accounts = await readAccounts();
     if (accounts.some((a) => a.email === e)) {
-      return { user: null, error: 'Diese E-Mail ist bereits registriert.' };
+      return { user: null, error: getT().auth.alreadyRegistered };
     }
     const salt = randomSalt();
     const hash = await hashPassword(password, salt);
@@ -114,10 +112,7 @@ export const localAuth = {
     const account = accounts.find((a) => a.email === e);
     // Same message whether the email is unknown or the password is wrong, so a
     // caller can't probe which emails are registered.
-    const invalid: AuthResult = {
-      user: null,
-      error: 'E-Mail oder Passwort ist falsch.',
-    };
+    const invalid: AuthResult = { user: null, error: getT().auth.invalidLogin };
     if (!account) return invalid;
     const hash = await hashPassword(password, account.salt);
     if (hash !== account.hash) return invalid;

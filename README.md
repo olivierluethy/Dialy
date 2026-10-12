@@ -434,6 +434,39 @@ npm run import:off -- pfad/zu/openfoodfacts-products.jsonl.gz
 Dauert ca. 25 Minuten; Zahlen pro Filterregel und Beispiele stehen danach in
 `data-sources/off-import-report.txt`.
 
+### Mehrsprachigkeit (DE / FR / IT / EN)
+
+Die App ist auf Deutsch, Französisch, Italienisch und Englisch verfügbar.
+Standard ist die Sprache des Geräts; umstellen lässt sie sich unter
+„Einstellungen“ (angemeldet) bzw. „Anmelden“ (Abschnitt „Sprache“).
+
+- **Oberfläche:** `src/i18n/locales/de.ts` ist das Referenz-Wörterbuch,
+  `en.ts`, `fr.ts`, `it.ts` haben (per TypeScript erzwungen) dieselbe Form.
+  Komponenten holen die Texte mit `useT()`, Code ausserhalb von React mit
+  `getT()`.
+- **Gespeicherte Daten bleiben deutsch** (Lebensmittelnamen, Kategorien,
+  Portionsangaben – auch das, was der Dialy-Editor bearbeitet). Übersetzt wird
+  erst beim Anzeigen (`src/i18n/foods.ts`); die Suche im KH-Rechner findet ein
+  Lebensmittel in der gewählten Sprache und zusätzlich über den deutschen
+  Namen.
+- **Lebensmittelnamen** stehen in `src/data/foodNames/{en,fr,it}.json`:
+  - BLV: offizielle englische, französische und italienische Ausgabe der
+    Schweizer Nährwertdatenbank (naehrwertdaten.ch/en|fr|it/downloads/),
+  - BLS: offizielle englische Namen; Französisch/Italienisch aus
+    `data-sources/bls-names-fr-it.tsv` (aus dem Englischen übersetzt),
+  - Open Food Facts: die Produktnamen `product_name_en/fr/it`, sobald
+    `import:off` neu gelaufen ist; bis dahin der deutsche Name,
+  - eigene Lebensmittel und Markengetränke: Feld `names` in
+    `src/data/seedFoods.ts` / `brandDrinks.ts`.
+- **Ratgeber-Artikel** kommen aus Supabase und sind (noch) nur deutsch; in
+  den anderen Sprachen zeigt die App einen Hinweis.
+
+**Aktualisieren** (nach `import:blv`, `import:bls` oder `import:off`):
+
+```bash
+npm run import:names
+```
+
 ---
 
 ## Web-Unterstützung (Browser)

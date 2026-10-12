@@ -17,6 +17,7 @@
     "import:menuch": "node scripts/import-menuch.mjs",
     "import:bls": "node scripts/import-bls.mjs",
     "import:off": "node scripts/import-off.mjs",
+    "import:names": "node scripts/import-food-names.mjs",
     "editor": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/article-editor.mjs"
   },
   "dependencies": {

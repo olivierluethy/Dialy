@@ -2,6 +2,7 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTheme } from '@/theme/useTheme';
 import { fontFor } from '@/theme/fonts';
+import { useT } from '@/i18n';
 import { RatgeberScreen } from '@/screens/ratgeber/RatgeberScreen';
 import { ArticleDetailScreen } from '@/screens/ratgeber/ArticleDetailScreen';
 import { LoginScreen } from '@/screens/login/LoginScreen';
@@ -28,6 +29,7 @@ function useScreenOptions() {
 const RatgeberStack = createNativeStackNavigator<RatgeberStackParamList>();
 export function RatgeberNavigator() {
   const screenOptions = useScreenOptions();
+  const t = useT();
   return (
     <RatgeberStack.Navigator screenOptions={screenOptions}>
       <RatgeberStack.Screen
@@ -38,7 +40,7 @@ export function RatgeberNavigator() {
       <RatgeberStack.Screen
         name="ArticleDetail"
         component={ArticleDetailScreen}
-        options={{ title: 'Artikel', headerBackTitle: 'Zurück' }}
+        options={{ title: t.nav.article, headerBackTitle: t.common.back }}
       />
     </RatgeberStack.Navigator>
   );
@@ -47,6 +49,7 @@ export function RatgeberNavigator() {
 const LoginStack = createNativeStackNavigator<LoginStackParamList>();
 export function LoginNavigator() {
   const screenOptions = useScreenOptions();
+  const t = useT();
   return (
     <LoginStack.Navigator screenOptions={screenOptions}>
       <LoginStack.Screen
@@ -57,32 +60,32 @@ export function LoginNavigator() {
       <LoginStack.Screen
         name="Register"
         component={RegisterScreen}
-        options={{ title: 'Registrieren', headerBackTitle: 'Zurück' }}
+        options={{ title: t.nav.register, headerBackTitle: t.common.back }}
       />
       <LoginStack.Screen
         name="Account"
         component={AccountView}
-        options={{ title: 'Konto' }}
+        options={{ title: t.nav.settings }}
       />
       <LoginStack.Screen
         name="Paywall"
         component={PaywallScreen}
-        options={{ title: 'Premium', headerBackTitle: 'Zurück' }}
+        options={{ title: t.nav.premium, headerBackTitle: t.common.back }}
       />
       <LoginStack.Screen
         name="Privacy"
         component={PrivacyScreen}
-        options={{ title: 'Datenschutz', headerBackTitle: 'Zurück' }}
+        options={{ title: t.nav.privacy, headerBackTitle: t.common.back }}
       />
       <LoginStack.Screen
         name="ForgotPassword"
         component={ForgotPasswordScreen}
-        options={{ title: 'Passwort vergessen', headerBackTitle: 'Zurück' }}
+        options={{ title: t.nav.forgotPassword, headerBackTitle: t.common.back }}
       />
       <LoginStack.Screen
         name="Contact"
         component={ContactScreen}
-        options={{ title: 'Kontakt', headerBackTitle: 'Zurück' }}
+        options={{ title: t.nav.contact, headerBackTitle: t.common.back }}
       />
     </LoginStack.Navigator>
   );

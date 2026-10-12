@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getSupabase, isNetworkError, supabaseStorageKey } from '@/sync/supabaseClient';
 import { softDeleteAllUserData } from '@/db/repositories/userData';
 import { localAuth } from '@/services/localAuth';
+import { getT } from '@/i18n';
 
 export interface AuthUser {
   id: string;
@@ -54,16 +55,14 @@ export const authService = {
     // An already registered address gets a user without identities and no
     // error (Supabase doesn't reveal existing accounts that way).
     if (data.user && data.user.identities?.length === 0) {
-      return { user: null, error: 'Diese E-Mail ist bereits registriert. Bitte melde dich an.' };
+      return { user: null, error: getT().auth.alreadyRegisteredSignIn };
     }
     // With "Confirm email" enabled there's no session until the link is clicked.
     if (!data.session) {
       return {
         user: null,
         error: null,
-        notice:
-          `Fast geschafft! Wir haben dir eine E-Mail an ${email} geschickt. Bitte ` +
-          'bestätige deine Adresse über den Link darin und melde dich danach an.',
+        notice: getT().auth.confirmEmail(email),
       };
     }
     return { user: toUser(data.user), error: null };
@@ -100,7 +99,7 @@ export const authService = {
    */
   async requestPasswordReset(email: string): Promise<{ error: string | null }> {
     const sb = getSupabase();
-    if (!sb) return { error: LOCAL_RESET_UNAVAILABLE };
+    if (!sb) return { error: getT().auth.localResetUnavailable };
     const { error } = await sb.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: recoveryRedirectUrl(),
     });
@@ -119,7 +118,7 @@ export const authService = {
     if (!sb) return null;
     const params = linkParams(url);
     if (params.get('error_code') || params.get('error')) {
-      return { error: 'Der Link ist abgelaufen oder wurde schon verwendet. Bitte fordere einen neuen an.' };
+      return { error: getT().auth.linkExpired };
     }
     if (params.get('type') !== 'recovery') return null;
     const accessToken = params.get('access_token');
@@ -130,7 +129,7 @@ export const authService = {
       refresh_token: refreshToken,
     });
     if (error || !data.user) {
-      return { error: 'Der Link ist abgelaufen oder wurde schon verwendet. Bitte fordere einen neuen an.' };
+      return { error: getT().auth.linkExpired };
     }
     return { user: toUser(data.user)! };
   },
@@ -138,7 +137,7 @@ export const authService = {
   /** Sets a new password for the signed-in user (after a reset link). */
   async updatePassword(password: string): Promise<{ error: string | null }> {
     const sb = getSupabase();
-    if (!sb) return { error: LOCAL_RESET_UNAVAILABLE };
+    if (!sb) return { error: getT().auth.localResetUnavailable };
     const { error } = await sb.auth.updateUser({ password });
     return { error: error ? translateAuthError(error.message) : null };
   },
@@ -179,9 +178,6 @@ export const authService = {
   },
 };
 
-const LOCAL_RESET_UNAVAILABLE =
-  'Ohne Server kann das Passwort nicht zurückgesetzt werden: Lokale Konten haben keine bestätigte E-Mail-Adresse. Erstelle bei Bedarf ein neues Konto.';
-
 /**
  * Where the reset link sends the user back to. Must be listed in Supabase
  * (Authentication → URL Configuration → Redirect URLs), otherwise Supabase
@@ -218,20 +214,17 @@ function toUser(user: { id: string; email?: string | null } | null): AuthUser | 
   return { id: user.id, email: user.email ?? '' };
 }
 
-/** Map common Supabase auth errors to simple Swiss-German copy. */
+/** Map common Supabase auth errors to simple copy in the UI language. */
 function translateAuthError(msg: string): string {
   const m = msg.toLowerCase();
-  if (isNetworkError({ message: msg })) {
-    return 'Keine Internetverbindung. Anmelden und Registrieren brauchen Internet – alles andere funktioniert auch offline.';
-  }
-  if (m.includes('invalid login')) return 'E-Mail oder Passwort ist falsch.';
-  if (m.includes('already registered')) return 'Diese E-Mail ist bereits registriert.';
-  if (m.includes('email not confirmed')) {
-    return 'Bitte bestätige zuerst deine E-Mail-Adresse (Link in der Bestätigungs-Mail) und melde dich dann an.';
-  }
-  if (m.includes('should be different')) return 'Das neue Passwort muss sich vom bisherigen unterscheiden.';
-  if (m.includes('rate limit')) return 'Zu viele Versuche. Bitte warte einen Moment und versuche es erneut.';
-  if (m.includes('password')) return 'Das Passwort erfüllt die Anforderungen nicht (mind. 6 Zeichen).';
-  if (m.includes('email')) return 'Bitte gib eine gültige E-Mail-Adresse ein.';
-  return 'Es ist ein Fehler aufgetreten. Bitte versuche es erneut.';
+  const t = getT().auth;
+  if (isNetworkError({ message: msg })) return t.offline;
+  if (m.includes('invalid login')) return t.invalidLogin;
+  if (m.includes('already registered')) return t.alreadyRegistered;
+  if (m.includes('email not confirmed')) return t.emailNotConfirmed;
+  if (m.includes('should be different')) return t.samePassword;
+  if (m.includes('rate limit')) return t.rateLimit;
+  if (m.includes('password')) return t.weakPassword;
+  if (m.includes('email')) return t.invalidEmail;
+  return t.generic;
 }
