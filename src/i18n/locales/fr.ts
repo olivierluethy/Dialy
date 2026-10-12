@@ -203,8 +203,6 @@ const fr: Dict = {
     empty:
       'Pas encore d’entrées. Ajoute quelque chose dans le calcul des glucides ou le planificateur de sport.',
     carbTotal: 'Glucides total',
-    meals: 'Repas',
-    sport: 'Sport',
     sameDateTime: (n) => `${n} entrées recevront la même date et la même heure.`,
     markHint: 'Sélectionner',
     editHint: 'Modifier l’entrée',

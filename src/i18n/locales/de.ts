@@ -172,8 +172,6 @@ const de = {
     changeDateTime: 'Datum & Zeit ändern',
     empty: 'Noch keine Einträge. Füge im KH-Rechner oder im Sport-Planer etwas hinzu.',
     carbTotal: 'KH total',
-    meals: 'Mahlzeiten',
-    sport: 'Sport',
     sameDateTime: (n: number) => `${n} Einträge erhalten dasselbe Datum und dieselbe Uhrzeit.`,
     markHint: 'Markieren',
     editHint: 'Eintrag bearbeiten',

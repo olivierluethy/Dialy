@@ -37,8 +37,6 @@ interface DayGroup {
   header: string;
   items: FeedItem[];
   carbTotal: number;
-  mealCount: number;
-  sportCount: number;
 }
 
 /** Stable key of a feed item across both entry tables. */
@@ -240,8 +238,6 @@ export function TagebuchScreen() {
                 {/* Daily summary chips */}
                 <View style={styles.summaryRow}>
                   <SummaryChip label={t.tagebuch.carbTotal} value={`${Math.round(g.carbTotal)} g`} />
-                  <SummaryChip label={t.tagebuch.meals} value={`${g.mealCount}`} />
-                  <SummaryChip label={t.tagebuch.sport} value={`${g.sportCount}×`} />
                 </View>
               </FadeIn>
             ))
@@ -472,18 +468,11 @@ function buildGroups(meals: MealEntry[], sports: SportEntry[]): DayGroup[] {
         header: formatDayHeader(item.data.logged_at),
         items: [],
         carbTotal: 0,
-        mealCount: 0,
-        sportCount: 0,
       };
       map.set(key, g);
     }
     g.items.push(item);
-    if (item.kind === 'meal') {
-      g.carbTotal += item.data.carbs_g;
-      g.mealCount += 1;
-    } else {
-      g.sportCount += 1;
-    }
+    if (item.kind === 'meal') g.carbTotal += item.data.carbs_g;
   }
   return Array.from(map.values());
 }

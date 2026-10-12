@@ -198,8 +198,6 @@ const en: Dict = {
     changeDateTime: 'Change date & time',
     empty: 'No entries yet. Add something in the carb counter or the sport planner.',
     carbTotal: 'Total carbs',
-    meals: 'Meals',
-    sport: 'Sport',
     sameDateTime: (n) => `${n} entries will get the same date and time.`,
     markHint: 'Select',
     editHint: 'Edit entry',

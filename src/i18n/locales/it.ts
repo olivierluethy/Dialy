@@ -198,8 +198,6 @@ const it: Dict = {
     changeDateTime: 'Modifica data e ora',
     empty: 'Ancora nessuna voce. Aggiungi qualcosa nel conta carboidrati o nel pianificatore sport.',
     carbTotal: 'Carboidrati tot.',
-    meals: 'Pasti',
-    sport: 'Sport',
     sameDateTime: (n) => `${n} voci riceveranno la stessa data e la stessa ora.`,
     markHint: 'Seleziona',
     editHint: 'Modifica voce',
