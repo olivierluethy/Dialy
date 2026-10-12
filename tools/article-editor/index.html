@@ -7,7 +7,8 @@
 <!--
   Dialy-Editor: create, edit and remove the Ratgeber articles in Supabase
   (table public.articles), edit, add and deactivate KH-Rechner foods
-  (public.foods) and read the Kontakt messages (contact_messages).
+  (public.foods), read the Kontakt messages (contact_messages) and back up
+  or restore these tables as a JSON file (tab "Backup").
   Start with `npm run editor`; needs an account in public.article_editors
   (supabase/migrations/0006_article_editors.sql, 0008_contact_messages_editors.sql,
   0010_food_edits.sql).
@@ -157,11 +158,25 @@
   .p-rows li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-top: 1px solid var(--border); font-size: 14px; }
   .p-rows li span:last-child { font-weight: 600; white-space: nowrap; }
 
+  /* Backup */
+  .backup { display: grid; gap: 20px; padding: 20px; max-width: 820px; margin: 0 auto; }
+  .backup .card { padding: 22px; min-width: 0; }
+  .backup h2 { font-size: 19px; margin-bottom: 6px; }
+  .backup p { margin: 0 0 16px; }
+  .bk-tables { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+  .backup .actions { margin-top: 16px; }
+  #bk-last { margin-top: 10px; }
+  #bk-summary { margin-top: 14px; }
+  #bk-summary .facts { margin: 0 0 12px; }
+  #bk-export-status.ok, #bk-import-status.ok { color: var(--accent); }
+  #bk-export-status.err, #bk-import-status.err { color: var(--danger); }
+
   @media (max-width: 1100px) { main { grid-template-columns: 1fr; } .preview { position: static; max-height: none; } }
   @media (max-width: 760px) {
     .layout { grid-template-columns: 1fr; padding: 16px; }
     .list { max-height: 260px; }
     .grid, .grid3 { grid-template-columns: 1fr; }
+    .backup { padding: 16px; }
     header { padding: 12px 16px; gap: 8px; }
     header h1 span, #user-email { display: none; }
     .tabs { margin-left: 0; }
@@ -206,6 +221,7 @@
       <button class="tab active" role="tab" data-tab="articles">Artikel</button>
       <button class="tab" role="tab" data-tab="foods">Lebensmittel</button>
       <button class="tab" role="tab" data-tab="messages">Nachrichten<span class="count" id="msg-badge" hidden></span></button>
+      <button class="tab" role="tab" data-tab="backup">Backup</button>
     </nav>
     <span class="spacer"></span>
     <span class="muted" id="user-email"></span>
@@ -373,6 +389,38 @@
     </aside>
     <section id="msg-detail" class="card" aria-live="polite"></section>
   </div>
+
+  <div class="backup" id="panel-backup" hidden>
+    <section class="card" aria-labelledby="bk-export-title">
+      <h2 id="bk-export-title">Backup erstellen</h2>
+      <p class="muted">Lädt den aktuellen Stand aus Supabase als JSON-Datei herunter. Die mit der App ausgelieferten Lebensmittel sind im Code und nicht Teil des Backups – nur was im Editor geändert, angelegt oder deaktiviert wurde.</p>
+      <div class="bk-tables">
+        <label class="check"><input type="checkbox" data-table="articles" checked> Ratgeber-Beiträge</label>
+        <label class="check"><input type="checkbox" data-table="foods" checked> Lebensmittel-Änderungen</label>
+        <label class="check"><input type="checkbox" data-table="contact_messages" checked> Kontakt-Nachrichten</label>
+        <label class="check"><input type="checkbox" data-table="users" id="bk-users" checked> Benutzerkonten mit Tagebuch, Blutzucker und Sport</label>
+      </div>
+      <div class="hint" id="bk-users-hint" hidden>Für Benutzerkonten den Service-Role-Key (Supabase → Settings → API) in .env als <code>SUPABASE_SERVICE_ROLE_KEY=…</code> eintragen und den Editor neu starten.</div>
+      <div class="hint" id="bk-users-warn" hidden>Das Backup enthält Gesundheitsdaten aller Nutzer – die Datei sicher und nicht in der Cloud oder im Git-Repository ablegen.</div>
+      <div class="actions">
+        <button class="btn primary" type="button" id="bk-export">Backup herunterladen</button>
+        <span id="bk-export-status"></span>
+      </div>
+      <div class="muted" id="bk-last"></div>
+    </section>
+
+    <section class="card" aria-labelledby="bk-import-title">
+      <h2 id="bk-import-title">Backup wiederherstellen</h2>
+      <p class="muted">Beiträge und Lebensmittel aus dem Backup werden auf den gesicherten Stand zurückgesetzt bzw. wieder angelegt. Einträge, die nach dem Backup neu dazugekommen sind, bleiben unverändert. Gelöschte Benutzerkonten werden mit derselben ID neu angelegt (Anmeldung danach über «Passwort vergessen»), fehlende Tagebuch-, Blutzucker- und Sport-Einträge ergänzt – vorhandene bleiben, wie sie sind. Kontakt-Nachrichten können nicht über den Editor zurückgeschrieben werden. Vor dem Wiederherstellen wird automatisch ein Backup des aktuellen Stands heruntergeladen.</p>
+      <label for="bk-file">Backup-Datei (.json)</label>
+      <input id="bk-file" type="file" accept=".json,application/json">
+      <div id="bk-summary"></div>
+      <div class="actions">
+        <button class="btn primary" type="button" id="bk-restore" disabled>Wiederherstellen</button>
+        <span id="bk-import-status"></span>
+      </div>
+    </section>
+  </div>
 </section>
 
 <script>window.DIALY_CONFIG = /*CONFIG*/null;</script>
@@ -395,6 +443,7 @@
   const show = (name) => views.forEach((v) => { $('view-' + v).hidden = v !== name; });
 
   let sb = null;
+  let supabaseUrl = '';
   let articles = [];
   let current = null; // article being edited; null = new
   let dirty = false;
@@ -443,6 +492,7 @@
       document.body.textContent = 'supabase.js konnte nicht geladen werden. Editor mit "npm run editor" starten.';
       return;
     }
+    supabaseUrl = config.url;
     sb = window.supabase.createClient(config.url, config.key, {
       auth: { persistSession: true, storageKey: 'dialy-editor-auth', detectSessionInUrl: false },
     });
@@ -511,13 +561,14 @@
     show('editor');
     showTab(TABS.includes(store.get(TAB_KEY)) ? store.get(TAB_KEY) : 'articles');
     loadMessages();
+    renderLastBackup();
     foodsReady = loadFoods().then(() => { if (!currentFood && !foodDirty) fillFood(null); });
     await loadArticles();
     if (!current) newArticle();
   }
 
   // ---------------------------------------------------------------- tabs
-  const TABS = ['articles', 'foods', 'messages'];
+  const TABS = ['articles', 'foods', 'messages', 'backup'];
   function showTab(tab) {
     TABS.forEach((t) => { $('panel-' + t).hidden = t !== tab; });
     document.querySelectorAll('.tab').forEach((b) => {
@@ -1231,6 +1282,282 @@
   }
   $('food-deactivate').addEventListener('click', () => setFoodActive(false));
   $('food-activate').addEventListener('click', () => setFoodActive(true));
+
+  // ---------------------------------------------------------------- backup
+  // A backup is a JSON file with all rows of the editor's tables. Restoring
+  // upserts articles and foods by id. updated_at is left to the database
+  // (trigger / default), so the app pulls restored foods again.
+  // contact_messages can't be written by editors (0008), so they are only
+  // exported. User accounts and their data (server: true) come from the
+  // editor server, which reads them with the service-role key.
+  const BACKUP_FORMAT = 'dialy-editor-backup';
+  const USERS_AVAILABLE = !!(window.DIALY_CONFIG && window.DIALY_CONFIG.usersBackup);
+  const BACKUP_KEY = 'dialy-editor-last-backup';
+  const BACKUP_TABLES = {
+    articles: {
+      label: 'Ratgeber-Beiträge',
+      restore: ['id', 'created_at', 'deleted_at', 'category', 'title', 'body', 'read_minutes',
+        'published_at', 'diabetes_type'],
+    },
+    foods: {
+      label: 'Lebensmittel-Änderungen',
+      restore: ['id', 'created_at', 'deleted_at', 'name', 'food_group', 'categories', 'carbs_per_100g',
+        'sugar_per_100g', 'fat_per_100g', 'glycemic_index', 'portions', 'active'],
+    },
+    contact_messages: { label: 'Kontakt-Nachrichten', restore: null },
+    users: { label: 'Benutzerkonten', server: true },
+    profiles: { label: 'Profile', server: true },
+    meal_entries: { label: 'Mahlzeiten', server: true },
+    sport_entries: { label: 'Sport-Einträge', server: true },
+    bg_readings: { label: 'Blutzuckerwerte', server: true },
+  };
+  const SERVER_TABLES = Object.keys(BACKUP_TABLES).filter((t) => BACKUP_TABLES[t].server);
+  const UPSERT_CHUNK = 500;
+  let pendingRestore = null; // { changes: { table: rows[] }, users: server tables | null, total }
+
+  if (!USERS_AVAILABLE) {
+    $('bk-users').checked = false;
+    $('bk-users').disabled = true;
+    $('bk-users-hint').hidden = false;
+  }
+  const updateUsersWarn = () => { $('bk-users-warn').hidden = !$('bk-users').checked; };
+  $('bk-users').addEventListener('change', updateUsersWarn);
+  updateUsersWarn();
+
+  // Editor server endpoints for the user accounts (scripts/article-editor.mjs).
+  async function serverApi(method, path, body) {
+    const { data } = await sb.auth.getSession();
+    const reply = await fetch(path, {
+      method,
+      headers: {
+        Authorization: `Bearer ${data.session ? data.session.access_token : ''}`,
+        ...(body ? { 'Content-Type': 'application/json' } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+      cache: 'no-store',
+    });
+    if (!reply.ok) throw new Error((await reply.text()) || `HTTP ${reply.status}`);
+    return reply.json();
+  }
+
+  const setBackupStatus = (id, text, kind) => {
+    $(id).textContent = text;
+    $(id).className = kind || '';
+  };
+
+  async function fetchAll(table) {
+    const rows = [];
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await sb.from(table).select('*').order('id').range(from, from + 999);
+      if (error) throw error;
+      rows.push(...data);
+      if (data.length < 1000) break;
+    }
+    return rows;
+  }
+
+  function download(name, text) {
+    const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+    const a = el('a', { href: url, download: name });
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  // Downloads the given tables ("users" = accounts and their data); label
+  // goes into the file name.
+  async function createBackup(groups, label) {
+    const now = new Date();
+    const backup = {
+      format: BACKUP_FORMAT,
+      version: 1,
+      created_at: now.toISOString(),
+      created_by: $('user-email').textContent,
+      supabase_url: supabaseUrl,
+      tables: {},
+    };
+    for (const group of groups) {
+      if (group === 'users') Object.assign(backup.tables, await serverApi('GET', 'api/users-backup'));
+      else backup.tables[group] = await fetchAll(group);
+    }
+    const tables = Object.keys(backup.tables);
+    const pad = (n) => String(n).padStart(2, '0');
+    const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-` +
+      `${pad(now.getHours())}${pad(now.getMinutes())}`;
+    download(`dialy-backup-${label ? label + '-' : ''}${stamp}.json`, JSON.stringify(backup, null, 2));
+    const counts = Object.fromEntries(tables.map((t) => [t, backup.tables[t].length]));
+    store.set(BACKUP_KEY, { at: backup.created_at, counts });
+    renderLastBackup();
+    return counts;
+  }
+
+  const countsText = (counts) => Object.entries(counts)
+    .map(([t, n]) => `${n} ${BACKUP_TABLES[t] ? BACKUP_TABLES[t].label : t}`).join(', ');
+
+  function renderLastBackup() {
+    const last = store.get(BACKUP_KEY);
+    $('bk-last').textContent = last && last.at
+      ? `Letztes Backup aus diesem Browser: ${formatDateTime(last.at)} (${countsText(last.counts || {})})`
+      : 'Aus diesem Browser wurde noch kein Backup erstellt.';
+  }
+
+  $('bk-export').addEventListener('click', async () => {
+    const tables = [...document.querySelectorAll('.bk-tables input:checked')].map((c) => c.dataset.table);
+    if (!tables.length) {
+      setBackupStatus('bk-export-status', 'Mindestens eine Tabelle auswählen.', 'err');
+      return;
+    }
+    $('bk-export').disabled = true;
+    setBackupStatus('bk-export-status', 'Backup wird erstellt …');
+    try {
+      const counts = await createBackup(tables);
+      setBackupStatus('bk-export-status', `Heruntergeladen ✓ (${countsText(counts)})`, 'ok');
+    } catch (e) {
+      setBackupStatus('bk-export-status', 'Backup fehlgeschlagen: ' + errorText(e), 'err');
+    }
+    $('bk-export').disabled = false;
+  });
+
+  const pick = (row, columns) => Object.fromEntries(columns.filter((c) => c in row).map((c) => [c, row[c]]));
+
+  // Reads the chosen file and compares it with what is in Supabase now.
+  $('bk-file').addEventListener('change', async () => {
+    pendingRestore = null;
+    $('bk-restore').disabled = true;
+    $('bk-summary').replaceChildren();
+    setBackupStatus('bk-import-status', '');
+    const file = $('bk-file').files[0];
+    if (!file) return;
+    let backup;
+    try {
+      backup = JSON.parse(await file.text());
+    } catch {
+      setBackupStatus('bk-import-status', 'Die Datei ist kein gültiges JSON.', 'err');
+      return;
+    }
+    if (!backup || backup.format !== BACKUP_FORMAT || typeof backup.tables !== 'object' || !backup.tables) {
+      setBackupStatus('bk-import-status', 'Die Datei ist kein Dialy-Backup.', 'err');
+      return;
+    }
+    setBackupStatus('bk-import-status', 'Backup wird mit der Datenbank verglichen …');
+
+    const facts = el('dl', { className: 'facts' });
+    const fact = (label, value) => facts.append(el('dt', { textContent: label }), el('dd', {}, value));
+    fact('Erstellt am', backup.created_at ? formatDateTime(backup.created_at) : '–');
+    fact('Von', backup.created_by || '–');
+    if (backup.supabase_url && backup.supabase_url !== supabaseUrl) {
+      fact('Server', el('span', { className: 'error', textContent: `${backup.supabase_url} (nicht der verbundene Server)` }));
+    }
+
+    const changes = {};
+    let users = null;
+    let userCount = 0;
+    try {
+      for (const [table, rows] of Object.entries(backup.tables)) {
+        const def = BACKUP_TABLES[table];
+        if (!def || def.server || !Array.isArray(rows)) continue;
+        if (!def.restore) {
+          fact(def.label, `${rows.length} im Backup (werden nicht zurückgeschrieben)`);
+          continue;
+        }
+        const current = new Map((await fetchAll(table)).map((r) => [r.id, r]));
+        let added = 0;
+        let changed = 0;
+        changes[table] = [];
+        for (const row of rows) {
+          if (!row || typeof row.id !== 'string') continue;
+          const restored = pick(row, def.restore);
+          const now = current.get(row.id);
+          if (!now) added++;
+          else if (JSON.stringify(pick(now, Object.keys(restored))) !== JSON.stringify(restored)) changed++;
+          else continue;
+          changes[table].push(restored);
+        }
+        const unchanged = rows.length - added - changed;
+        fact(def.label, `${rows.length} im Backup: ${changed} geändert, ${added} fehlen und werden neu angelegt, ` +
+          `${unchanged} unverändert`);
+      }
+
+      // Accounts and their data: the editor server counts what is missing.
+      const userTables = SERVER_TABLES.filter((t) => Array.isArray(backup.tables[t]));
+      if (userTables.length && !USERS_AVAILABLE) {
+        fact(BACKUP_TABLES.users.label, `${(backup.tables.users || []).length} im Backup – zum Wiederherstellen ` +
+          'SUPABASE_SERVICE_ROLE_KEY in .env eintragen und den Editor neu starten');
+      } else if (userTables.length) {
+        users = Object.fromEntries(userTables.map((t) => [t, backup.tables[t]]));
+        const missing = await serverApi('POST', 'api/users-restore?dryRun=1', users);
+        for (const t of userTables) {
+          const n = backup.tables[t].length;
+          fact(BACKUP_TABLES[t].label, t === 'users'
+            ? `${n} im Backup: ${missing.users} fehlen und werden neu angelegt` +
+              (missing.skipped ? `, ${missing.skipped} ohne E-Mail werden übersprungen` : '')
+            : `${n} im Backup: ${missing[t]} fehlen und werden ergänzt`);
+          userCount += missing[t] || 0;
+        }
+        if (!userCount) users = null;
+      }
+    } catch (e) {
+      setBackupStatus('bk-import-status', 'Vergleich fehlgeschlagen: ' + errorText(e), 'err');
+      return;
+    }
+    $('bk-summary').replaceChildren(facts);
+    const total = Object.values(changes).reduce((n, rows) => n + rows.length, 0) + userCount;
+    if (!total) {
+      setBackupStatus('bk-import-status', 'Die Datenbank entspricht bereits diesem Backup.', 'ok');
+      return;
+    }
+    pendingRestore = { changes, users, total };
+    $('bk-restore').disabled = false;
+    setBackupStatus('bk-import-status', `${total} ${total === 1 ? 'Eintrag wird' : 'Einträge werden'} zurückgesetzt.`);
+  });
+
+  $('bk-restore').addEventListener('click', async () => {
+    if (!pendingRestore) return;
+    if ((dirty || foodDirty) && !confirm('Ungespeicherte Änderungen im Editor verwerfen?')) return;
+    if (!confirm(`${pendingRestore.total} Einträge auf den Stand des Backups zurücksetzen? ` +
+      'Die Änderungen sind sofort in der App sichtbar.')) return;
+    const { changes, users } = pendingRestore;
+    $('bk-restore').disabled = true;
+    $('bk-file').disabled = true;
+    const done = {};
+    try {
+      setBackupStatus('bk-import-status', 'Sicherheitskopie des aktuellen Stands …');
+      await createBackup(['articles', 'foods', 'contact_messages', ...(users ? ['users'] : [])],
+        'vor-wiederherstellung');
+      for (const [table, rows] of Object.entries(changes)) {
+        done[table] = 0;
+        for (let i = 0; i < rows.length; i += UPSERT_CHUNK) {
+          setBackupStatus('bk-import-status', `${BACKUP_TABLES[table].label} werden wiederhergestellt …`);
+          const chunk = rows.slice(i, i + UPSERT_CHUNK);
+          const { error } = await sb.from(table).upsert(chunk, { onConflict: 'id' });
+          if (error) throw error;
+          done[table] += chunk.length;
+        }
+      }
+      if (users) {
+        setBackupStatus('bk-import-status', 'Benutzerkonten werden wiederhergestellt …');
+        const restored = await serverApi('POST', 'api/users-restore', users);
+        SERVER_TABLES.forEach((t) => { if (restored[t]) done[t] = restored[t]; });
+      }
+      pendingRestore = null;
+      $('bk-file').value = '';
+      $('bk-summary').replaceChildren();
+      setBackupStatus('bk-import-status', `Wiederhergestellt ✓ (${countsText(done)})`, 'ok');
+    } catch (e) {
+      const partial = Object.values(done).some(Boolean) ? ` Bereits zurückgesetzt: ${countsText(done)}.` : '';
+      setBackupStatus('bk-import-status', 'Wiederherstellen fehlgeschlagen: ' + errorText(e) + partial, 'err');
+      $('bk-restore').disabled = false;
+    }
+    $('bk-file').disabled = false;
+    // Show the restored state in the other tabs.
+    dirty = false;
+    foodDirty = false;
+    await loadArticles();
+    current = current ? articles.find((a) => a.id === current.id) || null : null;
+    fill(current);
+    foodsReady = loadFoods().then(() => fillFood(currentFood));
+  });
 
   window.addEventListener('beforeunload', (e) => {
     if (dirty || foodDirty) { e.preventDefault(); e.returnValue = ''; }

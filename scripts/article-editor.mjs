@@ -1,16 +1,18 @@
 #!/usr/bin/env node
 /**
- * Serves the Dialy editor - Ratgeber articles, KH-Rechner foods and Kontakt
- * messages (tools/article-editor/index.html) - on http://localhost:8095, with
- * the Supabase URL and publishable key from .env.
+ * Serves the Dialy editor - Ratgeber articles, KH-Rechner foods, Kontakt
+ * messages and backups (tools/article-editor/index.html) - on
+ * http://localhost:8095, with the Supabase URL and publishable key from .env.
  *
  * Editing needs an account listed in public.article_editors
- * (supabase/migrations/0006_article_editors.sql).
+ * (supabase/migrations/0006_article_editors.sql). Backing up user accounts
+ * needs SUPABASE_SERVICE_ROLE_KEY in .env (used only by this server).
  */
 import { createServer } from 'node:http';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { createClient } from '@supabase/supabase-js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = Number(process.env.PORT) || 8095;
@@ -27,13 +29,146 @@ function readEnv() {
 }
 
 const env = { ...readEnv(), ...process.env };
+const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY || '';
 const config = {
   url: env.EXPO_PUBLIC_SUPABASE_URL || '',
   key: env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '',
+  // Whether the user accounts can be backed up (the key itself stays here).
+  usersBackup: Boolean(env.EXPO_PUBLIC_SUPABASE_URL && serviceKey),
 };
 if (!config.url || !config.key) {
   console.warn('⚠ EXPO_PUBLIC_SUPABASE_URL / _ANON_KEY missing in .env - the editor will ask for them.');
 }
+if (!serviceKey) {
+  console.warn('ℹ SUPABASE_SERVICE_ROLE_KEY missing in .env - backups without user accounts.');
+}
+
+// ------------------------------------------------------------ user accounts
+// Accounts (auth.users) and their synced data are only readable with the
+// service-role key, so the editor gets them from here. The key never leaves
+// this process; every request must carry the access token of an editor
+// (public.article_editors).
+const USER_TABLES = ['profiles', 'meal_entries', 'sport_entries', 'bg_readings'];
+const admin = config.usersBackup
+  ? createClient(config.url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } })
+  : null;
+
+class HttpError extends Error {
+  constructor(status, message) {
+    super(message);
+    this.status = status;
+  }
+}
+
+async function requireEditor(req) {
+  if (!admin) throw new HttpError(501, 'SUPABASE_SERVICE_ROLE_KEY fehlt in .env.');
+  const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+  const { data, error } = token ? await admin.auth.getUser(token) : { data: null };
+  if (error || !data?.user) throw new HttpError(401, 'Nicht angemeldet.');
+  const editor = await admin.from('article_editors').select('user_id').eq('user_id', data.user.id).maybeSingle();
+  if (editor.error) throw editor.error;
+  if (!editor.data) throw new HttpError(403, 'Kein Editor-Konto.');
+}
+
+async function allRows(table, columns = '*') {
+  const rows = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await admin.from(table).select(columns).order('id').range(from, from + 999);
+    if (error) throw error;
+    rows.push(...data);
+    if (data.length < 1000) break;
+  }
+  return rows;
+}
+
+async function allUsers() {
+  const users = [];
+  for (let page = 1; ; page++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error) throw error;
+    users.push(...data.users);
+    if (data.users.length < 1000) break;
+  }
+  return users;
+}
+
+// Password hashes aren't available through the API: restored accounts sign
+// in again with "Passwort vergessen".
+const accountOf = (u) => ({
+  id: u.id,
+  email: u.email ?? null,
+  phone: u.phone || null,
+  created_at: u.created_at,
+  last_sign_in_at: u.last_sign_in_at ?? null,
+  email_confirmed_at: u.email_confirmed_at ?? null,
+  user_metadata: u.user_metadata ?? {},
+});
+
+async function usersBackup() {
+  const tables = { users: (await allUsers()).map(accountOf) };
+  for (const table of USER_TABLES) tables[table] = await allRows(table);
+  return tables;
+}
+
+/**
+ * Re-creates accounts that no longer exist (same id) and adds data rows
+ * that are missing. Existing rows are left alone: devices sync them
+ * last-write-wins, so the server copy is as new as the backup or newer.
+ * dryRun only counts.
+ */
+async function usersRestore(backup, dryRun) {
+  const result = { users: 0, skipped: 0 };
+  const existing = new Set((await allUsers()).map((u) => u.id));
+  for (const account of Array.isArray(backup.users) ? backup.users : []) {
+    if (!account || typeof account.id !== 'string' || existing.has(account.id)) continue;
+    if (!account.email) {
+      result.skipped++;
+      continue;
+    }
+    if (!dryRun) {
+      const { error } = await admin.auth.admin.createUser({
+        id: account.id,
+        email: account.email,
+        email_confirm: Boolean(account.email_confirmed_at),
+        user_metadata: account.user_metadata || {},
+      });
+      if (error) throw new Error(`${account.email}: ${error.message}`);
+    }
+    existing.add(account.id);
+    result.users++;
+  }
+  for (const table of USER_TABLES) {
+    const rows = Array.isArray(backup[table]) ? backup[table] : [];
+    const have = new Set((await allRows(table, 'id')).map((r) => r.id));
+    const missing = rows.filter((r) => r && !have.has(r.id) && existing.has(r.user_id));
+    result[table] = missing.length;
+    if (dryRun) continue;
+    for (let i = 0; i < missing.length; i += 500) {
+      const { error } = await admin.from(table)
+        .upsert(missing.slice(i, i + 500), { onConflict: 'id', ignoreDuplicates: true });
+      if (error) throw error;
+    }
+  }
+  return result;
+}
+
+const MAX_BODY = 200 * 1024 * 1024;
+async function readJson(req) {
+  const chunks = [];
+  let size = 0;
+  for await (const chunk of req) {
+    size += chunk.length;
+    if (size > MAX_BODY) throw new HttpError(413, 'Backup zu gross.');
+    chunks.push(chunk);
+  }
+  return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+}
+
+const api = {
+  'GET /api/users-backup': () => usersBackup(),
+  'POST /api/users-restore': async (req, url) =>
+    usersRestore(await readJson(req), url.searchParams.get('dryRun') === '1'),
+};
 
 /**
  * The foods the app ships with, as src/db/seed.ts writes them: curated foods
@@ -113,7 +248,21 @@ const files = {
 };
 
 createServer(async (req, res) => {
-  const pathname = new URL(req.url, 'http://localhost').pathname;
+  const url = new URL(req.url, 'http://localhost');
+  const pathname = url.pathname;
+  const handler = api[`${req.method} ${pathname}`];
+  if (handler) {
+    try {
+      await requireEditor(req);
+      const body = JSON.stringify(await handler(req, url));
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+      res.end(body);
+    } catch (e) {
+      if (!e.status) console.error(`✖ ${pathname}:`, e);
+      res.writeHead(e.status || 500, { 'Content-Type': 'text/plain; charset=utf-8' }).end(String(e?.message || e));
+    }
+    return;
+  }
   if (pathname === '/foods.json') {
     try {
       const body = JSON.stringify(await bundledFoods());

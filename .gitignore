@@ -36,3 +36,5 @@ yarn-error.*
 .idea/
 .vscode/
 *.log
+# Dialy-Editor backups (contain user and health data)
+dialy-backup-*.json
