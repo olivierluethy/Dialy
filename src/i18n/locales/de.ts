@@ -104,7 +104,7 @@ const de = {
     noFoodsYet:
       'Die Lebensmittel werden beim ersten Start aus dem Internet geladen. Bitte verbinde dich mit dem Internet – danach funktioniert der KH-Rechner auch offline.',
     resultCount: (n: number) => `${n} Lebensmittel`,
-    showMore: (n: number) => `Weitere anzeigen (${n})`,
+    showMore: (n: number, of: number) => `Weitere ${n} von ${of} anzeigen`,
     closeFoodA11y: 'Lebensmittel schliessen',
     portionSize: 'Portionsgrösse',
     grams: 'Gramm',

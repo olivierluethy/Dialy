@@ -99,7 +99,7 @@ const it: Dict = {
     noFoodsYet:
       'Gli alimenti vengono scaricati da Internet al primo avvio. Collegati a Internet – poi il calcolatore di carboidrati funziona anche offline.',
     resultCount: (n) => (n === 1 ? '1 alimento' : `${n} alimenti`),
-    showMore: (n) => `Mostra altri (${n})`,
+    showMore: (n, of) => `Mostra altri ${n} di ${of}`,
     closeFoodA11y: 'Chiudi alimento',
     portionSize: 'Porzione',
     grams: 'grammi',

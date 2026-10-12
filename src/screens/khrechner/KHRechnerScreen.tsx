@@ -36,7 +36,7 @@ import type { Food } from '@/types/models';
 const BAR_MAX = { carbs: 80, sugar: 50, gi: 100, fat: 40 };
 const MAX_GRAMS = 500;
 // Search results shown at once; "Weitere anzeigen" adds another page.
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 50;
 
 /** A food + chosen portion collected into the meal being built. */
 interface MealItem {
@@ -405,7 +405,7 @@ export function KHRechnerScreen() {
           {resultRows}
           {remaining > 0 && (
             <Button
-              title={t.khrechner.showMore(remaining)}
+              title={t.khrechner.showMore(Math.min(PAGE_SIZE, remaining), remaining)}
               variant="secondary"
               onPress={() => setVisibleCount((n) => n + PAGE_SIZE)}
               style={styles.spacedBtn}

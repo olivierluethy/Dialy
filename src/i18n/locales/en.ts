@@ -99,7 +99,7 @@ const en: Dict = {
     noFoodsYet:
       'The foods are downloaded from the internet on first start. Please connect to the internet – afterwards the carb calculator also works offline.',
     resultCount: (n) => (n === 1 ? '1 food' : `${n} foods`),
-    showMore: (n) => `Show more (${n})`,
+    showMore: (n, of) => `Show ${n} more of ${of}`,
     closeFoodA11y: 'Close food',
     portionSize: 'Portion size',
     grams: 'grams',

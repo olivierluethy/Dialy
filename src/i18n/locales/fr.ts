@@ -100,7 +100,7 @@ const fr: Dict = {
     noFoodsYet:
       'Les aliments sont téléchargés depuis Internet au premier démarrage. Connecte-toi à Internet – ensuite, le calculateur de glucides fonctionne aussi hors ligne.',
     resultCount: (n) => (n === 1 ? '1 aliment' : `${n} aliments`),
-    showMore: (n) => `Afficher plus (${n})`,
+    showMore: (n, of) => `Afficher ${n} de plus sur ${of}`,
     closeFoodA11y: 'Fermer l’aliment',
     portionSize: 'Taille de la portion',
     grams: 'grammes',
