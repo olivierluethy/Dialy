@@ -328,6 +328,12 @@ const it: Dict = {
     partlyDeletedMessage:
       'I dati locali sono stati eliminati. L’eliminazione sul server seguirà alla prossima sincronizzazione.',
     deletedMessage: 'Tutte le tue voci sono state eliminate.',
+    deleteAccount: 'Elimina account',
+    deleteAccountConfirm:
+      'Vuoi davvero eliminare definitivamente il tuo account e tutti i tuoi dati? Un abbonamento Premium in corso va disdetto separatamente nell’App Store o su Google Play.',
+    deleteAccountFailed: 'Account non eliminato',
+    accountDeleted: 'Account eliminato',
+    accountDeletedMessage: 'Il tuo account e tutti i tuoi dati sono stati eliminati.',
     sync: 'Sincronizzazione',
     signOut: 'Esci',
     syncLocalOnly:

@@ -2,7 +2,12 @@ import { Platform } from 'react-native';
 import * as Linking from 'expo-linking';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getSupabase, isNetworkError, supabaseStorageKey } from '@/sync/supabaseClient';
-import { softDeleteAllUserData } from '@/db/repositories/userData';
+import {
+  clearErasePending,
+  clearErasureMarkers,
+  markErasePending,
+  purgeUserData,
+} from '@/db/repositories/userData';
 import { localAuth } from '@/services/localAuth';
 import { getT } from '@/i18n';
 
@@ -17,12 +22,6 @@ export interface AuthResult {
   /** Non-error hint, e.g. "check your inbox" after a sign-up needing confirmation. */
   notice?: string;
 }
-
-const SYNC_TABLES = [
-  'meal_entries',
-  'sport_entries',
-  'bg_readings',
-] as const;
 
 /**
  * Auth + account service backed by Supabase Auth (email + password, JWT).
@@ -160,28 +159,54 @@ export const authService = {
   },
 
   /**
-   * Privacy: erase all of the user's data. Soft-deletes locally (so the
-   * deletion syncs out and can't resurface), then issues matching deletes on
-   * Supabase. Best-effort on the server; local deletion always succeeds.
+   * Privacy: erase all of the user's entries — physically, on the device and
+   * on the server (erase_my_data, supabase/migrations/0014_real_deletion.sql).
+   * Local deletion always succeeds; if the server can't be reached the
+   * erasure stays pending and the next sync does it (before pulling anything).
    */
   async deleteAccountData(userId: string): Promise<{ error: string | null }> {
-    await softDeleteAllUserData(userId);
     const sb = getSupabase();
-    if (!sb) return { error: null }; // offline-only: local deletion is enough
+    if (!sb) {
+      await purgeUserData(userId); // offline-only: local deletion is enough
+      return { error: null };
+    }
+    // Marked first, so the server copy goes even if the app stops halfway.
+    await markErasePending(userId);
+    await purgeUserData(userId);
     try {
-      const ts = new Date().toISOString();
-      for (const table of SYNC_TABLES) {
-        // supabase-js reports failures in `error` instead of throwing.
-        const { error } = await sb
-          .from(table)
-          .update({ deleted_at: ts, updated_at: ts })
-          .eq('user_id', userId);
-        if (error) return { error: error.message };
-      }
+      // supabase-js reports failures in `error` instead of throwing.
+      const { error } = await sb.rpc('erase_my_data');
+      if (error) return { error: error.message };
+      await clearErasePending(userId);
       return { error: null };
     } catch (e) {
       return { error: String(e) };
     }
+  },
+
+  /**
+   * Privacy: delete the account itself together with everything it owns
+   * (delete_my_account, on delete cascade), then the local copy and the
+   * session. Needs a connection; on failure nothing is deleted.
+   */
+  async deleteAccount(userId: string): Promise<{ error: string | null }> {
+    const sb = getSupabase();
+    if (!sb) {
+      await localAuth.deleteAccount(userId);
+      await purgeUserData(userId);
+      return { error: null };
+    }
+    try {
+      const { error } = await sb.rpc('delete_my_account');
+      if (error) return { error: translateAuthError(error.message) };
+    } catch (e) {
+      return { error: translateAuthError(String(e)) };
+    }
+    await purgeUserData(userId);
+    await clearErasureMarkers(userId);
+    // The server session is gone with the account; only drop the local one.
+    await sb.auth.signOut({ scope: 'local' });
+    return { error: null };
   },
 };
 

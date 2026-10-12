@@ -4,6 +4,13 @@ import { getSupabase, isNetworkError } from '@/sync/supabaseClient';
 import { Sentry } from '@/services/sentry';
 import { refreshPremiumGrant } from '@/services/premium';
 import { syncDiabetesType } from '@/services/userSettings';
+import {
+  appliedErasure,
+  clearErasePending,
+  isErasePending,
+  purgeUserData,
+  setAppliedErasure,
+} from '@/db/repositories/userData';
 import { nowIso } from '@/utils/id';
 import { useAppStore } from '@/state/store';
 
@@ -16,7 +23,8 @@ import { useAppStore } from '@/state/store';
  *  - Conflict resolution: LAST-WRITE-WINS on `updated_at` (newer wins,
  *    regardless of origin).
  *  - Deletes are SOFT (`deleted_at`), never physical, so a deleted row can't
- *    resurface on another device.
+ *    resurface on another device. Exception: "Daten löschen" erases the
+ *    account's rows physically (applyErasure).
  *  - Triggers: automatic. Every local change schedules a sync (debounced, so a
  *    burst of changes goes out together); also on app start, sign-in and
  *    return to the foreground. Without a connection it retries with growing
@@ -150,10 +158,42 @@ async function runSync(onUser: (uid: string) => void): Promise<SyncResult> {
   onUser(uid);
   await refreshPremiumGrant(sb, uid);
   await syncDiabetesType(sb, reply.data.user!);
+  const erased = await applyErasure(sb, uid);
+  // The server copy still has to go: pulling now would bring it back.
+  if (erased === null) return { pushed: 0, pulled: 0, error: 'erase-failed' };
   const { pushed, failed } = await pushPending(uid);
-  const pulled = await pullRemote(uid);
+  const pulled = erased + (await pullRemote(uid));
   if (failed > 0) return { pushed, pulled, error: 'push-failed' };
   return { pushed, pulled };
+}
+
+/**
+ * "Daten löschen" (services/auth.ts deleteAccountData): erases the server copy
+ * if that is still pending on this device, and deletes the local rows when
+ * the data was erased elsewhere (public.data_erasures). Returns the number of
+ * local rows deleted, or null when the pending server erasure failed.
+ */
+async function applyErasure(sb: SupabaseClient, uid: string): Promise<number | null> {
+  if (await isErasePending(uid)) {
+    const { error } = await sb.rpc('erase_my_data');
+    if (error) {
+      Sentry.captureException(error);
+      return null;
+    }
+    await clearErasePending(uid);
+  }
+  const { data, error } = await sb
+    .from('data_erasures')
+    .select('erased_at')
+    .eq('user_id', uid)
+    .maybeSingle();
+  // Missing table (migration not run yet) or a failed request: next time.
+  if (error || !data) return 0;
+  const erasedAt = String(data.erased_at);
+  if ((await appliedErasure(uid)) === erasedAt) return 0;
+  const deleted = await purgeUserData(uid, erasedAt);
+  await setAppliedErasure(uid, erasedAt);
+  return deleted;
 }
 
 /** Changed rows of `uid` still queued, i.e. not on the server yet. */

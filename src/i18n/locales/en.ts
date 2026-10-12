@@ -328,6 +328,12 @@ const en: Dict = {
     partlyDeletedMessage:
       'Local data has been deleted. Deletion on the server follows with the next sync.',
     deletedMessage: 'All your entries have been deleted.',
+    deleteAccount: 'Delete account',
+    deleteAccountConfirm:
+      'Do you really want to permanently delete your account and all your data? Cancel a running Premium subscription separately in the App Store or on Google Play.',
+    deleteAccountFailed: 'Account not deleted',
+    accountDeleted: 'Account deleted',
+    accountDeletedMessage: 'Your account and all your data have been deleted.',
     sync: 'Sync',
     signOut: 'Sign out',
     syncLocalOnly:

@@ -295,6 +295,12 @@ const de = {
     partlyDeletedMessage:
       'Lokale Daten wurden gelöscht. Die Server-Löschung folgt beim nächsten Sync.',
     deletedMessage: 'Alle deine Einträge wurden gelöscht.',
+    deleteAccount: 'Konto löschen',
+    deleteAccountConfirm:
+      'Möchtest du dein Konto und alle deine Daten unwiderruflich löschen? Ein laufendes Premium-Abo kündigst du separat im App Store bzw. bei Google Play.',
+    deleteAccountFailed: 'Konto nicht gelöscht',
+    accountDeleted: 'Konto gelöscht',
+    accountDeletedMessage: 'Dein Konto und alle deine Daten wurden gelöscht.',
     sync: 'Synchronisierung',
     signOut: 'Abmelden',
     syncLocalOnly:

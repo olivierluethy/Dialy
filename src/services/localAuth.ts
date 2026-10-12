@@ -129,6 +129,15 @@ export const localAuth = {
     await AsyncStorage.removeItem(SESSION_KEY);
   },
 
+  /** Removes the account from this device and ends its session. */
+  async deleteAccount(userId: string): Promise<void> {
+    const accounts = await readAccounts();
+    await writeAccounts(accounts.filter((a) => a.id !== userId));
+    if ((await AsyncStorage.getItem(SESSION_KEY)) === userId) {
+      await AsyncStorage.removeItem(SESSION_KEY);
+    }
+  },
+
   async currentUser(): Promise<AuthUser | null> {
     try {
       const id = await AsyncStorage.getItem(SESSION_KEY);

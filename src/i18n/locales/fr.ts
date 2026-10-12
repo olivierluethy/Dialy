@@ -333,6 +333,12 @@ const fr: Dict = {
     partlyDeletedMessage:
       'Les données locales ont été supprimées. La suppression sur le serveur suivra lors de la prochaine synchronisation.',
     deletedMessage: 'Toutes tes entrées ont été supprimées.',
+    deleteAccount: 'Supprimer le compte',
+    deleteAccountConfirm:
+      'Veux-tu vraiment supprimer définitivement ton compte et toutes tes données ? Un abonnement Premium en cours se résilie séparément dans l’App Store ou sur Google Play.',
+    deleteAccountFailed: 'Compte non supprimé',
+    accountDeleted: 'Compte supprimé',
+    accountDeletedMessage: 'Ton compte et toutes tes données ont été supprimés.',
     sync: 'Synchronisation',
     signOut: 'Se déconnecter',
     syncLocalOnly:

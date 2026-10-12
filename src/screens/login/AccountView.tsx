@@ -53,10 +53,37 @@ export function AccountView() {
           onPress: async () => {
             if (!user) return;
             const { error } = await authService.deleteAccountData(user.id);
+            useAppStore.getState().bumpDataRevision();
             Alert.alert(
               error ? t.account.partlyDeleted : t.account.deleted,
               error ? t.account.partlyDeletedMessage : t.account.deletedMessage
             );
+          },
+        },
+      ]
+    );
+  };
+
+  const deleteAccount = () => {
+    Alert.alert(
+      t.account.deleteAccount,
+      t.account.deleteAccountConfirm,
+      [
+        { text: t.common.cancel, style: 'cancel' },
+        {
+          text: t.common.delete,
+          style: 'destructive',
+          onPress: async () => {
+            if (!user) return;
+            const { error } = await authService.deleteAccount(user.id);
+            if (error) {
+              Alert.alert(t.account.deleteAccountFailed, error);
+              return;
+            }
+            syncEngine.reset();
+            setUser(null);
+            useAppStore.getState().bumpDataRevision();
+            Alert.alert(t.account.accountDeleted, t.account.accountDeletedMessage);
           },
         },
       ]
@@ -119,6 +146,10 @@ export function AccountView() {
         <Pressable style={styles.linkRow} onPress={deleteData}>
           <Text style={[styles.linkText, { color: colors.danger }]}>{t.account.deleteData}</Text>
           <Ionicons name="trash" size={18} color={colors.danger} />
+        </Pressable>
+        <Pressable style={styles.linkRow} onPress={deleteAccount}>
+          <Text style={[styles.linkText, { color: colors.danger }]}>{t.account.deleteAccount}</Text>
+          <Ionicons name="person-remove" size={18} color={colors.danger} />
         </Pressable>
       </Card>
 
