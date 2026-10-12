@@ -151,6 +151,7 @@ export function TagebuchScreen() {
     setReloadTick((n) => n + 1);
   };
 
+  const goLogin = () => navigation.navigate('Login', { screen: 'LoginHome' });
   const goRegister = () => navigation.navigate('Login', { screen: 'Register' });
   const unlocked = can('saveDiaryEntry', ctx);
   const firstEdited = editKeys?.[0] ? itemsByKey.get(editKeys[0]) : undefined;
@@ -177,10 +178,17 @@ export function TagebuchScreen() {
           <Text style={styles.lockedTitle}>{t.tagebuch.locked}</Text>
           <Text style={styles.lockedText}>{t.gate.diaryNeedsAccount}</Text>
           <Button
-            title={t.tagebuch.registerFree}
+            title={t.login.signIn}
+            icon="log-in-outline"
+            onPress={goLogin}
+            style={styles.lockedButton}
+          />
+          <Button
+            title={t.login.createAccount}
             icon="person-add"
+            variant="secondary"
             onPress={goRegister}
-            style={{ marginTop: spacing.lg }}
+            style={styles.lockedButtonSecondary}
           />
         </Card>
       ) : (
@@ -501,6 +509,8 @@ const makeStyles = (colors: Colors) =>
       marginTop: spacing.sm,
       lineHeight: 21,
     },
+    lockedButton: { alignSelf: 'stretch', marginTop: spacing.lg },
+    lockedButtonSecondary: { alignSelf: 'stretch', marginTop: spacing.sm },
     premiumBanner: {
       flexDirection: 'row',
       alignItems: 'center',

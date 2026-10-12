@@ -81,7 +81,7 @@ const fr: Dict = {
     saveMeal: 'Enregistrer un repas dans le journal nécessite un compte.',
     saveSport: 'Enregistrer du sport dans le journal nécessite un compte.',
     diaryNeedsAccount:
-      'Le journal nécessite un compte (gratuit). Ainsi, tes entrées restent en sécurité et disponibles sur tous tes appareils.',
+      'Le journal nécessite un compte avec un abonnement. Ainsi, tes entrées restent en sécurité et disponibles sur tous tes appareils.',
     diaryNeedsPremium:
       'Le journal complet avec l’historique et les aperçus de la glycémie fait partie de Dialy Premium.',
     registerCta: 'S’inscrire gratuitement →',
@@ -197,7 +197,6 @@ const fr: Dict = {
     done: 'Terminé',
     select: 'Sélectionner',
     locked: 'Journal verrouillé',
-    registerFree: 'S’inscrire gratuitement',
     tapToMark: 'Touche des entrées pour les sélectionner.',
     selectedCount: (n) =>
       n === 1 ? '1 entrée sélectionnée' : `${n} entrées sélectionnées`,

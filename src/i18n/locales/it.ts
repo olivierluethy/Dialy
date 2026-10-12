@@ -80,7 +80,7 @@ const it: Dict = {
     saveMeal: 'Salvare un pasto nel diario richiede un account.',
     saveSport: 'Salvare lo sport nel diario richiede un account.',
     diaryNeedsAccount:
-      'Il diario richiede un account (gratuito). Così le tue voci restano al sicuro e disponibili su tutti i dispositivi.',
+      'Il diario richiede un account con un abbonamento. Così le tue voci restano al sicuro e disponibili su tutti i dispositivi.',
     diaryNeedsPremium:
       'Il diario completo con andamento e panoramiche della glicemia fa parte di Dialy Premium.',
     registerCta: 'Registrati gratuitamente →',
@@ -194,7 +194,6 @@ const it: Dict = {
     done: 'Fine',
     select: 'Seleziona',
     locked: 'Diario bloccato',
-    registerFree: 'Registrati gratuitamente',
     tapToMark: 'Tocca le voci per selezionarle.',
     selectedCount: (n) => (n === 1 ? '1 voce selezionata' : `${n} voci selezionate`),
     changeDateTime: 'Modifica data e ora',

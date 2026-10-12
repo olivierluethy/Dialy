@@ -85,7 +85,7 @@ const de = {
     saveMeal: 'Mahlzeit im Tagebuch speichern erfordert ein Konto.',
     saveSport: 'Sport im Tagebuch speichern erfordert ein Konto.',
     diaryNeedsAccount:
-      'Das Tagebuch benötigt ein (kostenloses) Konto. So bleiben deine Einträge sicher und geräteübergreifend verfügbar.',
+      'Das Tagebuch erfordert ein Konto mit einem Abo. So bleiben deine Einträge sicher und geräteübergreifend verfügbar.',
     diaryNeedsPremium:
       'Das vollständige Tagebuch mit Blutzucker-Verlauf und Übersichten ist Teil von Dialy Premium.',
     registerCta: 'Kostenlos registrieren →',
@@ -168,7 +168,6 @@ const de = {
     done: 'Fertig',
     select: 'Auswählen',
     locked: 'Tagebuch gesperrt',
-    registerFree: 'Kostenlos registrieren',
     tapToMark: 'Einträge antippen, um sie zu markieren.',
     selectedCount: (n: number) => `${n} ${n === 1 ? 'Eintrag' : 'Einträge'} ausgewählt`,
     changeDateTime: 'Datum & Zeit ändern',
