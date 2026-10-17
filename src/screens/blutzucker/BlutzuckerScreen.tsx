@@ -22,7 +22,6 @@ import {
 } from '@/utils/glucose';
 import {
   dayPoints,
-  dayMetrics,
   segmentize,
   mealImpact,
   minuteOfDay,
@@ -96,7 +95,6 @@ export function BlutzuckerScreen() {
 
   const points: GlucosePoint[] = useMemo(() => dayPoints(readings, key), [readings, key]);
   const segments = useMemo(() => segmentize(points), [points]);
-  const metrics = useMemo(() => dayMetrics(points), [points]);
 
   const mealRows: MealRow[] = useMemo(() => {
     const sorted = [...meals].sort((a, b) => a.logged_at.localeCompare(b.logged_at));
@@ -184,31 +182,6 @@ export function BlutzuckerScreen() {
         <EmptyImport onImport={() => navigation.navigate('Login', { screen: 'GlucoseImport' })} />
       ) : (
         <>
-          {/* Metric cards (2×2) */}
-          <View style={styles.metricGrid}>
-            <MetricCard
-              label={t.blutzucker.average}
-              value={metrics.averageMgdl === null ? '–' : formatGlucoseValue(metrics.averageMgdl, unit)}
-              unit={unitLabel(unit)}
-            />
-            <MetricCard
-              label={t.blutzucker.timeInRange}
-              value={metrics.timeInRangePct === null ? '–' : String(Math.round(metrics.timeInRangePct))}
-              unit="%"
-              progress={metrics.timeInRangePct === null ? undefined : metrics.timeInRangePct / 100}
-            />
-            <MetricCard
-              label={t.blutzucker.lowest}
-              value={metrics.lowest === null ? '–' : formatGlucoseValue(metrics.lowest.mgdl, unit)}
-              unit={metrics.lowest === null ? unitLabel(unit) : t.blutzucker.atTime(formatTime(metrics.lowest.timestamp))}
-            />
-            <MetricCard
-              label={t.blutzucker.highest}
-              value={metrics.highest === null ? '–' : formatGlucoseValue(metrics.highest.mgdl, unit)}
-              unit={metrics.highest === null ? unitLabel(unit) : t.blutzucker.atTime(formatTime(metrics.highest.timestamp))}
-            />
-          </View>
-
           {showDelayHint && (
             <View style={styles.hintRow}>
               <Icon name="time" size={16} color={colors.textTertiary} />
@@ -316,35 +289,6 @@ function GlucoseHeader({ title }: { title: string }) {
   );
 }
 
-function MetricCard({
-  label,
-  value,
-  unit,
-  progress,
-}: {
-  label: string;
-  value: string;
-  unit: string;
-  progress?: number;
-}) {
-  const { colors } = useTheme();
-  const styles = useThemedStyles(makeStyles);
-  return (
-    <View style={styles.metricCard}>
-      <Text style={styles.metricLabel} numberOfLines={2}>{label}</Text>
-      <View style={styles.metricValueRow}>
-        <Text style={styles.metricValue}>{value}</Text>
-        <Text style={styles.metricUnit}>{unit}</Text>
-      </View>
-      {progress !== undefined && (
-        <View style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: `${Math.max(0, Math.min(1, progress)) * 100}%`, backgroundColor: colors.accent }]} />
-        </View>
-      )}
-    </View>
-  );
-}
-
 function EmptyImport({ onImport }: { onImport: () => void }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -410,23 +354,6 @@ const makeStyles = (colors: Colors) =>
     dayLabelWrap: { flex: 1, alignItems: 'center' },
     dayLabel: { fontSize: 18, fontWeight: '700', color: colors.textPrimary, textAlign: 'center' },
     todayHint: { fontSize: 12, color: colors.accent, marginTop: 2 },
-
-    metricGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-    metricCard: {
-      flexBasis: '48%',
-      flexGrow: 1,
-      backgroundColor: colors.bgSurface,
-      borderRadius: radius.card,
-      borderWidth: 1,
-      borderColor: colors.border,
-      padding: spacing.md,
-    },
-    metricLabel: { fontSize: 12, color: colors.textTertiary, minHeight: 32 },
-    metricValueRow: { flexDirection: 'row', alignItems: 'baseline', marginTop: spacing.xs },
-    metricValue: { fontSize: 26, fontWeight: '700', color: colors.textPrimary },
-    metricUnit: { fontSize: 12, color: colors.textTertiary, marginLeft: spacing.xs, flexShrink: 1 },
-    progressTrack: { height: 6, borderRadius: radius.pill, backgroundColor: colors.bgInput, marginTop: spacing.sm, overflow: 'hidden' },
-    progressFill: { height: 6, borderRadius: radius.pill },
 
     hintRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: spacing.md },
     hintText: { flex: 1, fontSize: 12, color: colors.textTertiary, lineHeight: 16 },
