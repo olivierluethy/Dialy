@@ -92,7 +92,7 @@ export function LoginNavigator() {
       <LoginStack.Screen
         name="Contact"
         component={ContactScreen}
-        options={{ title: t.nav.contact, headerBackTitle: t.common.back }}
+        options={{ title: t.nav.contact, headerBackVisible: false, headerLeft: () => null }}
       />
       <LoginStack.Screen
         name="GlucoseImport"

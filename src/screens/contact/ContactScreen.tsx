@@ -133,8 +133,6 @@ export function ContactScreen() {
 
   return (
     <Screen contentStyle={styles.content}>
-      <Text style={styles.intro}>{t.contact.intro}</Text>
-
       <View style={styles.kindRow}>
         <SelectableChip
           label={t.contact.kindNew}
@@ -307,16 +305,7 @@ export function ContactScreen() {
 
 const makeStyles = (colors: Colors) =>
   StyleSheet.create({
-    // Half the usual top padding above the intro…
     content: { paddingTop: spacing.sm },
-    // …and an empty line (one line height) more below it.
-    intro: {
-      fontSize: 15,
-      color: colors.textSecondary,
-      lineHeight: 21,
-      marginBottom: spacing.lg + 21,
-    },
-    // Like the intro: an empty line (one line height) more below the chips.
     kindRow: {
       flexDirection: 'row',
       flexWrap: 'wrap',

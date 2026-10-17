@@ -8,7 +8,6 @@ import { FadeIn, staggerDelay } from '@/components/FadeIn';
 import { Button } from '@/components/Button';
 import { Dialog } from '@/components/Dialog';
 import { TextField } from '@/components/TextField';
-import { SelectableChip } from '@/components/Chip';
 import { radius, spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import { useAppStore } from '@/state/store';
@@ -509,6 +508,7 @@ function EditEntryDialog({
   onCancel: () => void;
   onSave: (changes: EntryChanges) => Promise<void>;
 }) {
+  const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const t = useT();
   const [date, setDate] = useState('');
@@ -526,9 +526,28 @@ function EditEntryDialog({
   }, [visible, initialIso, initialNote]);
 
   const shiftDays = (days: number) => {
-    const d = new Date();
-    d.setDate(d.getDate() - days);
+    // Use noon to move calendar days reliably across daylight-saving changes.
+    const iso = parseLocalDateTime(date, '12:00');
+    if (!iso) {
+      setError(t.tagebuch.invalidDateTime);
+      return;
+    }
+    const d = new Date(iso);
+    d.setDate(d.getDate() + days);
     setDate(formatDateInput(d.toISOString()));
+    setError(null);
+  };
+
+  const shiftHours = (hours: number) => {
+    const iso = parseLocalDateTime(date, time);
+    if (!iso) {
+      setError(t.tagebuch.invalidDateTime);
+      return;
+    }
+    const shifted = new Date(new Date(iso).getTime() + hours * 60 * 60 * 1000).toISOString();
+    setDate(formatDateInput(shifted));
+    setTime(formatTime(shifted));
+    setError(null);
   };
 
   const save = async () => {
@@ -557,32 +576,64 @@ function EditEntryDialog({
       ]}
     >
       <View style={styles.editFields}>
-        <TextField
-          label={t.tagebuch.date}
-          value={date}
-          onChangeText={(v) => {
-            setDate(v);
-            setError(null);
-          }}
-          placeholder={t.date.datePlaceholder}
-          keyboardType="numbers-and-punctuation"
-          containerStyle={styles.dateField}
-        />
-        <TextField
-          label={t.tagebuch.time}
-          value={time}
-          onChangeText={(v) => {
-            setTime(v);
-            setError(null);
-          }}
-          placeholder={t.date.timePlaceholder}
-          keyboardType="numbers-and-punctuation"
-          containerStyle={styles.timeField}
-        />
-      </View>
-      <View style={styles.quickRow}>
-        <SelectableChip label={t.tagebuch.today} selected={false} onPress={() => shiftDays(0)} />
-        <SelectableChip label={t.tagebuch.yesterday} selected={false} onPress={() => shiftDays(1)} />
+        <View style={styles.dateNavigation}>
+          <Pressable
+            onPress={() => shiftDays(-1)}
+            accessibilityRole="button"
+            accessibilityLabel={t.tagebuch.prevDay}
+            style={({ pressed }) => [styles.dayArrow, pressed && styles.actionBtnPressed]}
+          >
+            <Icon name="chevronLeft" size={22} color={colors.textPrimary} />
+          </Pressable>
+          <TextField
+            label={t.tagebuch.date}
+            value={date}
+            onChangeText={(v) => {
+              setDate(v);
+              setError(null);
+            }}
+            placeholder={t.date.datePlaceholder}
+            keyboardType="numbers-and-punctuation"
+            containerStyle={styles.dateField}
+          />
+          <Pressable
+            onPress={() => shiftDays(1)}
+            accessibilityRole="button"
+            accessibilityLabel={t.tagebuch.nextDay}
+            style={({ pressed }) => [styles.dayArrow, pressed && styles.actionBtnPressed]}
+          >
+            <Icon name="chevronRight" size={22} color={colors.textPrimary} />
+          </Pressable>
+        </View>
+        <View style={styles.dateNavigation}>
+          <Pressable
+            onPress={() => shiftHours(-1)}
+            accessibilityRole="button"
+            accessibilityLabel={t.tagebuch.prevHour}
+            style={({ pressed }) => [styles.dayArrow, pressed && styles.actionBtnPressed]}
+          >
+            <Icon name="chevronLeft" size={22} color={colors.textPrimary} />
+          </Pressable>
+          <TextField
+            label={t.tagebuch.time}
+            value={time}
+            onChangeText={(v) => {
+              setTime(v);
+              setError(null);
+            }}
+            placeholder={t.date.timePlaceholder}
+            keyboardType="numbers-and-punctuation"
+            containerStyle={styles.dateField}
+          />
+          <Pressable
+            onPress={() => shiftHours(1)}
+            accessibilityRole="button"
+            accessibilityLabel={t.tagebuch.nextHour}
+            style={({ pressed }) => [styles.dayArrow, pressed && styles.actionBtnPressed]}
+          >
+            <Icon name="chevronRight" size={22} color={colors.textPrimary} />
+          </Pressable>
+        </View>
       </View>
       {error && <Text style={styles.editError}>{error}</Text>}
       {!multiple && (
@@ -889,10 +940,10 @@ const makeStyles = (colors: Colors) =>
     },
     chipValue: { fontSize: 18, fontWeight: '700', color: colors.accent },
     chipLabel: { fontSize: 12, color: colors.textTertiary, marginTop: 2 },
-    editFields: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.lg },
-    dateField: { flex: 3, marginBottom: 0 },
-    timeField: { flex: 2, marginBottom: 0 },
-    quickRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
+    editFields: { gap: spacing.md, marginTop: spacing.lg },
+    dateNavigation: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.xs },
+    dayArrow: { width: 44, minHeight: 48, borderRadius: radius.input, backgroundColor: colors.bgSurfaceAlt, alignItems: 'center', justifyContent: 'center' },
+    dateField: { flex: 1, marginBottom: 0 },
     editError: { color: colors.danger, fontSize: 14, marginTop: spacing.md },
     noteField: { marginTop: spacing.lg, marginBottom: 0 },
     noteInput: { minHeight: 80, paddingTop: spacing.md, textAlignVertical: 'top' },
