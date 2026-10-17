@@ -1,15 +1,17 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import Svg, { Rect, Path, Line, Circle, Text as SvgText, G } from 'react-native-svg';
 import { spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import {
   mgdlToMmol,
+  formatGlucose,
   TARGET_HIGH_MMOL,
   TARGET_LOW_MMOL,
   type GlucoseUnit,
 } from '@/utils/glucose';
 import type { GlucosePoint } from '@/services/glucoseStats';
+import { formatTime } from '@/utils/format';
 
 /** A meal placed on the day axis, plus its highlight state. */
 export interface ChartMeal {
@@ -39,7 +41,7 @@ const HEIGHT = 240;
 
 /**
  * Day glucose curve with the target band shaded, meal markers on the time
- * axis and a tooltip for the selected meal's peak (issue #21 §5). Gaps in the
+ * axis and a tooltip for a tapped reading or selected meal's peak. Gaps in the
  * sensor data are left as breaks, never interpolated. Built on react-native-svg
  * for full control over the band, markers and selection highlight.
  */
@@ -47,6 +49,10 @@ export function GlucoseChart({ segments, meals, peak, unit, onSelectMeal }: Prop
   const { width } = useWindowDimensions();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const [selectedPoint, setSelectedPoint] = useState<GlucosePoint | null>(null);
+
+  // A different day/data set or meal selection dismisses the previous reading.
+  useEffect(() => setSelectedPoint(null), [segments, peak]);
   // screen padding + card padding, both sides.
   const chartWidth = width - spacing.lg * 2 - spacing.lg * 2;
   const plotW = chartWidth - PAD.left - PAD.right;
@@ -72,6 +78,12 @@ export function GlucoseChart({ segments, meals, peak, unit, onSelectMeal }: Prop
 
   // X-axis ticks every 3 hours.
   const xTicks = Array.from({ length: 9 }, (_, i) => i * 180);
+  const tooltip = selectedPoint
+    ? {
+        ...selectedPoint,
+        label: `${formatTime(selectedPoint.timestamp)} · ${formatGlucose(selectedPoint.mgdl, unit)}`,
+      }
+    : peak;
 
   return (
     <View style={styles.container}>
@@ -160,14 +172,51 @@ export function GlucoseChart({ segments, meals, peak, unit, onSelectMeal }: Prop
         {linePaths.map((d, i) => (
           <Path key={`l${i}`} d={d} stroke={colors.accent} strokeWidth={2.5} fill="none" />
         ))}
-        {/* Selected peak marker + tooltip */}
-        {peak && (
-          <G>
-            <Circle cx={xOf(peak.minute)} cy={yOf(peak.mgdl)} r={4} fill={colors.accent} />
+        {/* Each reading owns the line up to the midpoint of its neighbours.
+            Wide invisible strokes make tapping easy without bridging data gaps. */}
+        {segments.map((segment, segmentIndex) => (
+          <G key={`hit${segmentIndex}`}>
+            {segment.length === 1 && (
+              <Circle cx={xOf(segment[0]!.minute)} cy={yOf(segment[0]!.mgdl)} r={3} fill={colors.accent} />
+            )}
+            {segment.map((point, pointIndex) => {
+              const label = `${formatTime(point.timestamp)} · ${formatGlucose(point.mgdl, unit)}`;
+              const onPress = () => setSelectedPoint(point);
+              return segment.length === 1 ? (
+                <Circle
+                  key={pointIndex}
+                  cx={xOf(point.minute)}
+                  cy={yOf(point.mgdl)}
+                  r={12}
+                  fill="transparent"
+                  onPress={onPress}
+                  accessible
+                  accessibilityLabel={label}
+                />
+              ) : (
+                <Path
+                  key={pointIndex}
+                  d={pointHitPath(segment, pointIndex, xOf, yOf)}
+                  stroke="transparent"
+                  strokeWidth={24}
+                  strokeLinecap="butt"
+                  fill="none"
+                  onPress={onPress}
+                  accessible
+                  accessibilityLabel={label}
+                />
+              );
+            })}
+          </G>
+        ))}
+        {/* Selected reading or meal peak marker + tooltip */}
+        {tooltip && (
+          <G pointerEvents="none">
+            <Circle cx={xOf(tooltip.minute)} cy={yOf(tooltip.mgdl)} r={5} fill={colors.accent} stroke={colors.bgSurface} strokeWidth={2} />
             <Tooltip
-              x={xOf(peak.minute)}
-              y={yOf(peak.mgdl)}
-              text={peak.label}
+              x={xOf(tooltip.minute)}
+              y={yOf(tooltip.mgdl)}
+              text={tooltip.label}
               plotLeft={PAD.left}
               plotRight={PAD.left + plotW}
               colors={colors}
@@ -177,6 +226,21 @@ export function GlucoseChart({ segments, meals, peak, unit, onSelectMeal }: Prop
       </Svg>
     </View>
   );
+}
+
+/** Split the hit area halfway along each adjacent line, using real readings. */
+function pointHitPath(
+  segment: GlucosePoint[],
+  index: number,
+  xOf: (minute: number) => number,
+  yOf: (mgdl: number) => number
+): string {
+  const point = segment[index]!;
+  const previous = segment[index - 1] ?? point;
+  const next = segment[index + 1] ?? point;
+  const x = xOf(point.minute);
+  const y = yOf(point.mgdl);
+  return `M ${(xOf(previous.minute) + x) / 2} ${(yOf(previous.mgdl) + y) / 2} L ${x} ${y} L ${(x + xOf(next.minute)) / 2} ${(y + yOf(next.mgdl)) / 2}`;
 }
 
 /** Small dark rounded label above a point, clamped to the plot width. */
