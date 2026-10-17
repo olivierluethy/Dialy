@@ -218,6 +218,16 @@ async function bundledFoods() {
   // Same name key as seed.ts.
   const nameKey = (name) => name.toLowerCase().replace(/[^a-zäöüéèàß0-9]+/g, ' ').trim();
   const curatedNames = new Set(SEED_FOODS.map((f) => nameKey(f.name)));
+
+  // Open Food Facts names carry the brand as a trailing "(…)"; drop it so the
+  // KH-Rechner list stays short (mirrors supabase/migrations/0016). Only the
+  // last group is removed, and only when something is left over.
+  const stripBrand = (name) => {
+    const s = name.replace(/\s*\([^()]+\)\s*$/, '').trim();
+    return s.length > 0 ? s : name;
+  };
+  const stripBrandNames = (names) =>
+    Object.fromEntries(Object.entries(names).map(([lang, v]) => [lang, stripBrand(v)]));
   const foods = [...SEED_FOODS, ...BRAND_DRINKS].map(({ names, ...food }) => ({
     ...food,
     names: { en: names.en, fr: names.fr, it: names.it },
@@ -226,9 +236,11 @@ async function bundledFoods() {
     for (const [id, name, group, categoryIdx, carbs, sugar, fat] of source.foods) {
       if (curatedNames.has(nameKey(name))) continue;
       const portion = portionFor(id);
+      // Only OFF names carry a brand; BLS/BLV parentheses are descriptions.
+      const isOff = id.startsWith('off-');
       foods.push({
         id,
-        name,
+        name: isOff ? stripBrand(name) : name,
         food_group: group,
         categories: categoryIdx.map((i) => source.categoryNames[i]),
         carbs_per_100g: carbs,
@@ -236,7 +248,7 @@ async function bundledFoods() {
         fat_per_100g: fat,
         glycemic_index: null,
         portions: portion ? [portion] : [],
-        names: namesFor(id),
+        names: isOff ? stripBrandNames(namesFor(id)) : namesFor(id),
       });
     }
   }

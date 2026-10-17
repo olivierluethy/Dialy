@@ -16,6 +16,7 @@ export type IconName =
   // Navigation & chrome
   | 'chevronLeft'
   | 'chevronRight'
+  | 'chevronDown'
   | 'arrowRight'
   | 'close'
   | 'menu'
@@ -89,6 +90,7 @@ type Glyph = keyof typeof Ionicons.glyphMap;
 export const ICONS: Record<IconName, Glyph> = {
   chevronLeft: 'chevron-back',
   chevronRight: 'chevron-forward',
+  chevronDown: 'chevron-down',
   arrowRight: 'arrow-forward-outline',
   close: 'close-outline',
   menu: 'reorder-two-outline',
@@ -99,7 +101,7 @@ export const ICONS: Record<IconName, Glyph> = {
   add: 'add',
   check: 'checkmark',
   checkDone: 'checkmark-done',
-  save: 'bookmark-outline',
+  save: 'save-outline',
   send: 'paper-plane-outline',
   refresh: 'refresh-outline',
   upload: 'cloud-upload-outline',

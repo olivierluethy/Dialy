@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { radius, spacing, type Colors } from '@/theme/theme';
+import { BLACK, radius, spacing, type Colors } from '@/theme/theme';
 import { useThemedStyles } from '@/theme/useTheme';
 
 interface NutrientBarProps {
@@ -39,7 +39,7 @@ const makeStyles = (colors: Colors) =>
       justifyContent: 'space-between',
       marginBottom: spacing.xs,
     },
-    label: { fontSize: 14, color: colors.textSecondary },
+    label: { fontSize: 14, color: BLACK },
     value: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
     track: {
       height: 8,

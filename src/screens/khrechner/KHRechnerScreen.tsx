@@ -15,10 +15,9 @@ import { Screen } from '@/components/Screen';
 import { ScreenTitle, SectionLabel, Card } from '@/components/primitives';
 import { Button } from '@/components/Button';
 import { TextField } from '@/components/TextField';
-import { SelectableChip } from '@/components/Chip';
 import { NutrientBar } from '@/components/NutrientBar';
 import { Dialog } from '@/components/Dialog';
-import { radius, spacing, type Colors } from '@/theme/theme';
+import { BLACK, radius, spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import { foodsRepo } from '@/db/repositories/foods';
 import { hasFoods } from '@/services/foodSync';
@@ -92,9 +91,12 @@ export function KHRechnerScreen() {
   const [noFoods, setNoFoods] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [category, setCategory] = useState<string | null>(null);
+  const [categoryListOpen, setCategoryListOpen] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Food | null>(null);
+  const [portionListOpen, setPortionListOpen] = useState(false);
+  const [selectedPortionIndex, setSelectedPortionIndex] = useState<number | null>(null);
   const [grams, setGrams] = useState(0);
   const [meal, setMeal] = useState<MealItem[]>([]);
   const [saving, setSaving] = useState(false);
@@ -170,7 +172,7 @@ export function KHRechnerScreen() {
     };
   }, [query, category, dataRevision, language]);
 
-  // Filter chips: only categories that actually contain foods.
+  // The select list only contains categories that actually contain foods.
   useEffect(() => {
     foodsRepo.categories().then((present) =>
       setCategories(FOOD_CATEGORIES.filter((c) => present.has(c)))
@@ -180,8 +182,10 @@ export function KHRechnerScreen() {
   // Picking a food opens the calculation popup.
   const selectFood = (food: Food) => {
     setSelected(food);
-    // Default to the first preset portion, or 100 g.
-    setGramsExternal(food.portions[0]?.grams ?? 100);
+    setPortionListOpen(false);
+    setSelectedPortionIndex(null);
+    // Start at 100 g; portions are applied only through the select list.
+    setGramsExternal(100);
   };
   // A new language renames the foods: close the open one so its name
   // isn't left in the old language.
@@ -218,6 +222,7 @@ export function KHRechnerScreen() {
     () => (selected ? portionNutrients(selected, grams) : null),
     [selected, grams]
   );
+  const selectedPortion = selectedPortionIndex === null ? undefined : selected?.portions[selectedPortionIndex];
 
   // Running carb total of everything collected into the meal so far.
   const mealCarbs = useMemo(
@@ -234,7 +239,10 @@ export function KHRechnerScreen() {
   };
 
   // Close the food editor without adding anything.
-  const closeFood = () => setSelected(null);
+  const closeFood = () => {
+    setSelected(null);
+    setPortionListOpen(false);
+  };
 
   const clearMeal = () => setMeal([]);
 
@@ -294,6 +302,7 @@ export function KHRechnerScreen() {
       <View style={styles.titleRow}>
         <ScreenTitle style={styles.title}>{t.khrechner.title}</ScreenTitle>
         <View style={styles.totalRow}>
+          <View style={styles.iconActions}>
           {/* Tap the total to see which foods it's made of. */}
           <Pressable
             onPress={() => setDialog({ kind: 'meal' })}
@@ -306,55 +315,99 @@ export function KHRechnerScreen() {
             <Text style={styles.totalValue}>{Math.round(mealCarbs)} g</Text>
             <Text style={styles.totalUnit}>{t.units.carbs}</Text>
           </Pressable>
-          {/* Greyed out without an account, but still tappable to explain why. */}
-          <Pressable
-            onPress={saveMeal}
-            disabled={canSaveDiary && (meal.length === 0 || saving)}
-            style={({ pressed }) => [
-              styles.iconBtn,
-              pressed && styles.iconBtnPressed,
-              (!canSaveDiary || meal.length === 0) && styles.iconBtnDimmed,
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel={t.khrechner.saveMealA11y}
-            hitSlop={4}
-          >
-            {saving ? (
-              <ActivityIndicator size="small" color={colors.accent} />
-            ) : (
-              <Icon
-                name="save"
-                size={20}
-                color={canSaveDiary ? colors.accent : colors.textTertiary}
-              />
-            )}
-          </Pressable>
-          <Pressable
-            onPress={clearMeal}
-            disabled={meal.length === 0}
-            style={({ pressed }) => [
-              styles.iconBtn,
-              pressed && styles.iconBtnPressed,
-              meal.length === 0 && styles.iconBtnDimmed,
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel={t.khrechner.clearA11y}
-            hitSlop={4}
-          >
-            <Icon name="delete" size={20} color={colors.danger} />
-          </Pressable>
+            {/* Greyed out without an account, but still tappable to explain why. */}
+            <Pressable
+              onPress={saveMeal}
+              disabled={canSaveDiary && (meal.length === 0 || saving)}
+              style={({ pressed }) => [
+                styles.iconBtn,
+                pressed && styles.iconBtnPressed,
+                (!canSaveDiary || meal.length === 0) && styles.iconBtnDimmed,
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={t.khrechner.saveMealA11y}
+              hitSlop={4}
+            >
+              {saving ? (
+                <ActivityIndicator size="small" color={BLACK} />
+              ) : (
+                <Icon
+                  name="save"
+                  size={20}
+                  color={BLACK}
+                />
+              )}
+            </Pressable>
+            <Pressable
+              onPress={clearMeal}
+              disabled={meal.length === 0}
+              style={({ pressed }) => [
+                styles.iconBtn,
+                pressed && styles.iconBtnPressed,
+                meal.length === 0 && styles.iconBtnDimmed,
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={t.khrechner.clearA11y}
+              hitSlop={4}
+            >
+              <Icon name="delete" size={20} color={BLACK} />
+            </Pressable>
+          </View>
         </View>
       </View>
 
 
+      <View style={styles.categoryFilter}>
+        <Pressable
+          onPress={() => setCategoryListOpen((open) => !open)}
+          accessibilityRole="button"
+          accessibilityLabel={`${t.khrechner.category}: ${category === null ? t.khrechner.all : foodCategoryLabel(category, t)}`}
+          accessibilityState={{ expanded: categoryListOpen }}
+          style={({ pressed }) => [styles.categorySelect, pressed && styles.categoryOptionPressed]}
+        >
+          <Text style={styles.categoryValue}>
+            {category === null ? t.khrechner.all : foodCategoryLabel(category, t)}
+          </Text>
+          <Icon name="chevronDown" size={18} color={colors.textSecondary} style={categoryListOpen ? styles.categoryChevronOpen : undefined} />
+        </Pressable>
+        {categoryListOpen && (
+          <ScrollView
+            style={styles.categoryList}
+            nestedScrollEnabled
+            keyboardShouldPersistTaps="handled"
+          >
+            {[null, ...categories].map((value) => (
+              <Pressable
+                key={value ?? 'all'}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: category === value }}
+                onPress={() => {
+                  setCategory(value);
+                  setCategoryListOpen(false);
+                }}
+                style={({ pressed }) => [
+                  styles.categoryOption,
+                  category === value && styles.categoryOptionSelected,
+                  pressed && styles.categoryOptionPressed,
+                ]}
+              >
+                <Text style={[styles.categoryValue, category === value && styles.categorySelectedText]}>
+                  {value === null ? t.khrechner.all : foodCategoryLabel(value, t)}
+                </Text>
+                {category === value && <Icon name="check" size={18} color={colors.accent} />}
+              </Pressable>
+            ))}
+          </ScrollView>
+        )}
+      </View>
+
       <View style={styles.searchRow}>
-        <Icon name="search" size={18} color={colors.textTertiary} />
         <TextField
           placeholder={t.khrechner.searchPlaceholder}
           value={query}
           onChangeText={setQuery}
           containerStyle={styles.searchField}
-          style={[styles.searchInput, query.length > 0 && styles.searchInputClearable]}
+          style={query.length > 0 && styles.searchInputClearable}
           autoCorrect={false}
         />
         {query.length > 0 && (
@@ -370,37 +423,16 @@ export function KHRechnerScreen() {
         )}
       </View>
 
-      {/* Category filter (tap the active one again to clear it). */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.categoryScroll}
-        contentContainerStyle={styles.categoryRow}
-        keyboardShouldPersistTaps="handled"
-      >
-        <SelectableChip label={t.khrechner.all} selected={category === null} onPress={() => setCategory(null)} />
-        {categories.map((c) => (
-          <SelectableChip
-            key={c}
-            label={foodCategoryLabel(c, t)}
-            selected={category === c}
-            onPress={() => setCategory((cur) => (cur === c ? null : c))}
-          />
-        ))}
-      </ScrollView>
-
       {/* Search results, paged. */}
       {loading ? (
         <ActivityIndicator color={colors.accent} />
       ) : (
         <>
-          <Text style={styles.resultCount}>
-            {noFoods
-              ? t.khrechner.noFoodsYet
-              : results.length === 0
-                ? t.khrechner.noResults
-                : t.khrechner.resultCount(results.length)}
-          </Text>
+          {(noFoods || results.length === 0) && (
+            <Text style={styles.resultCount}>
+              {noFoods ? t.khrechner.noFoodsYet : t.khrechner.noResults}
+            </Text>
+          )}
           {resultRows}
           {remaining > 0 && (
             <Button
@@ -438,11 +470,6 @@ export function KHRechnerScreen() {
                 <View style={styles.foodHeader}>
                   <View style={styles.foodHeaderText}>
                     <Text style={styles.foodName}>{selected.name}</Text>
-                    {/* "Quelle: <nutrients> | <usual portion>"; the full source
-                        names are listed in the privacy screen. */}
-                    {foodSourceText(selected, t) && (
-                      <Text style={styles.foodSource}>{foodSourceText(selected, t)}</Text>
-                    )}
                   </View>
                   <Pressable
                     onPress={closeFood}
@@ -459,15 +486,45 @@ export function KHRechnerScreen() {
                 {selected.portions.length > 0 && (
                   <>
                     <SectionLabel>{t.khrechner.portionSize}</SectionLabel>
-                    <View style={styles.chipRow}>
-                      {selected.portions.map((p) => (
-                        <SelectableChip
-                          key={p.label}
-                          label={localizedPortionLabel(p.label, t)}
-                          selected={Math.round(grams) === p.grams}
-                          onPress={() => setGramsExternal(p.grams)}
-                        />
-                      ))}
+                    <View style={styles.portionFilter}>
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={t.khrechner.portionSize}
+                        accessibilityState={{ expanded: portionListOpen }}
+                        onPress={() => setPortionListOpen((open) => !open)}
+                        style={({ pressed }) => [styles.categorySelect, pressed && styles.categoryOptionPressed]}
+                      >
+                        <Text style={styles.categoryValue}>
+                          {selectedPortion
+                            ? `${localizedPortionLabel(selectedPortion.label, t)} · ${selectedPortion.grams} g`
+                            : t.khrechner.portionSize}
+                        </Text>
+                        <Icon name="chevronDown" size={18} color={colors.textSecondary} style={portionListOpen ? styles.categoryChevronOpen : undefined} />
+                      </Pressable>
+                      {portionListOpen && (
+                        <ScrollView style={styles.categoryList} nestedScrollEnabled keyboardShouldPersistTaps="handled">
+                          {selected.portions.map((portion, index) => (
+                            <Pressable
+                              key={`${portion.label}-${index}`}
+                              accessibilityRole="radio"
+                              accessibilityState={{ checked: selectedPortionIndex === index }}
+                              onPress={() => {
+                                setGramsExternal(portion.grams);
+                                setSelectedPortionIndex(index);
+                                setPortionListOpen(false);
+                              }}
+                              style={({ pressed }) => [
+                                styles.categoryOption,
+                                selectedPortionIndex === index && styles.portionOptionSelected,
+                                pressed && styles.categoryOptionPressed,
+                              ]}
+                            >
+                              <Text style={styles.categoryValue}>{localizedPortionLabel(portion.label, t)} · {portion.grams} g</Text>
+                              {selectedPortionIndex === index && <Icon name="check" size={18} color={colors.textPrimary} />}
+                            </Pressable>
+                          ))}
+                        </ScrollView>
+                      )}
                     </View>
                   </>
                 )}
@@ -477,6 +534,7 @@ export function KHRechnerScreen() {
                   <TextField
                     value={String(Math.round(grams))}
                     onChangeText={(v) => {
+                      setSelectedPortionIndex(null);
                       const n = parseInt(v.replace(/[^0-9]/g, ''), 10);
                       setGramsExternal(Number.isNaN(n) ? 0 : Math.min(n, MAX_GRAMS));
                     }}
@@ -484,13 +542,19 @@ export function KHRechnerScreen() {
                     containerStyle={styles.gramField}
                     style={styles.gramInput}
                   />
-                  <Text style={styles.gramUnit}>{t.khrechner.grams}</Text>
+                  <View style={styles.gramUnitBox}>
+                    <Text style={styles.gramUnit}>{t.khrechner.grams}</Text>
+                  </View>
                 </View>
                 <Slider
                   minimumValue={0}
                   maximumValue={MAX_GRAMS}
                   step={1}
                   value={sliderValue}
+                  onSlidingStart={() => {
+                    setSelectedPortionIndex(null);
+                    setPortionListOpen(false);
+                  }}
                   onValueChange={(v) => {
                     // Coalesce the burst of drag events into one commit per frame so
                     // the nutrient math + re-render can keep up (issue #1).
@@ -498,10 +562,12 @@ export function KHRechnerScreen() {
                     if (rafRef.current !== null) return;
                     rafRef.current = requestAnimationFrame(() => {
                       rafRef.current = null;
+                      setSelectedPortionIndex(null);
                       setGrams(Math.round(pendingGramsRef.current));
                     });
                   }}
                   onSlidingComplete={(v) => {
+                    setSelectedPortionIndex(null);
                     if (rafRef.current !== null) {
                       cancelAnimationFrame(rafRef.current);
                       rafRef.current = null;
@@ -522,42 +588,41 @@ export function KHRechnerScreen() {
                   label={t.khrechner.carbs}
                   value={`${Math.round(nutrients.carbs)} g`}
                   fraction={nutrients.carbs / BAR_MAX.carbs}
-                  color={colors.dataCarb}
+                  color={colors.accent}
                 />
                 <NutrientBar
                   label={t.khrechner.sugar}
                   value={`${Math.round(nutrients.sugar)} g`}
                   fraction={nutrients.sugar / BAR_MAX.sugar}
-                  color={colors.dataSugar}
+                  color={colors.accent}
                 />
                 <NutrientBar
                   label={t.khrechner.gi}
                   value={nutrients.gi === null ? t.common.notAvailable : `${Math.round(nutrients.gi)}`}
                   fraction={(nutrients.gi ?? 0) / BAR_MAX.gi}
-                  color={colors.dataGlyc}
+                  color={colors.accent}
                 />
                 <NutrientBar
                   label={t.khrechner.fat}
                   value={`${Math.round(nutrients.fat)} g`}
                   fraction={nutrients.fat / BAR_MAX.fat}
-                  color={colors.dataFat}
+                  color={colors.accent}
                 />
 
-                {/* Carbs of this portion */}
-                <View style={styles.summaryChip}>
-                  <Text style={styles.summaryText}>
-                    {t.khrechner.thisPortion(formatCarbs(nutrients.carbs))}
-                  </Text>
-                </View>
+                {foodSourceText(selected, t) && (
+                  <Text style={styles.foodSource}>{foodSourceText(selected, t)}</Text>
+                )}
 
                 {/* Collect into the meal (saved to the diary via the title icon). */}
-                <Button
-                  title={t.khrechner.addToMeal}
-                  icon="add"
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled: grams <= 0 }}
                   onPress={addToMeal}
                   disabled={grams <= 0}
-                  style={styles.spacedBtn}
-                />
+                  style={({ pressed }) => [styles.addMealButton, pressed && styles.addMealButtonPressed, grams <= 0 && styles.iconBtnDimmed]}
+                >
+                  <Text style={styles.addMealLabel}>{t.khrechner.addToMeal}</Text>
+                </Pressable>
               </Card>
             </ScrollView>
           )}
@@ -644,6 +709,14 @@ const makeStyles = (colors: Colors) =>
     },
     title: { marginBottom: 0, flexShrink: 1 },
     totalRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+    iconActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+      padding: spacing.xs,
+      borderRadius: radius.input,
+      backgroundColor: colors.bgInput,
+    },
     total: {
       alignItems: 'flex-end',
       marginRight: spacing.xs,
@@ -651,17 +724,14 @@ const makeStyles = (colors: Colors) =>
       borderRadius: radius.input,
     },
     totalPressed: { backgroundColor: colors.bgSurfaceAlt },
-    totalValue: { fontSize: 20, fontWeight: '700', color: colors.accent },
+    totalValue: { fontSize: 20, fontWeight: '600', color: colors.textSecondary },
     totalUnit: { fontSize: 12, color: colors.textTertiary },
     iconBtn: {
       width: 40,
       height: 40,
-      borderRadius: radius.pill,
+      borderRadius: radius.input,
       alignItems: 'center',
       justifyContent: 'center',
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.bgSurface,
     },
     iconBtnPressed: { backgroundColor: colors.bgSurfaceAlt },
     iconBtnDimmed: { opacity: 0.4 },
@@ -673,8 +743,7 @@ const makeStyles = (colors: Colors) =>
     mealCarbs: { fontSize: 14, fontWeight: '700', color: colors.accent },
     mealTotalLabel: { flex: 1, fontSize: 15, fontWeight: '700', color: colors.textPrimary },
     searchRow: { flexDirection: 'row', alignItems: 'center', position: 'relative' },
-    searchField: { flex: 1, marginBottom: spacing.md, marginLeft: -26 },
-    searchInput: { paddingLeft: 42 },
+    searchField: { flex: 1, marginBottom: spacing.md },
     // Room for the clear button, so long queries don't run under it.
     searchInputClearable: { paddingRight: 44 },
     // Centred on the input (the field has a bottom margin).
@@ -688,17 +757,36 @@ const makeStyles = (colors: Colors) =>
     resultRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingVertical: spacing.sm,
+      minHeight: 56,
+      paddingVertical: spacing.md,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
     },
     resultBody: { flex: 1, marginRight: spacing.md },
-    resultName: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
-    resultCarbs: { fontSize: 13, color: colors.textSecondary },
+    resultName: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
+    resultCarbs: { fontSize: 12, color: colors.textSecondary },
     resultCount: { fontSize: 12, color: colors.textTertiary, marginBottom: spacing.xs },
-    // Bleed to the screen edges so chips scroll under the side padding.
-    categoryScroll: { marginHorizontal: -spacing.lg, marginBottom: spacing.md },
-    categoryRow: { gap: spacing.sm, paddingHorizontal: spacing.lg },
+    categoryFilter: { marginBottom: spacing.md },
+    categorySelect: {
+      flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+      minHeight: 48, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm,
+      borderWidth: 1, borderColor: colors.border, borderRadius: radius.input,
+      backgroundColor: colors.bgInput,
+    },
+    categoryValue: { flex: 1, fontSize: 15, color: colors.textPrimary },
+    categoryChevronOpen: { transform: [{ rotate: '180deg' }] },
+    categoryList: {
+      maxHeight: 280, marginTop: spacing.xs,
+      borderWidth: 1, borderColor: colors.border, borderRadius: radius.input,
+      backgroundColor: colors.bgSurface,
+    },
+    categoryOption: {
+      flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+      minHeight: 48, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm,
+    },
+    categoryOptionSelected: { backgroundColor: colors.accentSubtle },
+    categorySelectedText: { color: colors.accent, fontWeight: '600' },
+    categoryOptionPressed: { backgroundColor: colors.bgSurfaceAlt },
     modalBackdrop: {
       flex: 1,
       backgroundColor: colors.overlay,
@@ -715,16 +803,30 @@ const makeStyles = (colors: Colors) =>
     foodName: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
     foodSource: { fontSize: 12, color: colors.textTertiary, marginTop: 2 },
     closeBtn: { marginLeft: spacing.md, marginTop: 1 },
-    chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
-    gramRow: { flexDirection: 'row', alignItems: 'center' },
-    gramField: { flex: 1, marginBottom: spacing.sm },
-    gramInput: { fontSize: 20, fontWeight: '700' },
-    gramUnit: { marginLeft: spacing.md, color: colors.textSecondary, fontSize: 16 },
-    nutrientLabel: { marginTop: spacing.lg },
-    summaryChip: {
-      paddingVertical: spacing.md,
-      marginTop: spacing.sm,
+    portionFilter: { marginBottom: spacing.lg },
+    portionOptionSelected: { backgroundColor: colors.bgSurfaceAlt },
+    addMealButton: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm,
+      minHeight: 48, paddingHorizontal: spacing.lg, marginTop: spacing.md,
+      borderRadius: radius.button, backgroundColor: colors.bgSurfaceAlt,
+      borderWidth: 1, borderColor: colors.border,
     },
-    summaryText: { color: colors.textPrimary, fontWeight: '700', fontSize: 16, textAlign: 'center' },
+    addMealButtonPressed: { backgroundColor: colors.bgInput },
+    addMealLabel: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
+    gramRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
+    gramField: { flex: 1, marginBottom: 0 },
+    gramInput: { fontSize: 20, fontWeight: '600' },
+    gramUnitBox: {
+      minHeight: 48,
+      paddingHorizontal: spacing.lg,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.bgInput,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.input,
+    },
+    gramUnit: { color: colors.textSecondary, fontSize: 16 },
     spacedBtn: { marginTop: spacing.md },
+    nutrientLabel: { marginTop: spacing.lg },
   });

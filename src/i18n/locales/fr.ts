@@ -99,6 +99,7 @@ const fr: Dict = {
     clearA11y: 'Remettre le sous-total à zéro',
     searchPlaceholder: 'Rechercher un aliment…',
     all: 'Tous',
+    category: 'Catégorie',
     noResults: 'Aucun résultat',
     noFoodsYet:
       'Les aliments sont téléchargés depuis Internet au premier démarrage. Connecte-toi à Internet – ensuite, le calculateur de glucides fonctionne aussi hors ligne.',

@@ -98,6 +98,7 @@ const en: Dict = {
     clearA11y: 'Reset subtotal to zero',
     searchPlaceholder: 'Search foods…',
     all: 'All',
+    category: 'Category',
     noResults: 'No results',
     noFoodsYet:
       'The foods are downloaded from the internet on first start. Please connect to the internet – afterwards the carb calculator also works offline.',

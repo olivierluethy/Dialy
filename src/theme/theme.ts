@@ -9,6 +9,8 @@
 
 export type ColorScheme = 'dark' | 'light';
 
+export const BLACK = '#000000';
+
 /** Appearance setting chosen by the user. 'system' follows the OS. */
 export type ThemeMode = ColorScheme | 'system';
 

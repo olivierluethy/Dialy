@@ -103,6 +103,7 @@ const de = {
     clearA11y: 'Zwischentotal auf null setzen',
     searchPlaceholder: 'Lebensmittel suchen…',
     all: 'Alle',
+    category: 'Kategorie',
     noResults: 'Keine Treffer',
     noFoodsYet:
       'Die Lebensmittel werden beim ersten Start aus dem Internet geladen. Bitte verbinde dich mit dem Internet – danach funktioniert der KH-Rechner auch offline.',

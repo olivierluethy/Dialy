@@ -98,6 +98,7 @@ const it: Dict = {
     clearA11y: 'Azzera il subtotale',
     searchPlaceholder: 'Cerca alimenti…',
     all: 'Tutti',
+    category: 'Categoria',
     noResults: 'Nessun risultato',
     noFoodsYet:
       'Gli alimenti vengono scaricati da Internet al primo avvio. Collegati a Internet – poi il calcolatore di carboidrati funziona anche offline.',
