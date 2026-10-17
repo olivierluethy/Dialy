@@ -173,6 +173,7 @@ const de = {
     title: 'Tagebuch',
     done: 'Fertig',
     select: 'Auswählen',
+    multiSelect: 'Mehrfachauswahl',
     viewList: 'Liste',
     viewCalendar: 'Kalender',
     noEntriesDay: 'Keine Einträge an diesem Tag.',
@@ -201,7 +202,7 @@ const de = {
     deleteEntryConfirm: (name: string) => `«${name}» aus dem Tagebuch löschen?`,
     deleteEntryA11y: (name: string) => `${name} löschen`,
     editEntryA11y: (name: string) => `${name} bearbeiten`,
-    deleteEntriesConfirm: (n: number) => `${n} Lebensmittel aus dem Tagebuch löschen?`,
+    deleteEntriesConfirm: (n: number) => `${n} Einträge aus dem Tagebuch löschen?`,
   },
 
   blutzucker: {

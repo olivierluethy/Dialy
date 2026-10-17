@@ -83,8 +83,8 @@ export function TagebuchScreen() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   // Entries being edited: date/time of one or several, comment of one.
   const [editKeys, setEditKeys] = useState<string[] | null>(null);
-  // Meals waiting for the delete confirmation (trash icon or selection).
-  const [deleting, setDeleting] = useState<MealEntry[] | null>(null);
+  // Entries waiting for the delete confirmation (trash icon or selection).
+  const [deleting, setDeleting] = useState<FeedItem[] | null>(null);
 
   // List vs. calendar view (toggle under the title).
   const [view, setView] = useState<'list' | 'calendar'>('list');
@@ -137,28 +137,18 @@ export function TagebuchScreen() {
     setView('calendar');
     exitSelection();
   };
-  // Selection is a list concept: enter it from either view.
-  const toggleSelect = () => {
-    if (selecting) {
-      exitSelection();
-      return;
-    }
-    if (view !== 'list') setView('list');
-    setSelecting(true);
-  };
-
   const exitSelection = () => {
     setSelecting(false);
     setSelected(new Set());
   };
 
-  const toggle = (key: string) =>
-    setSelected((cur) => {
-      const next = new Set(cur);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
+  const toggle = (key: string) => {
+    const next = new Set(selected);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    if (next.size === 0) exitSelection();
+    else setSelected(next);
+  };
 
   const onRowPress = (item: FeedItem) => {
     if (selecting) toggle(itemKey(item));
@@ -182,21 +172,22 @@ export function TagebuchScreen() {
     setReloadTick((n) => n + 1);
   };
 
-  // Only meals can be deleted; sport entries in the selection stay.
-  const selectedMeals = useMemo(
+  const selectedItems = useMemo(
     () =>
       [...selected].flatMap((key) => {
         const item = itemsByKey.get(key);
-        return item?.kind === 'meal' ? [item.data] : [];
+        return item ? [item] : [];
       }),
     [selected, itemsByKey]
   );
 
   const confirmDelete = async () => {
     if (!userId || !deleting) return;
-    const ids = deleting.map((m) => m.id);
+    const ids = (kind: FeedItem['kind']) =>
+      deleting.filter((item) => item.kind === kind).map((item) => item.data.id);
     setDeleting(null);
-    await mealsRepo.remove(ids, userId);
+    await mealsRepo.remove(ids('meal'), userId);
+    await sportsRepo.remove(ids('sport'), userId);
     exitSelection();
     setReloadTick((n) => n + 1);
   };
@@ -225,8 +216,12 @@ export function TagebuchScreen() {
             selected={selected.has(itemKey(item))}
             onPress={() => onRowPress(item)}
             onLongPress={() => onRowLongPress(item)}
-            onEdit={() => setEditKeys([itemKey(item)])}
-            onDelete={item.kind === 'meal' ? () => setDeleting([item.data]) : undefined}
+            onEdit={() => setEditKeys(selecting ? [...selected] : [itemKey(item)])}
+            onDelete={
+              selecting
+                ? () => setDeleting(selectedItems)
+                : item.kind === 'meal' ? () => setDeleting([item]) : undefined
+            }
           />
         ))}
       </Card>
@@ -248,12 +243,6 @@ export function TagebuchScreen() {
               label={t.tagebuch.viewCalendar}
               active={view === 'calendar'}
               onPress={showCalendar}
-            />
-            <TabIconButton
-              icon={selecting ? 'checkDone' : 'select'}
-              label={selecting ? t.tagebuch.done : t.tagebuch.select}
-              active={selecting}
-              onPress={toggleSelect}
             />
           </View>
         )}
@@ -295,33 +284,6 @@ export function TagebuchScreen() {
         </Card>
       ) : (
         <>
-          {selecting && (
-            <Card style={styles.selectBar}>
-              <Text style={styles.selectCount}>
-                {selected.size === 0
-                  ? t.tagebuch.tapToMark
-                  : t.tagebuch.selectedCount(selected.size)}
-              </Text>
-              <View style={styles.selectActions}>
-                <Button
-                  title={t.tagebuch.changeDateTime}
-                  icon="time"
-                  onPress={() => setEditKeys([...selected])}
-                  disabled={selected.size === 0}
-                  style={styles.selectButton}
-                />
-                <Button
-                  title={t.common.delete}
-                  icon="delete"
-                  variant="secondary"
-                  onPress={() => setDeleting(selectedMeals)}
-                  disabled={selectedMeals.length === 0}
-                  style={styles.selectButton}
-                />
-              </View>
-            </Card>
-          )}
-
           {loading ? (
             <ActivityIndicator color={colors.accent} style={{ marginTop: spacing.xl }} />
           ) : groups.length === 0 ? (
@@ -347,7 +309,7 @@ export function TagebuchScreen() {
 
       <EditEntryDialog
         visible={editKeys !== null}
-        multiple={(editKeys?.length ?? 0) > 1}
+        multiple={selecting || (editKeys?.length ?? 0) > 1}
         subtitle={
           editKeys && editKeys.length > 1
             ? t.tagebuch.sameDateTime(editKeys.length)
@@ -366,7 +328,7 @@ export function TagebuchScreen() {
         title={t.tagebuch.deleteEntryTitle}
         message={
           deleting?.length === 1
-            ? t.tagebuch.deleteEntryConfirm(deleting[0]!.name)
+            ? t.tagebuch.deleteEntryConfirm(itemTitle(deleting[0]!, t))
             : deleting
               ? t.tagebuch.deleteEntriesConfirm(deleting.length)
               : undefined
@@ -408,7 +370,7 @@ export function TagebuchScreen() {
                     item.kind === 'meal'
                       ? () => {
                           setCalendarDay(null);
-                          setDeleting([item.data]);
+                          setDeleting([item]);
                         }
                       : undefined
                   }
@@ -441,9 +403,9 @@ function FeedRow({
   selected: boolean;
   onPress: () => void;
   onLongPress: () => void;
-  /** Shows the edit (pencil) icon (not while selecting). */
+  /** Edits this entry, or all selected entries in selection mode. */
   onEdit?: () => void;
-  /** Shows the trash icon (not while selecting). */
+  /** Deletes this entry, or all selected entries in selection mode. */
   onDelete?: () => void;
 }) {
   const { colors } = useTheme();
@@ -488,24 +450,30 @@ function FeedRow({
           </Text>
         ) : null}
       </View>
-      {!selecting && (onEdit || onDelete) && (
+      {(!selecting || selected) && (onEdit || onDelete) && (
         <View style={styles.rowActions}>
           {onEdit && (
             <Pressable
-              onPress={onEdit}
+              onPress={(event) => {
+                event.stopPropagation();
+                onEdit();
+              }}
               accessibilityRole="button"
-              accessibilityLabel={t.tagebuch.editEntryA11y(itemTitle(item, t))}
+              accessibilityLabel={selecting ? `${t.tagebuch.multiSelect}: ${t.tagebuch.changeDateTime}` : t.tagebuch.editEntryA11y(itemTitle(item, t))}
               hitSlop={8}
               style={({ pressed }) => [styles.actionBtn, pressed && styles.actionBtnPressed]}
             >
-              <Icon name="edit" size={18} color={colors.textSecondary} />
+              <Icon name={selecting ? 'time' : 'edit'} size={18} color={colors.textSecondary} />
             </Pressable>
           )}
           {onDelete && (
             <Pressable
-              onPress={onDelete}
+              onPress={(event) => {
+                event.stopPropagation();
+                onDelete();
+              }}
               accessibilityRole="button"
-              accessibilityLabel={t.tagebuch.deleteEntryA11y(itemTitle(item, t))}
+              accessibilityLabel={selecting ? `${t.tagebuch.multiSelect}: ${t.common.delete}` : t.tagebuch.deleteEntryA11y(itemTitle(item, t))}
               hitSlop={8}
               style={({ pressed }) => [styles.actionBtn, pressed && styles.actionBtnPressed]}
             >
@@ -686,7 +654,7 @@ function monthCells(month: Date): Array<Date | null> {
   return cells;
 }
 
-/** Small round icon button in the title row (Liste / Kalender / Auswählen). */
+/** Small round icon button in the title row (Liste / Kalender). */
 function TabIconButton({
   icon,
   label,
@@ -879,10 +847,6 @@ const makeStyles = (colors: Colors) =>
     },
     lockedButton: { alignSelf: 'stretch', marginTop: spacing.lg },
     lockedButtonSecondary: { alignSelf: 'stretch', marginTop: spacing.sm },
-    selectBar: { marginBottom: spacing.lg },
-    selectCount: { fontSize: 15, color: colors.textSecondary },
-    selectActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
-    selectButton: { flex: 1, paddingHorizontal: spacing.sm },
     empty: { color: colors.textTertiary, fontSize: 15, marginTop: spacing.lg, lineHeight: 22 },
     dayBlock: { marginBottom: spacing.xl },
     dayHeader: {

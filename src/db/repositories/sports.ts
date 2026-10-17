@@ -1,5 +1,5 @@
 import { getDb } from '@/db/database';
-import { enqueueSync, updateEntries, type EntryChanges } from '@/db/repositories/base';
+import { deleteEntries, enqueueSync, updateEntries, type EntryChanges } from '@/db/repositories/base';
 import { nowIso, uuidv4 } from '@/utils/id';
 import type { BgCurvePoint, SportEntry } from '@/types/models';
 
@@ -85,6 +85,11 @@ export const sportsRepo = {
   /** Changes date/time and/or comment of entries (of `userId`). */
   update(ids: string[], userId: string, changes: EntryChanges): Promise<void> {
     return updateEntries('sport_entries', ids, userId, changes);
+  },
+
+  /** Deletes entries (of `userId`); syncs as a soft delete. */
+  remove(ids: string[], userId: string): Promise<void> {
+    return deleteEntries('sport_entries', ids, userId);
   },
 
   /** Entries of one account only — a device can hold several accounts. */

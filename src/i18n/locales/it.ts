@@ -199,6 +199,7 @@ const it: Dict = {
     title: 'Diario',
     done: 'Fine',
     select: 'Seleziona',
+    multiSelect: 'Selezione multipla',
     viewList: 'Elenco',
     viewCalendar: 'Calendario',
     noEntriesDay: 'Nessuna voce in questo giorno.',
@@ -227,7 +228,7 @@ const it: Dict = {
     deleteEntryConfirm: (name: string) => `Eliminare «${name}» dal diario?`,
     deleteEntryA11y: (name: string) => `Elimina ${name}`,
     editEntryA11y: (name: string) => `Modifica ${name}`,
-    deleteEntriesConfirm: (n: number) => `Eliminare ${n} alimenti dal diario?`,
+    deleteEntriesConfirm: (n: number) => `Eliminare ${n} voci dal diario?`,
   },
 
   blutzucker: {
