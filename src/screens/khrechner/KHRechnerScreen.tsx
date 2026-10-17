@@ -142,10 +142,14 @@ export function KHRechnerScreen() {
   const dataRevision = useAppStore((s) => s.dataRevision);
   const ctx = { isLoggedIn: user !== null, isPremium };
 
-  // A collected (unsaved) meal belongs to whoever built it: drop it when the
-  // account changes so it can't be saved into someone else's diary.
+  // A collected (unsaved) meal belongs to whoever built it: drop it when an
+  // account signs out or another one signs in, so it can't be saved into
+  // someone else's diary. Signing in after building it signed out keeps it.
+  const mealOwnerRef = useRef(user?.id ?? null);
   useEffect(() => {
-    setMeal([]);
+    const id = user?.id ?? null;
+    if (mealOwnerRef.current !== null && mealOwnerRef.current !== id) setMeal([]);
+    mealOwnerRef.current = id;
   }, [user?.id]);
 
   // Search runs in memory, so the spinner only shows on the very first load
