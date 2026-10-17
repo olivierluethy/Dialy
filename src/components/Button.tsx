@@ -15,7 +15,7 @@ import { Icon, type IconName } from '@/components/Icon';
 interface ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary' | 'neutral';
   icon?: IconName;
   disabled?: boolean;
   loading?: boolean;
@@ -34,6 +34,7 @@ export function Button({
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const isPrimary = variant === 'primary';
+  const foreground = isPrimary ? colors.textOnAccent : variant === 'neutral' ? colors.textSecondary : colors.accent;
   return (
     <Pressable
       onPress={onPress}
@@ -48,18 +49,18 @@ export function Button({
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={isPrimary ? colors.textOnAccent : colors.accent} />
+        <ActivityIndicator color={foreground} />
       ) : (
         <View style={styles.row}>
           {icon && (
             <Icon
               name={icon}
               size={18}
-              color={isPrimary ? colors.textOnAccent : colors.accent}
+              color={foreground}
               style={styles.icon}
             />
           )}
-          <Text style={[styles.label, isPrimary ? styles.labelPrimary : styles.labelSecondary]}>
+          <Text style={[styles.label, { color: foreground }]}>
             {title}
           </Text>
         </View>
@@ -85,6 +86,4 @@ const makeStyles = (colors: Colors) =>
     secondaryPressed: { backgroundColor: colors.bgInput },
     disabled: { opacity: 0.5 },
     label: { fontSize: 16, fontWeight: '700' },
-    labelPrimary: { color: colors.textOnAccent },
-    labelSecondary: { color: colors.accent },
   });

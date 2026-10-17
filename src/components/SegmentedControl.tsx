@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { radius, spacing, type Colors, type ThemeMode } from '@/theme/theme';
-import { useThemedStyles } from '@/theme/useTheme';
+import { useTheme, useThemedStyles } from '@/theme/useTheme';
+import { Icon } from '@/components/Icon';
 import { useAppStore } from '@/state/store';
 import { syncEngine } from '@/sync/syncEngine';
-import { LANGUAGES, useLanguage, useT, type Language } from '@/i18n';
+import { LANGUAGES, useLanguage, useT } from '@/i18n';
 import { unitOptions } from '@/utils/glucose';
 import type { DiabetesType } from '@/types/models';
 
@@ -56,17 +57,55 @@ export function ThemeModeControl() {
 }
 
 /**
- * Language picker: DE / FR / IT / EN. Until the user picks one, the device
+ * Language select list. Until the user picks one, the device
  * language is used (and shown as selected). Persisted in the store.
  */
 export function LanguageControl() {
   const language = useLanguage();
   const setLanguage = useAppStore((s) => s.setLanguage);
-  const options: Array<{ value: Language; label: string }> = LANGUAGES.map((l) => ({
-    value: l.code,
-    label: l.short,
-  }));
-  return <Segmented options={options} value={language} onChange={setLanguage} />;
+  const [open, setOpen] = useState(false);
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const t = useT();
+  const selected = LANGUAGES.find((option) => option.code === language)!;
+
+  return (
+    <View style={styles.selectContainer}>
+      <Pressable
+        onPress={() => setOpen((current) => !current)}
+        accessibilityRole="button"
+        accessibilityLabel={`${t.common.language}: ${selected.name}`}
+        accessibilityState={{ expanded: open }}
+        style={({ pressed }) => [styles.select, pressed && styles.optionPressed]}
+      >
+        <Text style={styles.selectText}>{selected.name}</Text>
+        <Icon name="chevronDown" size={18} color={colors.textSecondary} style={open ? styles.chevronOpen : undefined} />
+      </Pressable>
+      {open && (
+        <View style={styles.options}>
+          {LANGUAGES.map((option) => (
+            <Pressable
+              key={option.code}
+              onPress={() => {
+                setOpen(false);
+                setLanguage(option.code);
+              }}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: option.code === language }}
+              style={({ pressed }) => [
+                styles.option,
+                option.code === language && styles.optionSelected,
+                pressed && styles.optionPressed,
+              ]}
+            >
+              <Text style={styles.selectText}>{option.name}</Text>
+              {option.code === language && <Icon name="check" size={18} color={colors.textPrimary} />}
+            </Pressable>
+          ))}
+        </View>
+      )}
+    </View>
+  );
 }
 
 /** Blood-glucose unit picker: mmol/L / mg/dL (issue #21). Persisted in the store. */
@@ -111,6 +150,26 @@ function Segmented<T extends string>({
 
 const makeStyles = (colors: Colors) =>
   StyleSheet.create({
+    selectContainer: { marginBottom: spacing.lg },
+    select: {
+      flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+      minHeight: 48, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm,
+      borderRadius: radius.input, borderWidth: 1, borderColor: colors.border,
+      backgroundColor: colors.bgInput,
+    },
+    selectText: { flex: 1, fontSize: 15, color: colors.textPrimary },
+    chevronOpen: { transform: [{ rotate: '180deg' }] },
+    options: {
+      marginTop: spacing.xs, borderRadius: radius.input,
+      borderWidth: 1, borderColor: colors.border, backgroundColor: colors.bgSurface,
+      overflow: 'hidden',
+    },
+    option: {
+      flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+      minHeight: 48, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm,
+    },
+    optionSelected: { backgroundColor: colors.bgInput },
+    optionPressed: { backgroundColor: colors.bgSurfaceAlt },
     container: {
       flexDirection: 'row',
       backgroundColor: colors.bgSurface,

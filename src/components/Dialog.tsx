@@ -8,7 +8,7 @@ import { useT } from '@/i18n';
 export interface DialogAction {
   label: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary' | 'neutral';
 }
 
 /**

@@ -93,7 +93,7 @@ export const ICONS: Record<IconName, Glyph> = {
   chevronDown: 'chevron-down',
   arrowRight: 'arrow-forward-outline',
   close: 'close-outline',
-  menu: 'reorder-two-outline',
+  menu: 'menu-outline',
 
   search: 'search-outline',
   edit: 'pencil',

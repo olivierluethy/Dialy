@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Icon, type IconName } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
-import { IconBubble, Card, SectionLabel } from '@/components/primitives';
+import { Card, SectionLabel } from '@/components/primitives';
 import { DiabetesTypeControl, LanguageControl, ThemeModeControl } from '@/components/SegmentedControl';
 import { Button } from '@/components/Button';
 import { radius, spacing, type Colors } from '@/theme/theme';
@@ -93,7 +93,6 @@ export function AccountView() {
   return (
     <Screen>
       <View style={styles.header}>
-        <IconBubble name="personCircle" size={30} />
         <Text style={styles.email}>{user?.email || t.account.signedIn}</Text>
         <View style={[styles.badge, isPremium ? styles.badgePremium : styles.badgeFree]}>
           <Text style={[styles.badgeText, isPremium && styles.badgeTextPremium]}>
@@ -102,33 +101,36 @@ export function AccountView() {
         </View>
       </View>
 
-      {/* Dev-only premium toggle (no real IAP in this build). Long-press the
-          row to flip the premium flag and test the premium UI. */}
-      <SectionLabel>{t.account.premium}</SectionLabel>
-      <Pressable onLongPress={togglePremiumDev} delayLongPress={500}>
-        <Card>
-          <View style={styles.row}>
-            <Icon name="premium" size={20} color={colors.accent} />
-            <View style={styles.rowBody}>
-              <Text style={styles.rowTitle}>{t.account.premiumTitle}</Text>
-              <Text style={styles.rowSub}>{t.account.premiumSub}</Text>
-            </View>
-          </View>
-          <Button
-            title={t.account.viewPremium}
-            variant="secondary"
-            onPress={() => navigation.navigate('Paywall')}
-            style={{ marginTop: spacing.md }}
-          />
-          <Text style={styles.devHint}>{t.account.devHint}</Text>
-        </Card>
-      </Pressable>
+      {!isPremium && (
+        <>
+          <SectionLabel>{t.account.premium}</SectionLabel>
+          {/* Long-press to enable demo Premium (no real IAP in this build). */}
+          <Pressable onLongPress={togglePremiumDev} delayLongPress={500}>
+            <Card>
+              <View style={styles.row}>
+                <Icon name="premium" size={20} color={colors.accent} />
+                <View style={styles.rowBody}>
+                  <Text style={styles.rowTitle}>{t.account.premiumTitle}</Text>
+                  <Text style={styles.rowSub}>{t.account.premiumSub}</Text>
+                </View>
+              </View>
+              <Button
+                title={t.account.viewPremium}
+                variant="secondary"
+                onPress={() => navigation.navigate('Paywall')}
+                style={{ marginTop: spacing.md }}
+              />
+              <Text style={styles.devHint}>{t.account.devHint}</Text>
+            </Card>
+          </Pressable>
+        </>
+      )}
 
-      <SectionLabel style={styles.spaced}>{t.common.diabetesType}</SectionLabel>
-      <DiabetesTypeControl />
-
-      <SectionLabel>{t.common.language}</SectionLabel>
+      <SectionLabel style={styles.spaced}>{t.common.language}</SectionLabel>
       <LanguageControl />
+
+      <SectionLabel>{t.common.diabetesType}</SectionLabel>
+      <DiabetesTypeControl />
 
       <SectionLabel>{t.common.appearance}</SectionLabel>
       <ThemeModeControl />

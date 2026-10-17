@@ -647,7 +647,7 @@ export function KHRechnerScreen() {
         visible={dialog?.kind === 'meal'}
         title={t.khrechner.mealTitle}
         onClose={closeDialog}
-        actions={[{ label: t.common.close, onPress: closeDialog }]}
+        actions={[{ label: t.common.close, variant: 'neutral', onPress: closeDialog }]}
       >
         <View style={styles.mealList}>
           {meal.map((item) => (
