@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Pressable,
   ActivityIndicator,
+  Keyboard,
   ScrollView,
   Modal,
 } from 'react-native';
@@ -80,6 +81,8 @@ function portionNutrients(food: Food, grams: number) {
 }
 
 export function KHRechnerScreen() {
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollToTopAfterAddRef = useRef(false);
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const t = useT();
@@ -181,6 +184,7 @@ export function KHRechnerScreen() {
 
   // Picking a food opens the calculation popup.
   const selectFood = (food: Food) => {
+    scrollToTopAfterAddRef.current = false;
     setSelected(food);
     setPortionListOpen(false);
     setSelectedPortionIndex(null);
@@ -235,7 +239,10 @@ export function KHRechnerScreen() {
   const addToMeal = () => {
     if (!selected || grams <= 0) return;
     setMeal((m) => [...m, { key: uuidv4(), food: selected, grams }]);
+    scrollToTopAfterAddRef.current = true;
+    Keyboard.dismiss();
     closeFood();
+    scrollRef.current?.scrollTo({ x: 0, y: 0, animated: false });
   };
 
   // Close the food editor without adding anything.
@@ -298,7 +305,7 @@ export function KHRechnerScreen() {
   const closeDialog = () => setDialog(null);
 
   return (
-    <Screen>
+    <Screen scrollRef={scrollRef}>
       <View style={styles.titleRow}>
         <ScreenTitle style={styles.title}>{t.khrechner.title}</ScreenTitle>
         <View style={styles.totalRow}>
@@ -452,6 +459,12 @@ export function KHRechnerScreen() {
         transparent
         animationType="fade"
         onRequestClose={closeFood}
+        onDismiss={() => {
+          if (!scrollToTopAfterAddRef.current) return;
+          scrollToTopAfterAddRef.current = false;
+          // Keep the total visible after the modal restores focus to the food row.
+          requestAnimationFrame(() => scrollRef.current?.scrollTo({ x: 0, y: 0, animated: false }));
+        }}
       >
         <View style={styles.modalBackdrop}>
           <Pressable
