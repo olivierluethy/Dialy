@@ -8,15 +8,15 @@ import {
   StyleProp,
   ViewStyle,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { radius, spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
+import { Icon, type IconName } from '@/components/Icon';
 
 interface ButtonProps {
   title: string;
   onPress: () => void;
   variant?: 'primary' | 'secondary';
-  icon?: keyof typeof Ionicons.glyphMap;
+  icon?: IconName;
   disabled?: boolean;
   loading?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -52,7 +52,7 @@ export function Button({
       ) : (
         <View style={styles.row}>
           {icon && (
-            <Ionicons
+            <Icon
               name={icon}
               size={18}
               color={isPrimary ? colors.textOnAccent : colors.accent}

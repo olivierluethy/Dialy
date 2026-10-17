@@ -87,8 +87,8 @@ const en: Dict = {
       'The diary requires an account with a subscription. That way your entries stay safe and available on all your devices.',
     diaryNeedsPremium:
       'The diary is part of Dialy Premium. With the subscription you save meals and sport and see your history.',
-    loginCta: 'Sign in →',
-    premiumCta: 'View Premium →',
+    loginCta: 'Sign in',
+    premiumCta: 'View Premium',
   },
 
   khrechner: {
@@ -253,7 +253,7 @@ const en: Dict = {
     footnote: (unit: string) =>
       `Peak and rise in ${unit}, measured within 2.5 hours after the meal. Values above 10.0 are highlighted.`,
     disclaimer:
-      '⚠️ For information only. Dialy gives no treatment advice (e.g. insulin doses) and does not replace a meter.',
+      'For information only. Dialy gives no treatment advice (e.g. insulin doses) and does not replace a meter.',
     manageData: 'Manage glucose data',
     emptyTitle: 'No glucose data yet',
     emptyText:
@@ -288,7 +288,7 @@ const en: Dict = {
     storedCount: (n: number) => `${n} glucose values stored.`,
     disconnectDelete: 'Disconnect & delete all glucose data',
     disclaimer:
-      '⚠️ Dialy shows values for information only and gives no treatment advice. Your values are transmitted and stored encrypted.',
+      'Dialy shows values for information only and gives no treatment advice. Your values are transmitted and stored encrypted.',
     csvError: (key: string) => {
       switch (key) {
         case 'empty':
@@ -328,7 +328,7 @@ const en: Dict = {
     bgBefore: 'Blood glucose before',
     curve: 'Typical tendency (general example)',
     disclaimer:
-      '⚠️ General illustration, not calculated for you: it only shows which way blood glucose often moves with this activity. No prediction and no recommendation – Dialy does not calculate insulin doses or carbohydrate amounts.',
+      'General illustration, not calculated for you: it only shows which way blood glucose often moves with this activity. No prediction and no recommendation – Dialy does not calculate insulin doses or carbohydrate amounts.',
     carbsBefore: 'Carbohydrates before sport (note)',
     carbsAfter: 'Carbohydrates after sport (note)',
     beforePrefix: 'Before sport',
@@ -340,7 +340,7 @@ const en: Dict = {
     for: 'for',
     pumpHint:
       'Only a note about your own pump setting. Dialy makes no recommendation and calculates nothing.',
-    saved: 'Saved to diary ✓',
+    saved: 'Saved to diary',
     save: 'Save sport',
   },
 
@@ -459,7 +459,7 @@ const en: Dict = {
       'The subscription renews automatically every month and can be cancelled at any time up to 24 hours before it ends in your App Store or Google Play account settings.',
     mockNote:
       'Note: in this build, payment is only a preview. No real payment system is set up.',
-    active: 'Premium is active ✓',
+    active: 'Premium is active',
     unlock: 'Unlock Premium (demo)',
   },
 

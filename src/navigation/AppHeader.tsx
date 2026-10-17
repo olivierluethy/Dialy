@@ -10,7 +10,7 @@ import {
   type PressableStateCallbackType,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import type { BottomTabHeaderProps } from '@react-navigation/bottom-tabs';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { radius, spacing, type Colors } from '@/theme/theme';
@@ -81,23 +81,23 @@ export function AppHeader({ navigation, route }: BottomTabHeaderProps) {
   return (
     <View style={[styles.bar, { paddingTop: insets.top }]}>
       <View style={styles.row}>
-          <Pressable
+        <Pressable
           onPress={() => navigation.navigate('Ratgeber', { screen: 'RatgeberList' })}
           style={styles.brand}
           accessibilityRole="link"
           accessibilityLabel={t.nav.brandA11y}
           hitSlop={8}
         >
-          <Ionicons name="water" size={22} color={colors.accent} />
+          <Icon name="brand" size={22} color={colors.accent} />
           <Text style={styles.brandText}>Dialy</Text>
         </Pressable>
-          <Pressable
+        <Pressable
           onPress={() => setOpen(true)}
           accessibilityRole="button"
           accessibilityLabel={t.nav.openMenu}
           hitSlop={12}
         >
-          <Ionicons name="reorder-two-outline" size={28} color={colors.textPrimary} />
+          <Icon name="menu" size={28} color={colors.textPrimary} />
         </Pressable>
       </View>
 
@@ -176,7 +176,7 @@ function MenuOverlay({
             accessibilityLabel={t.nav.closeMenu}
             hitSlop={12}
           >
-            <Ionicons name="close-outline" size={30} color={colors.textPrimary} />
+            <Icon name="close" size={30} color={colors.textPrimary} />
           </Pressable>
         </View>
 
@@ -197,7 +197,7 @@ function MenuOverlay({
                         {item.label}
                       </Text>
                       {showChevron(state) && (
-                        <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
+                        <Icon name="chevronRight" size={20} color={colors.textTertiary} />
                       )}
                     </>
                   )}
@@ -222,7 +222,7 @@ function MenuOverlay({
                     <>
                       <Text style={styles.moreText}>{item.label}</Text>
                       {showChevron(state) && (
-                        <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+                        <Icon name="chevronRight" size={16} color={colors.textTertiary} />
                       )}
                     </>
                   )}
@@ -236,8 +236,8 @@ function MenuOverlay({
             accessibilityRole="button"
             accessibilityLabel={nextScheme === 'light' ? t.nav.toLight : t.nav.toDark}
           >
-            <Ionicons
-              name={nextScheme === 'light' ? 'sunny-outline' : 'moon-outline'}
+            <Icon
+              name={nextScheme === 'light' ? 'sun' : 'moon'}
               size={18}
               color={colors.textPrimary}
             />

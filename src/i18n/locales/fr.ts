@@ -88,8 +88,8 @@ const fr: Dict = {
       'Le journal nécessite un compte avec un abonnement. Ainsi, tes entrées restent en sécurité et disponibles sur tous tes appareils.',
     diaryNeedsPremium:
       'Le journal fait partie de Dialy Premium. Avec l’abonnement, tu enregistres tes repas et ton sport et tu vois ton historique.',
-    loginCta: 'Se connecter →',
-    premiumCta: 'Voir Premium →',
+    loginCta: 'Se connecter',
+    premiumCta: 'Voir Premium',
   },
 
   khrechner: {
@@ -258,7 +258,7 @@ const fr: Dict = {
     footnote: (unit: string) =>
       `Pic et hausse en ${unit}, mesurés dans les 2.5 heures après le repas. Les valeurs supérieures à 10.0 sont mises en évidence.`,
     disclaimer:
-      '⚠️ À titre informatif uniquement. Dialy ne donne aucune recommandation thérapeutique (p. ex. doses d’insuline) et ne remplace pas un lecteur.',
+      'À titre informatif uniquement. Dialy ne donne aucune recommandation thérapeutique (p. ex. doses d’insuline) et ne remplace pas un lecteur.',
     manageData: 'Gérer les données de glycémie',
     emptyTitle: 'Pas encore de données de glycémie',
     emptyText:
@@ -293,7 +293,7 @@ const fr: Dict = {
     storedCount: (n: number) => `${n} valeurs de glycémie enregistrées.`,
     disconnectDelete: 'Déconnecter et supprimer toutes les données de glycémie',
     disclaimer:
-      '⚠️ Dialy affiche les valeurs à titre informatif et ne donne aucune recommandation thérapeutique. Tes valeurs sont transmises et stockées de manière chiffrée.',
+      'Dialy affiche les valeurs à titre informatif et ne donne aucune recommandation thérapeutique. Tes valeurs sont transmises et stockées de manière chiffrée.',
     csvError: (key: string) => {
       switch (key) {
         case 'empty':
@@ -333,7 +333,7 @@ const fr: Dict = {
     bgBefore: 'Glycémie avant le sport',
     curve: 'Tendance typique (exemple général)',
     disclaimer:
-      '⚠️ Illustration générale, pas calculée pour toi : elle montre seulement dans quel sens la glycémie évolue souvent avec cette activité. Ni prévision ni recommandation – Dialy ne calcule ni dose d’insuline ni quantité de glucides.',
+      'Illustration générale, pas calculée pour toi : elle montre seulement dans quel sens la glycémie évolue souvent avec cette activité. Ni prévision ni recommandation – Dialy ne calcule ni dose d’insuline ni quantité de glucides.',
     carbsBefore: 'Glucides avant le sport (note)',
     carbsAfter: 'Glucides après le sport (note)',
     beforePrefix: 'Avant le sport',
@@ -345,7 +345,7 @@ const fr: Dict = {
     for: 'pendant',
     pumpHint:
       'Simple note sur le réglage de ta propre pompe. Dialy ne donne aucune recommandation et ne calcule rien.',
-    saved: 'Enregistré dans le journal ✓',
+    saved: 'Enregistré dans le journal',
     save: 'Enregistrer le sport',
   },
 
@@ -470,7 +470,7 @@ const fr: Dict = {
       'L’abonnement se renouvelle automatiquement chaque mois et peut être résilié à tout moment jusqu’à 24 heures avant son échéance dans les réglages de ton compte App Store ou Google Play.',
     mockNote:
       'Remarque : dans cette version, le paiement n’est qu’un aperçu. Aucun véritable système de paiement n’est configuré.',
-    active: 'Premium est actif ✓',
+    active: 'Premium est actif',
     unlock: 'Activer Premium (démo)',
   },
 

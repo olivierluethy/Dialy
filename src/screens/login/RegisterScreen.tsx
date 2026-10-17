@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { Screen } from '@/components/Screen';
 import { IconBubble } from '@/components/primitives';
+import { Icon } from '@/components/Icon';
 import { Button } from '@/components/Button';
 import { TextField } from '@/components/TextField';
 import { spacing, type Colors } from '@/theme/theme';
-import { useThemedStyles } from '@/theme/useTheme';
+import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import { useAppStore } from '@/state/store';
 import { authService } from '@/services/auth';
 import { useT } from '@/i18n';
@@ -14,6 +15,7 @@ import { TERMS_VERSION } from '@/legal/terms';
 import type { LoginStackParamList } from '@/navigation/types';
 
 export function RegisterScreen() {
+  const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const t = useT();
   const navigation = useNavigation<any>();
@@ -59,7 +61,7 @@ export function RegisterScreen() {
   return (
     <Screen>
       <View style={styles.header}>
-        <IconBubble name="person-add" size={26} />
+        <IconBubble name="personAdd" size={26} />
         <Text style={styles.title}>{t.register.title}</Text>
         <Text style={styles.subtitle}>{t.register.subtitle}</Text>
       </View>
@@ -90,12 +92,16 @@ export function RegisterScreen() {
 
       {/* Consent — terms of use plus health data, which is specially protected
           (revDSG / GDPR Art. 9). The accepted terms version is stored at sign-up. */}
-      <Text
-        style={[styles.consent, consent && styles.consentActive]}
+      <Pressable
+        style={styles.consentRow}
         onPress={() => setConsent((c) => !c)}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: consent }}
+        accessibilityLabel={t.register.consent}
       >
-        {consent ? '☑' : '☐'}  {t.register.consent}
-      </Text>
+        <Icon name={consent ? 'checkboxOn' : 'checkboxOff'} size={22} color={consent ? colors.accent : colors.textTertiary} />
+        <Text style={[styles.consent, consent && styles.consentActive]}>{t.register.consent}</Text>
+      </Pressable>
       <Text style={styles.legalLinks}>
         <Text style={styles.legalLink} onPress={() => navigation.navigate('Terms')}>
           {t.common.termsOfUse}
@@ -125,11 +131,18 @@ const makeStyles = (colors: Colors) =>
       marginTop: spacing.sm,
       lineHeight: 21,
     },
+    consentRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: spacing.sm,
+      minHeight: 44,
+      marginBottom: spacing.md,
+    },
     consent: {
+      flex: 1,
       fontSize: 14,
       color: colors.textSecondary,
       lineHeight: 20,
-      marginBottom: spacing.md,
     },
     consentActive: { color: colors.textPrimary },
     legalLinks: { fontSize: 14, color: colors.textTertiary, marginBottom: spacing.md },

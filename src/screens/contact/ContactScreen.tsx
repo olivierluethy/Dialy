@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import Constants from 'expo-constants';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { Card, SectionLabel } from '@/components/primitives';
 import { Button } from '@/components/Button';
@@ -234,7 +234,7 @@ export function ContactScreen() {
                   accessibilityLabel={t.contact.otherFoodA11y}
                   hitSlop={8}
                 >
-                  <Ionicons name="close-circle" size={22} color={colors.textTertiary} />
+                  <Icon name="clear" size={22} color={colors.textTertiary} />
                 </Pressable>
               </View>
             </Card>

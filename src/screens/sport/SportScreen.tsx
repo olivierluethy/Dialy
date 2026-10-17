@@ -1,15 +1,15 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/Screen';
 import { ScreenTitle, SectionLabel, Card } from '@/components/primitives';
+import { Icon, type IconName } from '@/components/Icon';
 import { Button } from '@/components/Button';
 import { TextField } from '@/components/TextField';
 import { SelectableChip } from '@/components/Chip';
 import { TrendChart } from '@/components/TrendChart';
 import { GateNotice } from '@/components/GateNotice';
 import { radius, spacing, type Colors } from '@/theme/theme';
-import { useThemedStyles } from '@/theme/useTheme';
+import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import { useAppStore } from '@/state/store';
 import { sportsRepo } from '@/db/repositories/sports';
 import { can } from '@/policy/gating';
@@ -18,12 +18,12 @@ import { illustrativeTrend } from '@/utils/sportCurve';
 import type { Activity } from '@/types/models';
 
 // Labels: t.activities.
-const ACTIVITIES: Array<{ value: Activity; icon: keyof typeof Ionicons.glyphMap }> = [
-  { value: 'wandern', icon: 'trail-sign' },
-  { value: 'laufen', icon: 'walk' },
-  { value: 'rad', icon: 'bicycle' },
-  { value: 'schwimmen', icon: 'water' },
-  { value: 'kraft', icon: 'barbell' },
+const ACTIVITIES: Array<{ value: Activity; icon: IconName }> = [
+  { value: 'wandern', icon: 'activityHike' },
+  { value: 'laufen', icon: 'activityRun' },
+  { value: 'rad', icon: 'activityBike' },
+  { value: 'schwimmen', icon: 'activitySwim' },
+  { value: 'kraft', icon: 'activityStrength' },
 ];
 
 // Small numeric helper that tolerates empty / partial input.
@@ -33,6 +33,7 @@ const num = (s: string, fallback = 0): number => {
 };
 
 export function SportScreen() {
+  const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const t = useT();
   const user = useAppStore((s) => s.user);
@@ -135,7 +136,9 @@ export function SportScreen() {
       <SectionLabel>{t.sport.curve}</SectionLabel>
       <Card>
         <TrendChart curve={curve} />
-        <Text style={styles.disclaimer}>{t.sport.disclaimer}</Text>
+        <Text style={styles.disclaimer}>
+          <Icon name="alert" size={13} color={colors.warn} /> {t.sport.disclaimer}
+        </Text>
       </Card>
 
       {/* Carbs before / after */}
@@ -144,7 +147,7 @@ export function SportScreen() {
         <Text style={styles.sentence}>
           {t.sport.beforePrefix}{' '}
           <InlineInput value={carbsBeforeHours} onChange={setCarbsBeforeHours} width={48} />{' '}
-          {t.units.hoursShort} → <InlineInput value={carbsBeforeG} onChange={setCarbsBeforeG} width={56} />{' '}
+          {t.units.hoursShort} <Icon name="arrowRight" size={16} color={colors.textSecondary} /> <InlineInput value={carbsBeforeG} onChange={setCarbsBeforeG} width={56} />{' '}
           g {t.units.carbs}
         </Text>
       </Card>
@@ -154,7 +157,7 @@ export function SportScreen() {
         <Text style={styles.sentence}>
           {t.sport.afterPrefix}{' '}
           <InlineInput value={carbsAfterHours} onChange={setCarbsAfterHours} width={48} />{' '}
-          {t.units.hoursShort} → <InlineInput value={carbsAfterG} onChange={setCarbsAfterG} width={56} />{' '}
+          {t.units.hoursShort} <Icon name="arrowRight" size={16} color={colors.textSecondary} /> <InlineInput value={carbsAfterG} onChange={setCarbsAfterG} width={56} />{' '}
           g {t.units.carbs}
         </Text>
         <Text style={styles.hint}>{t.sport.afterHint}</Text>
@@ -175,7 +178,7 @@ export function SportScreen() {
       {can('saveDiaryEntry', ctx) ? (
         <Button
           title={saved ? t.sport.saved : t.sport.save}
-          icon={saved ? 'checkmark' : 'save'}
+          icon={saved ? 'check' : 'save'}
           onPress={save}
           disabled={saved || bgBefore.trim() === ''}
           style={styles.saveBtn}

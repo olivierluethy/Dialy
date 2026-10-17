@@ -677,6 +677,13 @@ ohne externe Konfiguration läuft. Im Code als `TODO(native)` markiert.
 
 ## Bewusste Entscheidungen
 
+- **Ein gemeinsames Icon-Set.** Alle App-Symbole laufen über
+  `src/components/Icon.tsx`: minimalistische Ionicons, bevorzugt als Outline,
+  mit Theme-Farben für Hell und Dunkel. Neue Symbole dort unter einem
+  semantischen Namen ergänzen und als `<Icon name="edit" size={20} />`
+  verwenden. Standardgrösse: 22; in Buttons und Chips: 16–20. Keine eigenen
+  Icon-Fonts oder Emoji-Symbole in Screens. Beschriftungen gehören an das
+  bedienbare Element; dekorative Icons sind für Screenreader ausgeblendet.
 - **Dark-Mode als Standard.** Im Login-Tab unter „Darstellung“ lässt sich auf
   **Hell** oder **System** (folgt der Geräte-Einstellung) umschalten. Die Wahl
   wird gespeichert. Farben kommen ausschliesslich aus `src/theme/theme.ts`

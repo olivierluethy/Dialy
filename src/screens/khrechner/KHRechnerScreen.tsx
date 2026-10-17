@@ -9,7 +9,7 @@ import {
   Modal,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { useNavigation } from '@react-navigation/native';
 import { Screen } from '@/components/Screen';
 import { ScreenTitle, SectionLabel, Card } from '@/components/primitives';
@@ -322,8 +322,8 @@ export function KHRechnerScreen() {
             {saving ? (
               <ActivityIndicator size="small" color={colors.accent} />
             ) : (
-              <Ionicons
-                name="save-outline"
+              <Icon
+                name="save"
                 size={20}
                 color={canSaveDiary ? colors.accent : colors.textTertiary}
               />
@@ -341,14 +341,14 @@ export function KHRechnerScreen() {
             accessibilityLabel={t.khrechner.clearA11y}
             hitSlop={4}
           >
-            <Ionicons name="trash-outline" size={20} color={colors.danger} />
+            <Icon name="delete" size={20} color={colors.danger} />
           </Pressable>
         </View>
       </View>
 
 
       <View style={styles.searchRow}>
-        <Ionicons name="search" size={18} color={colors.textTertiary} />
+        <Icon name="search" size={18} color={colors.textTertiary} />
         <TextField
           placeholder={t.khrechner.searchPlaceholder}
           value={query}
@@ -365,7 +365,7 @@ export function KHRechnerScreen() {
             accessibilityLabel={t.khrechner.clearSearchA11y}
             hitSlop={8}
           >
-            <Ionicons name="close-circle" size={20} color={colors.textTertiary} />
+            <Icon name="clear" size={20} color={colors.textTertiary} />
           </Pressable>
         )}
       </View>
@@ -451,7 +451,7 @@ export function KHRechnerScreen() {
                     hitSlop={8}
                     style={styles.closeBtn}
                   >
-                    <Ionicons name="close" size={22} color={colors.textTertiary} />
+                    <Icon name="close" size={22} color={colors.textTertiary} />
                   </Pressable>
                 </View>
 

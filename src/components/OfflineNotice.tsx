@@ -13,7 +13,7 @@ export function OfflineNotice({ message, onRetry }: { message: string; onRetry?:
   const t = useT();
   return (
     <Card style={styles.card}>
-      <IconBubble name="cloud-offline-outline" color={colors.warn} bg={colors.bgSurfaceAlt} />
+      <IconBubble name="offline" color={colors.warn} bg={colors.bgSurfaceAlt} />
       <Text style={styles.text}>{message}</Text>
       {onRetry && (
         <Button

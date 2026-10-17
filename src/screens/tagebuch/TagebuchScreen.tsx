@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, ActivityIndicator, ScrollView } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon, type IconName } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenTitle, Card, IconBubble } from '@/components/primitives';
 import { FadeIn, staggerDelay } from '@/components/FadeIn';
@@ -137,6 +137,15 @@ export function TagebuchScreen() {
     setView('calendar');
     exitSelection();
   };
+  // Selection is a list concept: enter it from either view.
+  const toggleSelect = () => {
+    if (selecting) {
+      exitSelection();
+      return;
+    }
+    if (view !== 'list') setView('list');
+    setSelecting(true);
+  };
 
   const exitSelection = () => {
     setSelecting(false);
@@ -231,42 +240,42 @@ export function TagebuchScreen() {
     <Screen>
       <View style={styles.titleRow}>
         <ScreenTitle style={styles.title}>{t.tagebuch.title}</ScreenTitle>
-        {unlocked && groups.length > 0 && view === 'list' && (
-          <Pressable
-            onPress={() => (selecting ? exitSelection() : setSelecting(true))}
-            accessibilityRole="button"
-            hitSlop={8}
-          >
-            <Text style={styles.titleAction}>{selecting ? t.tagebuch.done : t.tagebuch.select}</Text>
-          </Pressable>
+        {unlocked && groups.length > 0 && (
+          <View style={styles.navIcons}>
+            <TabIconButton icon="list" label={t.tagebuch.viewList} active={view === 'list'} onPress={showList} />
+            <TabIconButton
+              icon="calendar"
+              label={t.tagebuch.viewCalendar}
+              active={view === 'calendar'}
+              onPress={showCalendar}
+            />
+            <TabIconButton
+              icon={selecting ? 'checkDone' : 'select'}
+              label={selecting ? t.tagebuch.done : t.tagebuch.select}
+              active={selecting}
+              onPress={toggleSelect}
+            />
+          </View>
         )}
       </View>
-
-      {/* List / calendar switch */}
-      {unlocked && groups.length > 0 && (
-        <View style={styles.viewToggle}>
-          <ViewTab label={t.tagebuch.viewList} icon="list" active={view === 'list'} onPress={showList} />
-          <ViewTab label={t.tagebuch.viewCalendar} icon="calendar" active={view === 'calendar'} onPress={showCalendar} />
-        </View>
-      )}
 
       {/* Locked without a subscription: sign in, or (signed in) get Premium. */}
       {!unlocked ? (
         <Card style={styles.lockedCard}>
-          <IconBubble name="lock-closed" color={colors.warn} bg={colors.bgSurfaceAlt} />
+          <IconBubble name="lock" color={colors.warn} bg={colors.bgSurfaceAlt} />
           <Text style={styles.lockedTitle}>{t.tagebuch.locked}</Text>
           {user === null ? (
             <>
               <Text style={styles.lockedText}>{t.gate.diaryNeedsAccount}</Text>
               <Button
                 title={t.login.signIn}
-                icon="log-in-outline"
+                icon="login"
                 onPress={goLogin}
                 style={styles.lockedButton}
               />
               <Button
                 title={t.login.createAccount}
-                icon="person-add"
+                icon="personAdd"
                 variant="secondary"
                 onPress={goRegister}
                 style={styles.lockedButtonSecondary}
@@ -277,7 +286,7 @@ export function TagebuchScreen() {
               <Text style={styles.lockedText}>{t.gate.diaryNeedsPremium}</Text>
               <Button
                 title={t.account.viewPremium}
-                icon="star"
+                icon="premium"
                 onPress={goPremium}
                 style={styles.lockedButton}
               />
@@ -296,14 +305,14 @@ export function TagebuchScreen() {
               <View style={styles.selectActions}>
                 <Button
                   title={t.tagebuch.changeDateTime}
-                  icon="time-outline"
+                  icon="time"
                   onPress={() => setEditKeys([...selected])}
                   disabled={selected.size === 0}
                   style={styles.selectButton}
                 />
                 <Button
                   title={t.common.delete}
-                  icon="trash-outline"
+                  icon="delete"
                   variant="secondary"
                   onPress={() => setDeleting(selectedMeals)}
                   disabled={selectedMeals.length === 0}
@@ -457,15 +466,15 @@ function FeedRow({
       accessibilityHint={selecting ? t.tagebuch.markHint : t.tagebuch.editHint}
     >
       {selecting && (
-        <Ionicons
-          name={selected ? 'checkmark-circle' : 'ellipse-outline'}
+        <Icon
+          name={selected ? 'radioOn' : 'radioOff'}
           size={22}
           color={selected ? colors.accent : colors.textTertiary}
           style={styles.check}
         />
       )}
       <Text style={styles.time}>{time}</Text>
-      <IconBubble name={item.kind === 'meal' ? 'restaurant' : 'walk'} size={18} />
+      <IconBubble name={item.kind === 'meal' ? 'meal' : 'activityRun'} size={18} />
       <View style={styles.rowBody}>
         <Text style={styles.rowTitle}>{itemTitle(item, t)}</Text>
         {item.kind === 'meal' ? (
@@ -489,7 +498,7 @@ function FeedRow({
               hitSlop={8}
               style={({ pressed }) => [styles.actionBtn, pressed && styles.actionBtnPressed]}
             >
-              <Ionicons name="pencil" size={18} color={colors.textSecondary} />
+              <Icon name="edit" size={18} color={colors.textSecondary} />
             </Pressable>
           )}
           {onDelete && (
@@ -500,7 +509,7 @@ function FeedRow({
               hitSlop={8}
               style={({ pressed }) => [styles.actionBtn, pressed && styles.actionBtnPressed]}
             >
-              <Ionicons name="trash-outline" size={20} color={colors.danger} />
+              <Icon name="delete" size={20} color={colors.danger} />
             </Pressable>
           )}
         </View>
@@ -677,15 +686,15 @@ function monthCells(month: Date): Array<Date | null> {
   return cells;
 }
 
-/** One of the two view tabs (Liste / Kalender). */
-function ViewTab({
-  label,
+/** Small round icon button in the title row (Liste / Kalender / Auswählen). */
+function TabIconButton({
   icon,
+  label,
   active,
   onPress,
 }: {
+  icon: IconName;
   label: string;
-  icon: keyof typeof Ionicons.glyphMap;
   active: boolean;
   onPress: () => void;
 }) {
@@ -694,12 +703,13 @@ function ViewTab({
   return (
     <Pressable
       onPress={onPress}
-      style={[styles.viewTab, active && styles.viewTabActive]}
       accessibilityRole="button"
+      accessibilityLabel={label}
       accessibilityState={{ selected: active }}
+      hitSlop={6}
+      style={[styles.navIconBtn, active && styles.navIconBtnActive]}
     >
-      <Ionicons name={icon} size={16} color={active ? colors.textOnAccent : colors.textSecondary} style={styles.viewTabIcon} />
-      <Text style={[styles.viewTabText, active && styles.viewTabTextActive]}>{label}</Text>
+      <Icon name={icon} size={20} color={active ? colors.textOnAccent : colors.textSecondary} />
     </Pressable>
   );
 }
@@ -735,13 +745,13 @@ function MonthCalendar({
     <View style={styles.calendar}>
       <View style={styles.calHeader}>
         <Pressable onPress={onPrevMonth} hitSlop={8} style={styles.calNavBtn} accessibilityLabel={t.tagebuch.prevMonth}>
-          <Ionicons name="chevron-back" size={20} color={colors.textPrimary} />
+          <Icon name="chevronLeft" size={20} color={colors.textPrimary} />
         </Pressable>
         <Pressable onPress={onToday} hitSlop={8}>
           <Text style={styles.calMonthLabel}>{`${t.date.months[month.getMonth()]} ${month.getFullYear()}`}</Text>
         </Pressable>
         <Pressable onPress={onNextMonth} hitSlop={8} style={styles.calNavBtn} accessibilityLabel={t.tagebuch.nextMonth}>
-          <Ionicons name="chevron-forward" size={20} color={colors.textPrimary} />
+          <Icon name="chevronRight" size={20} color={colors.textPrimary} />
         </Pressable>
       </View>
 
@@ -791,27 +801,16 @@ const makeStyles = (colors: Colors) =>
     title: { marginBottom: 0 },
     titleAction: { fontSize: 16, fontWeight: '600', color: colors.accent },
 
-    viewToggle: {
-      flexDirection: 'row',
-      backgroundColor: colors.bgSurface,
+    navIcons: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+    navIconBtn: {
+      width: 36,
+      height: 36,
       borderRadius: radius.pill,
-      borderWidth: 1,
-      borderColor: colors.border,
-      padding: spacing.xs,
-      marginBottom: spacing.lg,
-    },
-    viewTab: {
-      flex: 1,
-      flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      paddingVertical: 8,
-      borderRadius: radius.pill,
+      backgroundColor: colors.bgSurfaceAlt,
     },
-    viewTabActive: { backgroundColor: colors.accent },
-    viewTabIcon: { marginRight: 6 },
-    viewTabText: { fontSize: 15, fontWeight: '600', color: colors.textSecondary },
-    viewTabTextActive: { color: colors.textOnAccent },
+    navIconBtnActive: { backgroundColor: colors.accent },
 
     calendar: {
       backgroundColor: colors.bgSurface,

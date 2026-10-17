@@ -7,9 +7,9 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { radius, spacing, elevation, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
+import { Icon, type IconName } from '@/components/Icon';
 
 /** Elevated surface card. */
 export function Card({
@@ -54,7 +54,7 @@ export function IconBubble({
   color,
   bg,
 }: {
-  name: keyof typeof Ionicons.glyphMap;
+  name: IconName;
   size?: number;
   color?: string;
   bg?: string;
@@ -63,7 +63,7 @@ export function IconBubble({
   const styles = useThemedStyles(makeStyles);
   return (
     <View style={[styles.bubble, { backgroundColor: bg ?? colors.accentSubtle }]}>
-      <Ionicons name={name} size={size} color={color ?? colors.accent} />
+      <Icon name={name} size={size} color={color ?? colors.accent} />
     </View>
   );
 }

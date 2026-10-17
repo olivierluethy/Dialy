@@ -2,10 +2,10 @@ import React, { useCallback, useState } from 'react';
 import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/Screen';
 import { DiabetesTypeControl } from '@/components/SegmentedControl';
 import { ScreenTitle, IconBubble } from '@/components/primitives';
+import { Icon, type IconName } from '@/components/Icon';
 import { FadeIn, staggerDelay } from '@/components/FadeIn';
 import { radius, spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
@@ -18,15 +18,15 @@ import type { Article } from '@/types/models';
 import type { RatgeberStackParamList } from '@/navigation/types';
 
 // Map article categories to icons. Unknown categories fall back to a book.
-const CATEGORY_ICON: Record<string, keyof typeof Ionicons.glyphMap> = {
-  Sport: 'walk',
-  Nacht: 'moon',
-  Insulin: 'water',
-  Technologie: 'hardware-chip',
-  Ernährung: 'restaurant',
-  Medikamente: 'medical',
-  Alltag: 'sunny',
-  Sicherheit: 'shield-checkmark',
+const CATEGORY_ICON: Record<string, IconName> = {
+  Sport: 'activityRun',
+  Nacht: 'catNight',
+  Insulin: 'catInsulin',
+  Technologie: 'catTech',
+  Ernährung: 'catNutrition',
+  Medikamente: 'catMeds',
+  Alltag: 'catEveryday',
+  Sicherheit: 'catSafety',
 };
 
 export function RatgeberScreen() {
@@ -103,7 +103,7 @@ export function RatgeberScreen() {
                   {a.read_minutes} min · {formatDate(a.published_at)}
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
+              <Icon name="chevronRight" size={20} color={colors.textTertiary} />
             </Pressable>
           </FadeIn>
         ))}

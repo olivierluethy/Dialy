@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { IconBubble, Card } from '@/components/primitives';
 import { Button } from '@/components/Button';
@@ -26,7 +26,7 @@ export function PaywallScreen() {
   return (
     <Screen>
       <View style={styles.header}>
-        <IconBubble name="star" size={30} />
+        <IconBubble name="premium" size={30} />
         <Text style={styles.title}>Dialy Premium</Text>
         <Text style={styles.price}>{t.paywall.price}</Text>
       </View>
@@ -34,7 +34,7 @@ export function PaywallScreen() {
       <Card>
         {t.paywall.features.map((f) => (
           <View key={f} style={styles.featureRow}>
-            <Ionicons name="checkmark-circle" size={20} color={colors.accent} />
+            <Icon name="radioOn" size={20} color={colors.accent} />
             <Text style={styles.featureText}>{f}</Text>
           </View>
         ))}
@@ -56,7 +56,7 @@ export function PaywallScreen() {
       {isPremium ? (
         <Button
           title={t.paywall.active}
-          icon="checkmark"
+          icon="check"
           onPress={() => navigation.goBack()}
           disabled
           style={styles.btn}
@@ -64,7 +64,7 @@ export function PaywallScreen() {
       ) : (
         <Button
           title={t.paywall.unlock}
-          icon="star"
+          icon="premium"
           onPress={() => {
             setPremium(true);
             navigation.goBack();

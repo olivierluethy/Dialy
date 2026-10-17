@@ -92,8 +92,8 @@ const de = {
       'Das Tagebuch erfordert ein Konto mit einem Abo. So bleiben deine Einträge sicher und geräteübergreifend verfügbar.',
     diaryNeedsPremium:
       'Das Tagebuch ist Teil von Dialy Premium. Mit dem Abo speicherst du Mahlzeiten und Sport und siehst deinen Verlauf.',
-    loginCta: 'Anmelden →',
-    premiumCta: 'Premium ansehen →',
+    loginCta: 'Anmelden',
+    premiumCta: 'Premium ansehen',
   },
 
   khrechner: {
@@ -227,7 +227,7 @@ const de = {
     footnote: (unit: string) =>
       `Spitze und Anstieg in ${unit}, gemessen innerhalb von 2.5 Stunden nach der Mahlzeit. Werte über 10.0 sind hervorgehoben.`,
     disclaimer:
-      '⚠️ Nur zur Information. Dialy gibt keine Therapieempfehlungen (z. B. Insulindosen) und ersetzt kein Messgerät.',
+      'Nur zur Information. Dialy gibt keine Therapieempfehlungen (z. B. Insulindosen) und ersetzt kein Messgerät.',
     manageData: 'Blutzucker-Daten verwalten',
     emptyTitle: 'Noch keine Blutzuckerdaten',
     emptyText:
@@ -263,7 +263,7 @@ const de = {
     storedCount: (n: number) => `${n} Blutzuckerwerte gespeichert.`,
     disconnectDelete: 'Verbindung trennen & alle Blutzuckerdaten löschen',
     disclaimer:
-      '⚠️ Dialy zeigt Werte nur zur Information und gibt keine Therapieempfehlungen. Deine Werte werden verschlüsselt übertragen und gespeichert.',
+      'Dialy zeigt Werte nur zur Information und gibt keine Therapieempfehlungen. Deine Werte werden verschlüsselt übertragen und gespeichert.',
     csvError: (key: string): string => {
       switch (key) {
         case 'empty':
@@ -303,7 +303,7 @@ const de = {
     bgBefore: 'Blutzucker vor Sport',
     curve: 'Typische Tendenz (allgemeines Beispiel)',
     disclaimer:
-      '⚠️ Allgemeine Illustration, nicht für dich berechnet: Sie zeigt nur, in welche Richtung sich der Blutzucker bei dieser Sportart oft bewegt. Keine Vorhersage und keine Empfehlung – Dialy berechnet keine Insulindosen und keine Kohlenhydratmengen.',
+      'Allgemeine Illustration, nicht für dich berechnet: Sie zeigt nur, in welche Richtung sich der Blutzucker bei dieser Sportart oft bewegt. Keine Vorhersage und keine Empfehlung – Dialy berechnet keine Insulindosen und keine Kohlenhydratmengen.',
     carbsBefore: 'Kohlenhydrate vor Sport (Notiz)',
     carbsAfter: 'Kohlenhydrate nach Sport (Notiz)',
     beforePrefix: 'Vor Sport',
@@ -315,7 +315,7 @@ const de = {
     for: 'für',
     pumpHint:
       'Nur eine Notiz zu deiner eigenen Pumpeneinstellung. Dialy gibt keine Empfehlung ab und berechnet nichts.',
-    saved: 'Im Tagebuch gespeichert ✓',
+    saved: 'Im Tagebuch gespeichert',
     save: 'Sport speichern',
   },
 
@@ -433,7 +433,7 @@ const de = {
       'Das Abo verlängert sich monatlich automatisch und kann jederzeit bis 24 Stunden vor Ablauf in den Einstellungen deines App-Store- bzw. Google-Play-Kontos gekündigt werden.',
     mockNote:
       'Hinweis: In diesem Build ist die Bezahlung nur eine Vorschau. Es ist kein echtes Zahlungssystem hinterlegt.',
-    active: 'Premium ist aktiv ✓',
+    active: 'Premium ist aktiv',
     unlock: 'Premium freischalten (Demo)',
   },
 

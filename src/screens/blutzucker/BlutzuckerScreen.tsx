@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenTitle, Card, SectionLabel, IconBubble } from '@/components/primitives';
 import { Button } from '@/components/Button';
@@ -161,7 +161,7 @@ export function BlutzuckerScreen() {
       {/* Day navigation */}
       <View style={styles.dayNav}>
         <Pressable onPress={() => shiftDay(-1)} hitSlop={8} style={styles.navBtn} accessibilityLabel={t.blutzucker.prevDay}>
-          <Ionicons name="chevron-back" size={22} color={colors.textPrimary} />
+          <Icon name="chevronLeft" size={22} color={colors.textPrimary} />
         </Pressable>
         <Pressable onPress={() => setDay(new Date())} style={styles.dayLabelWrap}>
           <Text style={styles.dayLabel}>{dayHeader(day, t)}</Text>
@@ -174,7 +174,7 @@ export function BlutzuckerScreen() {
           disabled={isToday}
           accessibilityLabel={t.blutzucker.nextDay}
         >
-          <Ionicons name="chevron-forward" size={22} color={isToday ? colors.textTertiary : colors.textPrimary} />
+          <Icon name="chevronRight" size={22} color={isToday ? colors.textTertiary : colors.textPrimary} />
         </Pressable>
       </View>
 
@@ -211,7 +211,7 @@ export function BlutzuckerScreen() {
 
           {showDelayHint && (
             <View style={styles.hintRow}>
-              <Ionicons name="time-outline" size={16} color={colors.textTertiary} />
+              <Icon name="time" size={16} color={colors.textTertiary} />
               <Text style={styles.hintText}>{t.blutzucker.delayHint}</Text>
             </View>
           )}
@@ -290,11 +290,13 @@ export function BlutzuckerScreen() {
           )}
 
           <Text style={styles.footnote}>{t.blutzucker.footnote(unitLabel(unit))}</Text>
-          <Text style={styles.disclaimer}>{t.blutzucker.disclaimer}</Text>
+          <Text style={styles.disclaimer}>
+            <Icon name="alert" size={12} color={colors.warn} /> {t.blutzucker.disclaimer}
+          </Text>
 
           <Button
             title={t.blutzucker.manageData}
-            icon="settings-outline"
+            icon="settings"
             variant="secondary"
             onPress={() => navigation.navigate('Login', { screen: 'GlucoseImport' })}
             style={styles.manageBtn}
@@ -349,10 +351,10 @@ function EmptyImport({ onImport }: { onImport: () => void }) {
   const t = useT();
   return (
     <Card style={styles.emptyCard}>
-      <IconBubble name="pulse" color={colors.accent} />
+      <IconBubble name="glucose" color={colors.accent} />
       <Text style={styles.emptyTitle}>{t.blutzucker.emptyTitle}</Text>
       <Text style={styles.emptyText}>{t.blutzucker.emptyText}</Text>
-      <Button title={t.blutzucker.importCta} icon="cloud-upload-outline" onPress={onImport} style={styles.emptyBtn} />
+      <Button title={t.blutzucker.importCta} icon="upload" onPress={onImport} style={styles.emptyBtn} />
     </Card>
   );
 }
@@ -365,12 +367,12 @@ function LockedCard() {
   const user = useAppStore((s) => s.user);
   return (
     <Card style={styles.emptyCard}>
-      <IconBubble name="lock-closed" color={colors.warn} bg={colors.bgSurfaceAlt} />
+      <IconBubble name="lock" color={colors.warn} bg={colors.bgSurfaceAlt} />
       <Text style={styles.emptyTitle}>{t.blutzucker.locked}</Text>
       <Text style={styles.emptyText}>{user === null ? t.gate.diaryNeedsAccount : t.gate.diaryNeedsPremium}</Text>
       <Button
         title={user === null ? t.login.signIn : t.account.viewPremium}
-        icon={user === null ? 'log-in-outline' : 'star'}
+        icon={user === null ? 'login' : 'premium'}
         onPress={() =>
           user === null
             ? navigation.navigate('Login', { screen: 'LoginHome' })

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon, type IconName } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { IconBubble, Card, SectionLabel } from '@/components/primitives';
 import { DiabetesTypeControl, LanguageControl, ThemeModeControl } from '@/components/SegmentedControl';
@@ -93,7 +93,7 @@ export function AccountView() {
   return (
     <Screen>
       <View style={styles.header}>
-        <IconBubble name="person-circle" size={30} />
+        <IconBubble name="personCircle" size={30} />
         <Text style={styles.email}>{user?.email || t.account.signedIn}</Text>
         <View style={[styles.badge, isPremium ? styles.badgePremium : styles.badgeFree]}>
           <Text style={[styles.badgeText, isPremium && styles.badgeTextPremium]}>
@@ -108,7 +108,7 @@ export function AccountView() {
       <Pressable onLongPress={togglePremiumDev} delayLongPress={500}>
         <Card>
           <View style={styles.row}>
-            <Ionicons name="star" size={20} color={colors.accent} />
+            <Icon name="premium" size={20} color={colors.accent} />
             <View style={styles.rowBody}>
               <Text style={styles.rowTitle}>{t.account.premiumTitle}</Text>
               <Text style={styles.rowSub}>{t.account.premiumSub}</Text>
@@ -137,7 +137,7 @@ export function AccountView() {
       <Card>
         <Pressable style={styles.linkRow} onPress={() => navigation.navigate('GlucoseImport')}>
           <Text style={styles.linkText}>{t.account.glucoseData}</Text>
-          <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
+          <Icon name="chevronRight" size={18} color={colors.textTertiary} />
         </Pressable>
       </Card>
 
@@ -145,19 +145,19 @@ export function AccountView() {
       <Card>
         <Pressable style={styles.linkRow} onPress={() => navigation.navigate('Privacy')}>
           <Text style={styles.linkText}>{t.common.privacyPolicy}</Text>
-          <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
+          <Icon name="chevronRight" size={18} color={colors.textTertiary} />
         </Pressable>
         <Pressable style={styles.linkRow} onPress={() => navigation.navigate('Terms')}>
           <Text style={styles.linkText}>{t.common.termsOfUse}</Text>
-          <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
+          <Icon name="chevronRight" size={18} color={colors.textTertiary} />
         </Pressable>
         <Pressable style={styles.linkRow} onPress={deleteData}>
           <Text style={[styles.linkText, { color: colors.danger }]}>{t.account.deleteData}</Text>
-          <Ionicons name="trash" size={18} color={colors.danger} />
+          <Icon name="delete" size={18} color={colors.danger} />
         </Pressable>
         <Pressable style={styles.linkRow} onPress={deleteAccount}>
           <Text style={[styles.linkText, { color: colors.danger }]}>{t.account.deleteAccount}</Text>
-          <Ionicons name="person-remove" size={18} color={colors.danger} />
+          <Icon name="personRemove" size={18} color={colors.danger} />
         </Pressable>
       </Card>
 
@@ -166,14 +166,14 @@ export function AccountView() {
       <SectionLabel style={styles.spaced}>{t.account.sync}</SectionLabel>
       <Card>
         <View style={styles.row} accessibilityLiveRegion="polite">
-          <Ionicons name={sync.icon} size={20} color={sync.warn ? colors.warn : colors.accent} />
+          <Icon name={sync.icon} size={20} color={sync.warn ? colors.warn : colors.accent} />
           <Text style={[styles.rowBody, styles.syncText]}>{sync.text}</Text>
         </View>
       </Card>
 
       <Button
         title={t.account.signOut}
-        icon="log-out"
+        icon="logout"
         variant="secondary"
         onPress={logout}
         style={{ marginTop: spacing.xl }}
@@ -219,10 +219,10 @@ function describeSync(
   lastSyncedAt: string | null,
   now: number,
   t: Dict
-): { icon: keyof typeof Ionicons.glyphMap; text: string; warn: boolean } {
+): { icon: IconName; text: string; warn: boolean } {
   if (!configured || status.state === 'disabled') {
     return {
-      icon: 'phone-portrait-outline',
+      icon: 'device',
       text: t.account.syncLocalOnly,
       warn: false,
     };
@@ -230,23 +230,23 @@ function describeSync(
   const n = status.pending;
   switch (status.state) {
     case 'syncing':
-      return { icon: 'sync-outline', text: t.account.syncing, warn: false };
+      return { icon: 'syncing', text: t.account.syncing, warn: false };
     case 'offline':
       return {
-        icon: 'cloud-offline-outline',
+        icon: 'offline',
         text: n > 0 ? t.account.offlinePending(n) : t.account.offlineSaved,
         warn: true,
       };
     case 'error':
       return {
-        icon: 'alert-circle-outline',
+        icon: 'alert',
         text: t.account.syncFailed,
         warn: true,
       };
     default:
-      if (n > 0) return { icon: 'time-outline', text: t.account.pending(n), warn: false };
+      if (n > 0) return { icon: 'time', text: t.account.pending(n), warn: false };
       return {
-        icon: 'cloud-done-outline',
+        icon: 'synced',
         text: lastSyncedAt
           ? t.account.allSynced(sinceText(lastSyncedAt, now, t))
           : t.account.notSynced,

@@ -1,14 +1,14 @@
 import React from 'react';
 import { Text, Pressable, StyleSheet, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { radius, spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
+import { Icon, type IconName } from '@/components/Icon';
 
 interface SelectableChipProps {
   label: string;
   selected: boolean;
   onPress: () => void;
-  icon?: keyof typeof Ionicons.glyphMap;
+  icon?: IconName;
 }
 
 /** Pill-shaped selectable chip (portion presets, activities). */
@@ -24,7 +24,7 @@ export function SelectableChip({ label, selected, onPress, icon }: SelectableChi
     >
       <View style={styles.row}>
         {icon && (
-          <Ionicons
+          <Icon
             name={icon}
             size={16}
             color={selected ? colors.textOnAccent : colors.textSecondary}

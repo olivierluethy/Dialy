@@ -1,4 +1,5 @@
 import { Platform, type TextStyle } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Inter_400Regular } from '@expo-google-fonts/inter/400Regular';
 import { Inter_600SemiBold } from '@expo-google-fonts/inter/600SemiBold';
 import { Inter_700Bold } from '@expo-google-fonts/inter/700Bold';
@@ -10,10 +11,11 @@ import { Inter_700Bold } from '@expo-google-fonts/inter/700Bold';
  */
 export const USE_CUSTOM_FONT = Platform.OS !== 'ios';
 
-/** Font files for `useFonts()`; empty on iOS. */
-export const fontAssets: Record<string, number> = USE_CUSTOM_FONT
-  ? { Inter_400Regular, Inter_600SemiBold, Inter_700Bold }
-  : {};
+/** Preload icons on every platform so controls are visible on the first screen. */
+export const fontAssets: Record<string, number> = {
+  ...Ionicons.font,
+  ...(USE_CUSTOM_FONT ? { Inter_400Regular, Inter_600SemiBold, Inter_700Bold } : {}),
+};
 
 /**
  * Text style for a font weight. A custom font needs one family per weight

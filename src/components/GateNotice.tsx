@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useAppStore } from '@/state/store';
 import type { LoginReturnTo } from '@/navigation/types';
 import { radius, spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
+import { Icon } from '@/components/Icon';
 import { useT } from '@/i18n';
 
 /**
@@ -21,7 +21,7 @@ export function GateNotice({ message, returnTo }: { message: string; returnTo: L
   const loggedIn = useAppStore((s) => s.user) !== null;
   return (
     <View style={styles.container}>
-      <Ionicons name="lock-closed" size={18} color={colors.warn} style={styles.icon} />
+      <Icon name="lock" size={18} color={colors.warn} style={styles.icon} />
       <View style={styles.flex}>
         <Text style={styles.message}>{message}</Text>
         <Pressable
@@ -32,7 +32,10 @@ export function GateNotice({ message, returnTo }: { message: string; returnTo: L
           }
           accessibilityRole="link"
         >
-          <Text style={styles.cta}>{loggedIn ? t.gate.premiumCta : t.gate.loginCta}</Text>
+          <Text style={styles.cta}>
+            {loggedIn ? t.gate.premiumCta : t.gate.loginCta}{' '}
+            <Icon name="chevronRight" size={15} color={colors.accent} />
+          </Text>
         </Pressable>
       </View>
     </View>

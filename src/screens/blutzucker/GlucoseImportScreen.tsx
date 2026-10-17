@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { Card, SectionLabel } from '@/components/primitives';
 import { Button } from '@/components/Button';
@@ -153,9 +153,12 @@ export function GlucoseImportScreen() {
       <Pressable
         style={[styles.consentRow, consented && styles.consentRowActive]}
         onPress={() => setConsent(!consented)}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: consented }}
+        accessibilityLabel={t.glucose.consent}
       >
-        <Ionicons
-          name={consented ? 'checkbox' : 'square-outline'}
+        <Icon
+          name={consented ? 'checkboxOn' : 'checkboxOff'}
           size={22}
           color={consented ? colors.accent : colors.textTertiary}
         />
@@ -170,7 +173,7 @@ export function GlucoseImportScreen() {
         {healthProvider.isAvailable() ? (
           <Button
             title={t.glucose.healthConnect}
-            icon="heart-outline"
+            icon="heart"
             onPress={importHealth}
             loading={busy}
             disabled={!consented}
@@ -209,7 +212,7 @@ export function GlucoseImportScreen() {
         />
         <Button
           title={t.glucose.importCsv}
-          icon="cloud-upload-outline"
+          icon="upload"
           onPress={importCsv}
           loading={busy}
           disabled={!consented || csv.trim().length === 0}
@@ -222,7 +225,7 @@ export function GlucoseImportScreen() {
         <Text style={styles.sourceSub}>{t.glucose.demoHelp}</Text>
         <Button
           title={t.glucose.demoCta}
-          icon="flask-outline"
+          icon="flask"
           variant="secondary"
           onPress={importDemo}
           loading={busy}
@@ -235,14 +238,16 @@ export function GlucoseImportScreen() {
       <Card>
         <Text style={styles.storedText}>{t.glucose.storedCount(counts.total)}</Text>
         <Pressable style={styles.deleteRow} onPress={() => setDialog({ kind: 'confirmDelete' })} disabled={counts.total === 0}>
-          <Ionicons name="trash" size={18} color={counts.total === 0 ? colors.textTertiary : colors.danger} />
+          <Icon name="delete" size={18} color={counts.total === 0 ? colors.textTertiary : colors.danger} />
           <Text style={[styles.deleteText, counts.total === 0 && styles.deleteTextDisabled]}>
             {t.glucose.disconnectDelete}
           </Text>
         </Pressable>
       </Card>
 
-      <Text style={styles.disclaimer}>{t.glucose.disclaimer}</Text>
+      <Text style={styles.disclaimer}>
+        <Icon name="alert" size={12} color={colors.warn} /> {t.glucose.disclaimer}
+      </Text>
 
       {/* Dialogs */}
       <Dialog
