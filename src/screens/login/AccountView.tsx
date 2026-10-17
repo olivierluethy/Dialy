@@ -133,6 +133,14 @@ export function AccountView() {
       <SectionLabel>{t.common.appearance}</SectionLabel>
       <ThemeModeControl />
 
+      <SectionLabel style={styles.spaced}>{t.nav.blutzucker}</SectionLabel>
+      <Card>
+        <Pressable style={styles.linkRow} onPress={() => navigation.navigate('GlucoseImport')}>
+          <Text style={styles.linkText}>{t.account.glucoseData}</Text>
+          <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
+        </Pressable>
+      </Card>
+
       <SectionLabel style={styles.spaced}>{t.account.legal}</SectionLabel>
       <Card>
         <Pressable style={styles.linkRow} onPress={() => navigation.navigate('Privacy')}>

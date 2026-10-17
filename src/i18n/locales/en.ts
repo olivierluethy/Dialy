@@ -49,10 +49,12 @@ const en: Dict = {
     ratgeber: 'Guide',
     khrechner: 'Carb Counter',
     tagebuch: 'Diary',
+    blutzucker: 'Blood glucose',
     sport: 'Sport',
     login: 'Sign in',
     settings: 'Settings',
     contact: 'Contact',
+    glucoseImport: 'Blood glucose data',
     premium: 'Premium',
     privacy: 'Privacy',
     terms: 'Terms of use',
@@ -101,6 +103,7 @@ const en: Dict = {
     resultCount: (n) => (n === 1 ? '1 food' : `${n} foods`),
     showMore: (n, of) => `Show ${n} more of ${of}`,
     closeFoodA11y: 'Close food',
+    clearSearchA11y: 'Clear search',
     portionSize: 'Portion size',
     grams: 'grams',
     nutrients: 'Nutrients',
@@ -220,6 +223,89 @@ const en: Dict = {
     deleteEntriesConfirm: (n: number) => `Delete ${n} foods from the diary?`,
   },
 
+  blutzucker: {
+    title: 'My blood glucose',
+    prevDay: 'Previous day',
+    nextDay: 'Next day',
+    backToToday: 'Back to today',
+    average: 'Average',
+    timeInRange: 'Time in range (3.9 to 10.0)',
+    lowest: 'Lowest value',
+    highest: 'Highest value',
+    atTime: (time: string) => `at ${time}`,
+    delayHint:
+      'The most recent hours may be missing: depending on the provider, CGM data is only available with a few hours’ delay.',
+    chartTitle: 'Glucose curve',
+    legendGlucose: (unit: string) => `Glucose (${unit})`,
+    legendTarget: 'Target range',
+    noReadingsDay: 'No glucose values for this day.',
+    mealsTitle: 'Meals',
+    totalCarbs: (g: number) => `Total ${g} g carbohydrates`,
+    noMeals: 'No meals logged on this day.',
+    peakTooltip: (value: string, time: string) => `Peak ${value} at ${time}`,
+    footnote: (unit: string) =>
+      `Peak and rise in ${unit}, measured within 2.5 hours after the meal. Values above 10.0 are highlighted.`,
+    disclaimer:
+      '⚠️ For information only. Dialy gives no treatment advice (e.g. insulin doses) and does not replace a meter.',
+    manageData: 'Manage glucose data',
+    emptyTitle: 'No glucose data yet',
+    emptyText:
+      'Connect a CGM source or upload a LibreView export to see your curve together with your meals.',
+    importCta: 'Import data',
+    locked: 'Blood glucose locked',
+  },
+
+  glucose: {
+    needAccount: 'Sign in to import glucose data.',
+    intro:
+      'Import your glucose values from a CGM sensor and see them together with your meals. Values are stored in mg/dL and shown in your chosen unit.',
+    unit: 'Unit',
+    consentTitle: 'Consent',
+    consent:
+      'I consent to my glucose values (sensitive health data) being imported into and stored by Dialy.',
+    sources: 'Sources',
+    dexcomSoon: 'Direct connection via your Dexcom account (OAuth). Coming soon.',
+    comingSoon: 'Soon',
+    healthHelp: (platform: string) =>
+      `Dexcom and Libre write their values into ${platform}. Dialy asks for read permission and imports them — no password.`,
+    healthConnect: 'Connect & import',
+    healthUnavailable: 'Only available in the installed Dialy app (not in preview/browser).',
+    healthDenied: 'No read permission granted. You can grant it in the system settings under Health/Health Connect.',
+    libreHelp: 'Export your data in LibreView (glucose data as CSV) and paste the contents here.',
+    csvPlaceholder: 'Paste LibreView CSV here …',
+    importCsv: 'Import CSV',
+    demoTitle: 'Demo data',
+    demoHelp: 'Generates a sample day curve for today, matching your meals logged today.',
+    demoCta: 'Generate demo data for today',
+    stored: 'Stored data',
+    storedCount: (n: number) => `${n} glucose values stored.`,
+    disconnectDelete: 'Disconnect & delete all glucose data',
+    disclaimer:
+      '⚠️ Dialy shows values for information only and gives no treatment advice. Your values are transmitted and stored encrypted.',
+    csvError: (key: string) => {
+      switch (key) {
+        case 'empty':
+          return 'The file is empty.';
+        case 'noHeader':
+          return 'No header row with a timestamp found. Is this a LibreView export?';
+        case 'noGlucoseColumn':
+          return 'No glucose column (mg/dL or mmol/L) found.';
+        case 'noReadings':
+          return 'No valid readings found.';
+        default:
+          return 'The file could not be read.';
+      }
+    },
+    importedTitle: 'Import complete',
+    importedMessage: (inserted: number, duplicates: number) =>
+      `${inserted} new values imported${duplicates > 0 ? `, ${duplicates} duplicates skipped` : ''}.`,
+    importFailed: 'Import failed',
+    deleteTitle: 'Delete glucose data',
+    deleteConfirm: 'Permanently delete all imported glucose values?',
+    deletedTitle: 'Deleted',
+    deletedMessage: (n: number) => `${n} glucose values were deleted.`,
+  },
+
   activities: {
     wandern: 'Hiking',
     laufen: 'Running',
@@ -324,6 +410,7 @@ const en: Dict = {
     viewPremium: 'View Premium',
     devHint: 'Dev: long-press this card to toggle Premium for testing.',
     legal: 'Legal & privacy',
+    glucoseData: 'Blood glucose & CGM',
     deleteData: 'Delete data',
     deleteConfirm:
       'Do you really want to permanently delete all your entries (meals, sport, blood glucose)?',

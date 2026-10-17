@@ -5,6 +5,7 @@ import { useThemedStyles } from '@/theme/useTheme';
 import { useAppStore } from '@/state/store';
 import { syncEngine } from '@/sync/syncEngine';
 import { LANGUAGES, useLanguage, useT, type Language } from '@/i18n';
+import { unitOptions } from '@/utils/glucose';
 import type { DiabetesType } from '@/types/models';
 
 /**
@@ -66,6 +67,13 @@ export function LanguageControl() {
     label: l.short,
   }));
   return <Segmented options={options} value={language} onChange={setLanguage} />;
+}
+
+/** Blood-glucose unit picker: mmol/L / mg/dL (issue #21). Persisted in the store. */
+export function GlucoseUnitControl() {
+  const unit = useAppStore((s) => s.glucoseUnit);
+  const setUnit = useAppStore((s) => s.setGlucoseUnit);
+  return <Segmented options={unitOptions()} value={unit} onChange={setUnit} />;
 }
 
 function Segmented<T extends string>({

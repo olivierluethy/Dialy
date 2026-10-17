@@ -15,6 +15,8 @@
  *   5 — food_edits (foods changed or added in the Dialy-Editor)
  *   6 — foods come only from Supabase (services/foodSync.ts): foods.names
  *       (translations), food_edits dropped, bundled foods cleared
+ *   7 — glucose_readings (CGM import, issue #21): stored in mg/dL, deduped by
+ *       (user_id, source, source_record_id)
  */
 
 /** Minimal DB surface needed to migrate; both implementations provide it. */
@@ -23,7 +25,7 @@ export interface MigratableDb {
   getFirstAsync<T>(sql: string): Promise<T | null>;
 }
 
-export const SCHEMA_VERSION = 6;
+export const SCHEMA_VERSION = 7;
 
 const FOODS_TABLE = `
 CREATE TABLE IF NOT EXISTS foods (
@@ -114,6 +116,24 @@ CREATE TABLE IF NOT EXISTS bg_readings (
   logged_at TEXT NOT NULL
 );
 
+/* Continuous-glucose readings (issue #21). Stored in mg/dL; shown in mmol/L
+   or mg/dL. Deduped by (user_id, source, source_record_id). */
+CREATE TABLE IF NOT EXISTS glucose_readings (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  deleted_at TEXT,
+  source TEXT NOT NULL,
+  source_record_id TEXT NOT NULL,
+  timestamp_utc TEXT NOT NULL,
+  display_time_local TEXT NOT NULL,
+  value_mgdl REAL NOT NULL,
+  trend TEXT,
+  status TEXT,
+  imported_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS profile (
   id TEXT PRIMARY KEY NOT NULL,
   user_id TEXT,
@@ -142,6 +162,9 @@ CREATE TABLE IF NOT EXISTS sync_queue (
 CREATE INDEX IF NOT EXISTS idx_meal_logged ON meal_entries(logged_at);
 CREATE INDEX IF NOT EXISTS idx_sport_logged ON sport_entries(logged_at);
 CREATE INDEX IF NOT EXISTS idx_bg_logged ON bg_readings(logged_at);
+CREATE INDEX IF NOT EXISTS idx_glucose_user_time ON glucose_readings(user_id, timestamp_utc);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_glucose_dedup
+  ON glucose_readings(user_id, source, source_record_id) WHERE deleted_at IS NULL;
 `;
 
 /**

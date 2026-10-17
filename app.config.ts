@@ -1,6 +1,33 @@
 import { ExpoConfig, ConfigContext } from 'expo/config';
 
 /**
+ * Health-import native modules (issue #21 §3 B) are optional: they only take
+ * effect in a dev/EAS build where the packages are installed. Referencing a
+ * plugin that isn't installed would break `expo prebuild`, so each is added
+ * only when it resolves. Install to enable:
+ *   npm i @kingstinct/react-native-healthkit react-native-health-connect
+ */
+type PluginEntry = string | [string, Record<string, unknown>];
+const optionalPlugin = (name: string, config?: Record<string, unknown>): PluginEntry | null => {
+  try {
+    require.resolve(name);
+    return config ? [name, config] : name;
+  } catch {
+    return null;
+  }
+};
+
+const HEALTH_USAGE =
+  'Dialy liest deine Glukosewerte (z. B. von Dexcom oder FreeStyle Libre) aus Apple Health, um sie zusammen mit deinen Mahlzeiten anzuzeigen.';
+
+const healthPlugins = [
+  optionalPlugin('@kingstinct/react-native-healthkit', {
+    NSHealthShareUsageDescription: HEALTH_USAGE,
+  }),
+  optionalPlugin('react-native-health-connect'),
+].filter((p): p is PluginEntry => p !== null);
+
+/**
  * Dialy – Diabetes-Begleiter (dark by default, optional light mode; offline-first).
  *
  * Secrets are NEVER hard-coded here. Public, client-safe values
@@ -31,8 +58,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     supportsTablet: true,
     bundleIdentifier: 'net.dialy.app',
     userInterfaceStyle: 'automatic',
-    // Manual-entry CGM/health fallback always works; native HealthKit
-    // bridge is a TODO(native) follow-up – see services/health.ts.
+    // Glucose read from Apple Health (issue #21). The HealthKit entitlement is
+    // added by the @kingstinct/react-native-healthkit config plugin; the usage
+    // string below shows in the OS permission dialog.
+    infoPlist: {
+      NSHealthShareUsageDescription: HEALTH_USAGE,
+    },
   },
   android: {
     package: 'net.dialy.app',
@@ -40,13 +71,15 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     adaptiveIcon: {
       backgroundColor: '#0E1512',
     },
-    permissions: [], // no camera / storage access needed
+    // Read blood glucose from Health Connect (issue #21); no other permissions.
+    permissions: ['android.permission.health.READ_BLOOD_GLUCOSE'],
   },
   plugins: [
     'expo-asset',
     'expo-font',
     'expo-secure-store',
     'expo-sqlite',
+    ...healthPlugins,
   ],
   extra: {
     supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL ?? '',

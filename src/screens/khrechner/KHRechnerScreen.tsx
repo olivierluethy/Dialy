@@ -354,9 +354,20 @@ export function KHRechnerScreen() {
           value={query}
           onChangeText={setQuery}
           containerStyle={styles.searchField}
-          style={styles.searchInput}
+          style={[styles.searchInput, query.length > 0 && styles.searchInputClearable]}
           autoCorrect={false}
         />
+        {query.length > 0 && (
+          <Pressable
+            onPress={() => setQuery('')}
+            style={styles.searchClear}
+            accessibilityRole="button"
+            accessibilityLabel={t.khrechner.clearSearchA11y}
+            hitSlop={8}
+          >
+            <Ionicons name="close-circle" size={20} color={colors.textTertiary} />
+          </Pressable>
+        )}
       </View>
 
       {/* Category filter (tap the active one again to clear it). */}
@@ -664,6 +675,16 @@ const makeStyles = (colors: Colors) =>
     searchRow: { flexDirection: 'row', alignItems: 'center', position: 'relative' },
     searchField: { flex: 1, marginBottom: spacing.md, marginLeft: -26 },
     searchInput: { paddingLeft: 42 },
+    // Room for the clear button, so long queries don't run under it.
+    searchInputClearable: { paddingRight: 44 },
+    // Centred on the input (the field has a bottom margin).
+    searchClear: {
+      position: 'absolute',
+      right: spacing.md,
+      top: 0,
+      bottom: spacing.md,
+      justifyContent: 'center',
+    },
     resultRow: {
       flexDirection: 'row',
       alignItems: 'center',

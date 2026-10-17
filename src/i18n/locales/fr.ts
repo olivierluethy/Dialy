@@ -50,10 +50,12 @@ const fr: Dict = {
     ratgeber: 'Conseils',
     khrechner: 'Calcul des glucides',
     tagebuch: 'Journal',
+    blutzucker: 'Glycémie',
     sport: 'Sport',
     login: 'Se connecter',
     settings: 'Réglages',
     contact: 'Contact',
+    glucoseImport: 'Données de glycémie',
     premium: 'Premium',
     privacy: 'Confidentialité',
     terms: 'Conditions d’utilisation',
@@ -102,6 +104,7 @@ const fr: Dict = {
     resultCount: (n) => (n === 1 ? '1 aliment' : `${n} aliments`),
     showMore: (n, of) => `Afficher ${n} de plus sur ${of}`,
     closeFoodA11y: 'Fermer l’aliment',
+    clearSearchA11y: 'Effacer la recherche',
     portionSize: 'Taille de la portion',
     grams: 'grammes',
     nutrients: 'Valeurs nutritives',
@@ -225,6 +228,89 @@ const fr: Dict = {
     deleteEntriesConfirm: (n: number) => `Supprimer ${n} aliments du journal ?`,
   },
 
+  blutzucker: {
+    title: 'Ma glycémie',
+    prevDay: 'Jour précédent',
+    nextDay: 'Jour suivant',
+    backToToday: 'Revenir à aujourd’hui',
+    average: 'Moyenne',
+    timeInRange: 'Temps dans la cible (3.9 à 10.0)',
+    lowest: 'Valeur la plus basse',
+    highest: 'Valeur la plus haute',
+    atTime: (time: string) => `à ${time}`,
+    delayHint:
+      'Les dernières heures peuvent manquer : selon le fournisseur, les données CGM ne sont disponibles qu’avec quelques heures de retard.',
+    chartTitle: 'Courbe de glycémie',
+    legendGlucose: (unit: string) => `Glucose (${unit})`,
+    legendTarget: 'Plage cible',
+    noReadingsDay: 'Aucune valeur de glycémie pour ce jour.',
+    mealsTitle: 'Repas',
+    totalCarbs: (g: number) => `Total ${g} g de glucides`,
+    noMeals: 'Aucun repas enregistré ce jour.',
+    peakTooltip: (value: string, time: string) => `Pic ${value} à ${time}`,
+    footnote: (unit: string) =>
+      `Pic et hausse en ${unit}, mesurés dans les 2.5 heures après le repas. Les valeurs supérieures à 10.0 sont mises en évidence.`,
+    disclaimer:
+      '⚠️ À titre informatif uniquement. Dialy ne donne aucune recommandation thérapeutique (p. ex. doses d’insuline) et ne remplace pas un lecteur.',
+    manageData: 'Gérer les données de glycémie',
+    emptyTitle: 'Pas encore de données de glycémie',
+    emptyText:
+      'Connecte une source CGM ou importe un export LibreView pour voir ta courbe avec tes repas.',
+    importCta: 'Importer des données',
+    locked: 'Glycémie verrouillée',
+  },
+
+  glucose: {
+    needAccount: 'Connecte-toi pour importer des données de glycémie.',
+    intro:
+      'Importe tes valeurs de glucose depuis un capteur CGM et vois-les avec tes repas. Les valeurs sont stockées en mg/dL et affichées dans l’unité choisie.',
+    unit: 'Unité',
+    consentTitle: 'Consentement',
+    consent:
+      'Je consens à ce que mes valeurs de glucose (données de santé sensibles) soient importées et conservées par Dialy.',
+    sources: 'Sources',
+    dexcomSoon: 'Connexion directe via ton compte Dexcom (OAuth). Bientôt disponible.',
+    comingSoon: 'Bientôt',
+    healthHelp: (platform: string) =>
+      `Dexcom et Libre écrivent leurs valeurs dans ${platform}. Dialy demande l’autorisation de lecture et les importe — sans mot de passe.`,
+    healthConnect: 'Connecter et importer',
+    healthUnavailable: 'Disponible uniquement dans l’app Dialy installée (pas en aperçu/navigateur).',
+    healthDenied: 'Autorisation de lecture non accordée. Tu peux l’accorder dans les réglages système sous Health/Health Connect.',
+    libreHelp: 'Exporte tes données dans LibreView (données de glucose en CSV) et colle le contenu ici.',
+    csvPlaceholder: 'Colle le CSV LibreView ici …',
+    importCsv: 'Importer le CSV',
+    demoTitle: 'Données de démo',
+    demoHelp: 'Génère une courbe journalière d’exemple pour aujourd’hui, selon tes repas du jour.',
+    demoCta: 'Générer des données de démo pour aujourd’hui',
+    stored: 'Données enregistrées',
+    storedCount: (n: number) => `${n} valeurs de glycémie enregistrées.`,
+    disconnectDelete: 'Déconnecter et supprimer toutes les données de glycémie',
+    disclaimer:
+      '⚠️ Dialy affiche les valeurs à titre informatif et ne donne aucune recommandation thérapeutique. Tes valeurs sont transmises et stockées de manière chiffrée.',
+    csvError: (key: string) => {
+      switch (key) {
+        case 'empty':
+          return 'Le fichier est vide.';
+        case 'noHeader':
+          return 'Aucune ligne d’en-tête avec un horodatage trouvée. Est-ce un export LibreView ?';
+        case 'noGlucoseColumn':
+          return 'Aucune colonne de glucose (mg/dL ou mmol/L) trouvée.';
+        case 'noReadings':
+          return 'Aucune mesure valide trouvée.';
+        default:
+          return 'Le fichier n’a pas pu être lu.';
+      }
+    },
+    importedTitle: 'Import terminé',
+    importedMessage: (inserted: number, duplicates: number) =>
+      `${inserted} nouvelles valeurs importées${duplicates > 0 ? `, ${duplicates} doublons ignorés` : ''}.`,
+    importFailed: 'Échec de l’import',
+    deleteTitle: 'Supprimer les données de glycémie',
+    deleteConfirm: 'Supprimer définitivement toutes les valeurs de glycémie importées ?',
+    deletedTitle: 'Supprimé',
+    deletedMessage: (n: number) => `${n} valeurs de glycémie ont été supprimées.`,
+  },
+
   activities: {
     wandern: 'Randonnée',
     laufen: 'Course',
@@ -329,6 +415,7 @@ const fr: Dict = {
     viewPremium: 'Voir Premium',
     devHint: 'Dev : appui long sur cette carte pour activer/désactiver Premium pour les tests.',
     legal: 'Mentions légales & confidentialité',
+    glucoseData: 'Glycémie et CGM',
     deleteData: 'Supprimer les données',
     deleteConfirm:
       'Veux-tu vraiment supprimer définitivement toutes tes entrées (repas, sport, glycémie) ?',

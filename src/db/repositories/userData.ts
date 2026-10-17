@@ -10,7 +10,7 @@ import { getDb } from '@/db/database';
  * called by services/auth.ts deleteAccountData or, if that failed, by the next
  * sync (see markErasePending).
  */
-const USER_TABLES = ['meal_entries', 'sport_entries', 'bg_readings'] as const;
+const USER_TABLES = ['meal_entries', 'sport_entries', 'bg_readings', 'glucose_readings'] as const;
 
 /**
  * Deletes the account's rows; with `upTo` (ISO time) only those last changed

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { DiabetesType } from '@/types/models';
+import type { GlucoseUnit } from '@/utils/glucose';
 import type { ThemeMode } from '@/theme/theme';
 import type { AuthUser } from '@/services/auth';
 import type { GateContext } from '@/policy/gating';
@@ -39,6 +40,13 @@ interface AppState {
   // UI language: 'system' (default) follows the device, else de/en/fr/it.
   language: LanguageSetting;
   setLanguage: (l: LanguageSetting) => void;
+
+  // Blood-glucose display unit (issue #21): mmol/L (default) or mg/dL.
+  glucoseUnit: GlucoseUnit;
+  setGlucoseUnit: (u: GlucoseUnit) => void;
+  // When the user consented to importing CGM health data (ISO), or null.
+  glucoseConsentAt: string | null;
+  setGlucoseConsent: (granted: boolean) => void;
 
   // Password reset: 'active' after opening a valid reset link (set a new
   // password), 'expired' for an invalid one. Not persisted.
@@ -105,6 +113,12 @@ export const useAppStore = create<AppState>()(
       language: 'system',
       setLanguage: (l) => set({ language: l }),
 
+      glucoseUnit: 'mmol',
+      setGlucoseUnit: (u) => set({ glucoseUnit: u }),
+      glucoseConsentAt: null,
+      setGlucoseConsent: (granted) =>
+        set({ glucoseConsentAt: granted ? new Date().toISOString() : null }),
+
       passwordRecovery: { state: 'idle' },
       setPasswordRecovery: (v) => set({ passwordRecovery: v }),
 
@@ -145,6 +159,8 @@ export const useAppStore = create<AppState>()(
         diabetesTypeSyncedFor: s.diabetesTypeSyncedFor,
         themeMode: s.themeMode,
         language: s.language,
+        glucoseUnit: s.glucoseUnit,
+        glucoseConsentAt: s.glucoseConsentAt,
         lastSyncedAt: s.lastSyncedAt,
         demoPremium: s.demoPremium,
         grantedPremiumFor: s.grantedPremiumFor,

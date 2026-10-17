@@ -36,7 +36,7 @@ import { useAppStore } from '@/state/store';
 
 // User-owned tables participate in two-way sync. Read-mostly content tables
 // (articles, foods) are pulled down separately and never pushed.
-const USER_TABLES = ['meal_entries', 'sport_entries', 'bg_readings'] as const;
+const USER_TABLES = ['meal_entries', 'sport_entries', 'bg_readings', 'glucose_readings'] as const;
 type UserTable = (typeof USER_TABLES)[number];
 
 let syncing = false;

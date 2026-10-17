@@ -57,6 +57,7 @@ export function AppHeader({ navigation, route }: BottomTabHeaderProps) {
     { label: t.nav.ratgeber, tab: 'Ratgeber' },
     { label: t.nav.khrechner, tab: 'KHRechner' },
     { label: t.nav.tagebuch, tab: 'Tagebuch' },
+    { label: t.nav.blutzucker, tab: 'Blutzucker' },
     { label: t.nav.sport, tab: 'Sport' },
     { label: user ? t.nav.settings : t.nav.login, tab: 'Login', screen: 'LoginHome' },
     { label: t.nav.contact, tab: 'Login', screen: 'Contact' },

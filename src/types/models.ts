@@ -83,6 +83,37 @@ export interface BgReading extends SyncMeta {
   logged_at: string;
 }
 
+/** Where a glucose reading came from (issue #21 §1). */
+export type GlucoseSource = 'dexcom' | 'libre' | 'manual' | 'health_platform';
+export type GlucoseTrend =
+  | 'rising_fast'
+  | 'rising'
+  | 'steady'
+  | 'falling'
+  | 'falling_fast';
+
+/**
+ * A single continuous-glucose reading. Stored in mg/dL (the providers' raw
+ * unit); the UI converts to mmol/L for display (utils/glucose). One row per
+ * measurement; (user_id, source, source_record_id) is unique so re-imports
+ * don't duplicate (issue #21 §1).
+ */
+export interface GlucoseReading extends SyncMeta {
+  source: GlucoseSource;
+  /** Provider's own id for this reading, for deduplication. */
+  source_record_id: string;
+  /** Measurement time, ISO 8601 UTC — the source of truth for ordering. */
+  timestamp_utc: string;
+  /** Local time as reported by the device, ISO 8601 (may carry an offset). */
+  display_time_local: string;
+  value_mgdl: number;
+  trend: GlucoseTrend | null;
+  /** Provider sensor status (e.g. during warm-up); such values are flagged. */
+  status: string | null;
+  /** When this reading was written into the app. */
+  imported_at: string;
+}
+
 export interface Profile extends SyncMeta {
   diabetes_type: DiabetesType;
   is_premium: boolean;

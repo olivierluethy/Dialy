@@ -6,7 +6,7 @@ export type RatgeberStackParamList = {
 };
 
 /** Tab to go back to after signing in or registering (instead of the account view). */
-export type LoginReturnTo = 'Tagebuch' | 'KHRechner' | 'Sport';
+export type LoginReturnTo = 'Tagebuch' | 'KHRechner' | 'Sport' | 'Blutzucker';
 
 export type LoginStackParamList = {
   LoginHome: { returnTo?: LoginReturnTo } | undefined;
@@ -17,6 +17,7 @@ export type LoginStackParamList = {
   Terms: undefined;
   Contact: undefined;
   ForgotPassword: undefined;
+  GlucoseImport: undefined;
 };
 
 export type RootTabParamList = {
@@ -24,5 +25,6 @@ export type RootTabParamList = {
   KHRechner: undefined;
   Tagebuch: undefined;
   Sport: undefined;
+  Blutzucker: undefined;
   Login: NavigatorScreenParams<LoginStackParamList>;
 };

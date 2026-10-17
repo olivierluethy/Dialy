@@ -13,6 +13,7 @@ import { PrivacyScreen } from '@/screens/privacy/PrivacyScreen';
 import { TermsScreen } from '@/screens/terms/TermsScreen';
 import { ContactScreen } from '@/screens/contact/ContactScreen';
 import { ForgotPasswordScreen } from '@/screens/login/ForgotPasswordScreen';
+import { GlucoseImportScreen } from '@/screens/blutzucker/GlucoseImportScreen';
 import type { LoginStackParamList, RatgeberStackParamList } from '@/navigation/types';
 
 // Shared themed header styling for all stacks.
@@ -92,6 +93,11 @@ export function LoginNavigator() {
         name="Contact"
         component={ContactScreen}
         options={{ title: t.nav.contact, headerBackTitle: t.common.back }}
+      />
+      <LoginStack.Screen
+        name="GlucoseImport"
+        component={GlucoseImportScreen}
+        options={{ title: t.nav.glucoseImport, headerBackTitle: t.common.back }}
       />
     </LoginStack.Navigator>
   );

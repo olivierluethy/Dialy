@@ -5,6 +5,7 @@ import { AppHeader } from '@/navigation/AppHeader';
 import { KHRechnerScreen } from '@/screens/khrechner/KHRechnerScreen';
 import { TagebuchScreen } from '@/screens/tagebuch/TagebuchScreen';
 import { SportScreen } from '@/screens/sport/SportScreen';
+import { BlutzuckerScreen } from '@/screens/blutzucker/BlutzuckerScreen';
 import type { RootTabParamList } from '@/navigation/types';
 import { useT } from '@/i18n';
 
@@ -24,6 +25,7 @@ export function RootNavigator() {
       <Tab.Screen name="Ratgeber" component={RatgeberNavigator} options={{ title: t.nav.ratgeber }} />
       <Tab.Screen name="KHRechner" component={KHRechnerScreen} options={{ title: t.nav.khrechner }} />
       <Tab.Screen name="Tagebuch" component={TagebuchScreen} options={{ title: t.nav.tagebuch }} />
+      <Tab.Screen name="Blutzucker" component={BlutzuckerScreen} options={{ title: t.nav.blutzucker }} />
       <Tab.Screen name="Sport" component={SportScreen} options={{ title: t.nav.sport }} />
       <Tab.Screen name="Login" component={LoginNavigator} options={{ title: t.nav.login }} />
     </Tab.Navigator>

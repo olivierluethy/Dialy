@@ -54,10 +54,12 @@ const de = {
     ratgeber: 'Ratgeber',
     khrechner: 'KH-Rechner',
     tagebuch: 'Tagebuch',
+    blutzucker: 'Blutzucker',
     sport: 'Sport',
     login: 'Anmelden',
     settings: 'Einstellungen',
     contact: 'Kontakt',
+    glucoseImport: 'Blutzucker-Daten',
     premium: 'Premium',
     privacy: 'Datenschutz',
     terms: 'Nutzungsbedingungen',
@@ -106,6 +108,7 @@ const de = {
     resultCount: (n: number) => `${n} Lebensmittel`,
     showMore: (n: number, of: number) => `Weitere ${n} von ${of} anzeigen`,
     closeFoodA11y: 'Lebensmittel schliessen',
+    clearSearchA11y: 'Suchbegriff löschen',
     portionSize: 'Portionsgrösse',
     grams: 'Gramm',
     nutrients: 'Nährwerte',
@@ -192,6 +195,90 @@ const de = {
     deleteEntryConfirm: (name: string) => `«${name}» aus dem Tagebuch löschen?`,
     deleteEntryA11y: (name: string) => `${name} löschen`,
     deleteEntriesConfirm: (n: number) => `${n} Lebensmittel aus dem Tagebuch löschen?`,
+  },
+
+  blutzucker: {
+    title: 'Mein Blutzucker',
+    prevDay: 'Vorheriger Tag',
+    nextDay: 'Nächster Tag',
+    backToToday: 'Zu heute',
+    average: 'Durchschnitt',
+    timeInRange: 'Zeit im Zielbereich (3.9 bis 10.0)',
+    lowest: 'Tiefster Wert',
+    highest: 'Höchster Wert',
+    atTime: (time: string) => `um ${time}`,
+    delayHint:
+      'Die letzten Stunden können fehlen: CGM-Daten sind je nach Anbieter erst mit einigen Stunden Verzögerung verfügbar.',
+    chartTitle: 'Blutzuckerverlauf',
+    legendGlucose: (unit: string) => `Glukose (${unit})`,
+    legendTarget: 'Zielbereich',
+    noReadingsDay: 'Für diesen Tag sind keine Blutzuckerwerte vorhanden.',
+    mealsTitle: 'Mahlzeiten',
+    totalCarbs: (g: number) => `Total ${g} g Kohlenhydrate`,
+    noMeals: 'An diesem Tag wurden keine Mahlzeiten erfasst.',
+    peakTooltip: (value: string, time: string) => `Spitze ${value} um ${time}`,
+    footnote: (unit: string) =>
+      `Spitze und Anstieg in ${unit}, gemessen innerhalb von 2.5 Stunden nach der Mahlzeit. Werte über 10.0 sind hervorgehoben.`,
+    disclaimer:
+      '⚠️ Nur zur Information. Dialy gibt keine Therapieempfehlungen (z. B. Insulindosen) und ersetzt kein Messgerät.',
+    manageData: 'Blutzucker-Daten verwalten',
+    emptyTitle: 'Noch keine Blutzuckerdaten',
+    emptyText:
+      'Verbinde eine CGM-Quelle oder lade einen LibreView-Export hoch, um deinen Verlauf mit den Mahlzeiten zu sehen.',
+    importCta: 'Daten importieren',
+    locked: 'Blutzucker gesperrt',
+  },
+
+  glucose: {
+    needAccount: 'Melde dich an, um Blutzuckerdaten zu importieren.',
+    intro:
+      'Importiere deine Glukosewerte aus einem CGM-Sensor und sieh sie zusammen mit deinen Mahlzeiten. Werte werden in mg/dL gespeichert und in deiner gewählten Einheit angezeigt.',
+    unit: 'Einheit',
+    consentTitle: 'Einwilligung',
+    consent:
+      'Ich willige ein, dass meine Glukosewerte (besonders schützenswerte Gesundheitsdaten) in Dialy importiert und gespeichert werden.',
+    sources: 'Quellen',
+    dexcomSoon: 'Direkte Verbindung per Dexcom-Konto (OAuth). In Vorbereitung.',
+    comingSoon: 'Bald',
+    healthHelp: (platform: string) =>
+      `Dexcom und Libre schreiben ihre Werte in ${platform}. Dialy fragt die Leseberechtigung ab und importiert sie – ohne Passwort.`,
+    healthConnect: 'Verbinden & importieren',
+    healthUnavailable: 'Nur in der installierten Dialy-App verfügbar (nicht in der Vorschau/im Browser).',
+    healthDenied: 'Keine Leseberechtigung erhalten. Du kannst sie in den System-Einstellungen unter Health/Health Connect erteilen.',
+    libreHelp:
+      'Exportiere deine Daten in LibreView (Glukosedaten als CSV) und füge den Inhalt hier ein.',
+    csvPlaceholder: 'LibreView-CSV hier einfügen …',
+    importCsv: 'CSV importieren',
+    demoTitle: 'Demodaten',
+    demoHelp: 'Erzeugt einen Beispiel-Tagesverlauf für heute, passend zu deinen heutigen Mahlzeiten.',
+    demoCta: 'Demodaten für heute erzeugen',
+    stored: 'Gespeicherte Daten',
+    storedCount: (n: number) => `${n} Blutzuckerwerte gespeichert.`,
+    disconnectDelete: 'Verbindung trennen & alle Blutzuckerdaten löschen',
+    disclaimer:
+      '⚠️ Dialy zeigt Werte nur zur Information und gibt keine Therapieempfehlungen. Deine Werte werden verschlüsselt übertragen und gespeichert.',
+    csvError: (key: string): string => {
+      switch (key) {
+        case 'empty':
+          return 'Die Datei ist leer.';
+        case 'noHeader':
+          return 'Keine Kopfzeile mit einem Zeitstempel gefunden. Ist das ein LibreView-Export?';
+        case 'noGlucoseColumn':
+          return 'Keine Glukose-Spalte (mg/dL oder mmol/L) gefunden.';
+        case 'noReadings':
+          return 'Keine gültigen Messwerte gefunden.';
+        default:
+          return 'Die Datei konnte nicht gelesen werden.';
+      }
+    },
+    importedTitle: 'Import abgeschlossen',
+    importedMessage: (inserted: number, duplicates: number) =>
+      `${inserted} neue Werte importiert${duplicates > 0 ? `, ${duplicates} Duplikate übersprungen` : ''}.`,
+    importFailed: 'Import fehlgeschlagen',
+    deleteTitle: 'Blutzuckerdaten löschen',
+    deleteConfirm: 'Alle importierten Blutzuckerwerte unwiderruflich löschen?',
+    deletedTitle: 'Gelöscht',
+    deletedMessage: (n: number) => `${n} Blutzuckerwerte wurden gelöscht.`,
   },
 
   activities: {
@@ -291,6 +378,7 @@ const de = {
     viewPremium: 'Premium ansehen',
     devHint: 'Dev: Diese Karte lange drücken, um Premium zum Testen umzuschalten.',
     legal: 'Rechtliches & Datenschutz',
+    glucoseData: 'Blutzucker-Daten & CGM',
     deleteData: 'Daten löschen',
     deleteConfirm:
       'Möchtest du wirklich alle deine Einträge (Mahlzeiten, Sport, Blutzucker) unwiderruflich löschen?',
