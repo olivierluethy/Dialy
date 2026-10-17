@@ -214,6 +214,10 @@ const it: Dict = {
     yesterday: 'Ieri',
     comment: 'Commento',
     commentPlaceholder: 'p. es. prima dello sport, ipo dopo …',
+    deleteEntryTitle: 'Elimina voce',
+    deleteEntryConfirm: (name: string) => `Eliminare «${name}» dal diario?`,
+    deleteEntryA11y: (name: string) => `Elimina ${name}`,
+    deleteEntriesConfirm: (n: number) => `Eliminare ${n} alimenti dal diario?`,
   },
 
   activities: {

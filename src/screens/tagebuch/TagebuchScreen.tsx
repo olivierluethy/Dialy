@@ -83,6 +83,8 @@ export function TagebuchScreen() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   // Entries being edited: date/time of one or several, comment of one.
   const [editKeys, setEditKeys] = useState<string[] | null>(null);
+  // Meals waiting for the delete confirmation (trash icon or selection).
+  const [deleting, setDeleting] = useState<MealEntry[] | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -147,6 +149,25 @@ export function TagebuchScreen() {
     await mealsRepo.update(ids('meal'), userId, changes);
     await sportsRepo.update(ids('sport'), userId, changes);
     setEditKeys(null);
+    exitSelection();
+    setReloadTick((n) => n + 1);
+  };
+
+  // Only meals can be deleted; sport entries in the selection stay.
+  const selectedMeals = useMemo(
+    () =>
+      [...selected].flatMap((key) => {
+        const item = itemsByKey.get(key);
+        return item?.kind === 'meal' ? [item.data] : [];
+      }),
+    [selected, itemsByKey]
+  );
+
+  const confirmDelete = async () => {
+    if (!userId || !deleting) return;
+    const ids = deleting.map((m) => m.id);
+    setDeleting(null);
+    await mealsRepo.remove(ids, userId);
     exitSelection();
     setReloadTick((n) => n + 1);
   };
@@ -218,13 +239,23 @@ export function TagebuchScreen() {
                   ? t.tagebuch.tapToMark
                   : t.tagebuch.selectedCount(selected.size)}
               </Text>
-              <Button
-                title={t.tagebuch.changeDateTime}
-                icon="time-outline"
-                onPress={() => setEditKeys([...selected])}
-                disabled={selected.size === 0}
-                style={styles.selectButton}
-              />
+              <View style={styles.selectActions}>
+                <Button
+                  title={t.tagebuch.changeDateTime}
+                  icon="time-outline"
+                  onPress={() => setEditKeys([...selected])}
+                  disabled={selected.size === 0}
+                  style={styles.selectButton}
+                />
+                <Button
+                  title={t.common.delete}
+                  icon="trash-outline"
+                  variant="secondary"
+                  onPress={() => setDeleting(selectedMeals)}
+                  disabled={selectedMeals.length === 0}
+                  style={styles.selectButton}
+                />
+              </View>
             </Card>
           )}
 
@@ -246,6 +277,7 @@ export function TagebuchScreen() {
                       selected={selected.has(itemKey(item))}
                       onPress={() => onRowPress(item)}
                       onLongPress={() => onRowLongPress(item)}
+                      onDelete={item.kind === 'meal' ? () => setDeleting([item.data]) : undefined}
                     />
                   ))}
                 </Card>
@@ -274,6 +306,23 @@ export function TagebuchScreen() {
         onCancel={() => setEditKeys(null)}
         onSave={saveEntry}
       />
+
+      <Dialog
+        visible={deleting !== null}
+        title={t.tagebuch.deleteEntryTitle}
+        message={
+          deleting?.length === 1
+            ? t.tagebuch.deleteEntryConfirm(deleting[0]!.name)
+            : deleting
+              ? t.tagebuch.deleteEntriesConfirm(deleting.length)
+              : undefined
+        }
+        onClose={() => setDeleting(null)}
+        actions={[
+          { label: t.common.cancel, onPress: () => setDeleting(null) },
+          { label: t.common.delete, variant: 'primary', onPress: confirmDelete },
+        ]}
+      />
     </Screen>
   );
 }
@@ -285,6 +334,7 @@ function FeedRow({
   selected,
   onPress,
   onLongPress,
+  onDelete,
 }: {
   item: FeedItem;
   last: boolean;
@@ -292,6 +342,8 @@ function FeedRow({
   selected: boolean;
   onPress: () => void;
   onLongPress: () => void;
+  /** Shows the trash icon (not while selecting). */
+  onDelete?: () => void;
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -335,6 +387,17 @@ function FeedRow({
           </Text>
         ) : null}
       </View>
+      {onDelete && !selecting && (
+        <Pressable
+          onPress={onDelete}
+          accessibilityRole="button"
+          accessibilityLabel={t.tagebuch.deleteEntryA11y(itemTitle(item, t))}
+          hitSlop={8}
+          style={({ pressed }) => [styles.deleteBtn, pressed && styles.deleteBtnPressed]}
+        >
+          <Ionicons name="trash-outline" size={20} color={colors.danger} />
+        </Pressable>
+      )}
     </Pressable>
   );
 }
@@ -519,7 +582,8 @@ const makeStyles = (colors: Colors) =>
     lockedButtonSecondary: { alignSelf: 'stretch', marginTop: spacing.sm },
     selectBar: { marginBottom: spacing.lg },
     selectCount: { fontSize: 15, color: colors.textSecondary },
-    selectButton: { marginTop: spacing.md },
+    selectActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
+    selectButton: { flex: 1, paddingHorizontal: spacing.sm },
     empty: { color: colors.textTertiary, fontSize: 15, marginTop: spacing.lg, lineHeight: 22 },
     dayBlock: { marginBottom: spacing.xl },
     dayHeader: {
@@ -547,6 +611,8 @@ const makeStyles = (colors: Colors) =>
     rowMeta: { fontSize: 14, color: colors.textSecondary, marginTop: 2 },
     rowSub: { fontSize: 13, color: colors.textTertiary, marginTop: 2 },
     rowNote: { fontSize: 13, color: colors.textSecondary, fontStyle: 'italic', marginTop: 4 },
+    deleteBtn: { marginLeft: spacing.sm, padding: spacing.xs, borderRadius: radius.pill },
+    deleteBtnPressed: { backgroundColor: colors.bgInput },
     summaryRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
     chip: {
       flex: 1,

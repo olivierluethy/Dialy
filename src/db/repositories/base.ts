@@ -34,6 +34,26 @@ export async function softDelete(
   await enqueueSync(db, tableName, rowId);
 }
 
+/** Soft-deletes diary entries of `userId` (other accounts' rows are left alone). */
+export async function deleteEntries(
+  tableName: string,
+  rowIds: string[],
+  userId: string
+): Promise<void> {
+  if (rowIds.length === 0) return;
+  const db = await getDb();
+  const ts = nowIso();
+  await db.withTransactionAsync(async () => {
+    for (const id of rowIds) {
+      const result = await db.runAsync(
+        `UPDATE ${tableName} SET deleted_at = ?, updated_at = ? WHERE id = ? AND user_id = ? AND deleted_at IS NULL`,
+        [ts, ts, id, userId]
+      );
+      if (result.changes > 0) await enqueueSync(db, tableName, id);
+    }
+  });
+}
+
 /** What the Tagebuch edit popup can change on a diary entry. */
 export interface EntryChanges {
   logged_at?: string;

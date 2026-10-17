@@ -188,6 +188,10 @@ const de = {
     yesterday: 'Gestern',
     comment: 'Kommentar',
     commentPlaceholder: 'z. B. vor dem Sport, Hypo danach …',
+    deleteEntryTitle: 'Eintrag löschen',
+    deleteEntryConfirm: (name: string) => `«${name}» aus dem Tagebuch löschen?`,
+    deleteEntryA11y: (name: string) => `${name} löschen`,
+    deleteEntriesConfirm: (n: number) => `${n} Lebensmittel aus dem Tagebuch löschen?`,
   },
 
   activities: {
