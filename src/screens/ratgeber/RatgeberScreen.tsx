@@ -67,8 +67,7 @@ export function RatgeberScreen() {
   );
 
   return (
-    <Screen>
-      <DiabetesTypeControl />
+    <Screen contentStyle={styles.content}>
       <ScreenTitle>{t.ratgeber.title}</ScreenTitle>
 
       {loading ? (
@@ -109,12 +108,17 @@ export function RatgeberScreen() {
         ))}
         </>
       )}
+      <View style={styles.typeFooter}>
+        <DiabetesTypeControl />
+      </View>
     </Screen>
   );
 }
 
 const makeStyles = (colors: Colors) =>
   StyleSheet.create({
+    content: { flexGrow: 1 },
+    typeFooter: { marginTop: 'auto', paddingTop: spacing.lg },
     card: {
       flexDirection: 'row',
       alignItems: 'center',
