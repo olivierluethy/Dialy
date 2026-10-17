@@ -8,6 +8,24 @@ const config = getDefaultConfig(__dirname);
 // src/db/database.web.ts) can load its WebAssembly binary via a served URL.
 config.resolver.assetExts.push('wasm');
 
+// Optional native health modules (issue #21 §3 B, src/services/healthGlucose).
+// They are only installed for a dev/EAS build; until then Metro can't resolve
+// the literal `require(...)` and the whole bundle fails. Stub the ones that
+// aren't installed to an empty module (the code guards by Platform + feature
+// detection, so an empty module simply reads as "unavailable"). Once the
+// package is installed, `require.resolve` succeeds and the real module loads.
+const OPTIONAL_HEALTH_MODULES = ['@kingstinct/react-native-healthkit', 'react-native-health-connect'];
+const missingHealthModules = new Set(
+  OPTIONAL_HEALTH_MODULES.filter((name) => {
+    try {
+      require.resolve(name);
+      return false;
+    } catch {
+      return true;
+    }
+  })
+);
+
 // @supabase/supabase-js's browser build (index.mjs) does an OPTIONAL dynamic
 // `import('@opentelemetry/api')` for tracing, guarded by `.catch(() => null)`.
 // Metro still tries to resolve it statically and fails the whole web bundle
@@ -16,6 +34,10 @@ config.resolver.assetExts.push('wasm');
 const defaultResolveRequest = config.resolver.resolveRequest;
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   if (moduleName === '@opentelemetry/api') {
+    return { type: 'empty' };
+  }
+  // Optional health modules that aren't installed (see above).
+  if (missingHealthModules.has(moduleName)) {
     return { type: 'empty' };
   }
   // react-native-gifted-charts pulls in `react-native-linear-gradient`, a BARE

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ActivityIndicator, ScrollView } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/Screen';
@@ -86,6 +86,12 @@ export function TagebuchScreen() {
   // Meals waiting for the delete confirmation (trash icon or selection).
   const [deleting, setDeleting] = useState<MealEntry[] | null>(null);
 
+  // List vs. calendar view (toggle under the title).
+  const [view, setView] = useState<'list' | 'calendar'>('list');
+  const [calMonth, setCalMonth] = useState<Date>(() => startOfMonth(new Date()));
+  // Day whose entries are shown in the calendar popup (null = closed).
+  const [calendarDay, setCalendarDay] = useState<string | null>(null);
+
   useFocusEffect(
     useCallback(() => {
       let active = true;
@@ -117,6 +123,20 @@ export function TagebuchScreen() {
     for (const g of groups) for (const item of g.items) map.set(itemKey(item), item);
     return map;
   }, [groups]);
+
+  // Day lookup + which days have entries, for the calendar.
+  const groupsByDay = useMemo(() => {
+    const map = new Map<string, DayGroup>();
+    for (const g of groups) map.set(g.key, g);
+    return map;
+  }, [groups]);
+  const daysWithEntries = useMemo(() => new Set(groups.map((g) => g.key)), [groups]);
+
+  const showList = () => setView('list');
+  const showCalendar = () => {
+    setView('calendar');
+    exitSelection();
+  };
 
   const exitSelection = () => {
     setSelecting(false);
@@ -180,12 +200,38 @@ export function TagebuchScreen() {
   const goPremium = () => navigation.navigate('Login', { screen: 'Paywall' });
   const unlocked = can('fullDiary', ctx);
   const firstEdited = editKeys?.[0] ? itemsByKey.get(editKeys[0]) : undefined;
+  const popupGroup = calendarDay ? groupsByDay.get(calendarDay) : undefined;
+
+  // One day's entries (header + rows + carb total). Reused by both views.
+  const renderDayBlock = (g: DayGroup, i: number) => (
+    <FadeIn key={g.key} delay={staggerDelay(i)} style={styles.dayBlock}>
+      <Text style={styles.dayHeader}>{g.header}</Text>
+      <Card style={styles.dayCard}>
+        {g.items.map((item, idx) => (
+          <FeedRow
+            key={item.data.id}
+            item={item}
+            last={idx === g.items.length - 1}
+            selecting={selecting}
+            selected={selected.has(itemKey(item))}
+            onPress={() => onRowPress(item)}
+            onLongPress={() => onRowLongPress(item)}
+            onEdit={() => setEditKeys([itemKey(item)])}
+            onDelete={item.kind === 'meal' ? () => setDeleting([item.data]) : undefined}
+          />
+        ))}
+      </Card>
+      <View style={styles.summaryRow}>
+        <SummaryChip label={t.tagebuch.carbTotal} value={`${Math.round(g.carbTotal)} g`} />
+      </View>
+    </FadeIn>
+  );
 
   return (
     <Screen>
       <View style={styles.titleRow}>
         <ScreenTitle style={styles.title}>{t.tagebuch.title}</ScreenTitle>
-        {unlocked && groups.length > 0 && (
+        {unlocked && groups.length > 0 && view === 'list' && (
           <Pressable
             onPress={() => (selecting ? exitSelection() : setSelecting(true))}
             accessibilityRole="button"
@@ -195,6 +241,14 @@ export function TagebuchScreen() {
           </Pressable>
         )}
       </View>
+
+      {/* List / calendar switch */}
+      {unlocked && groups.length > 0 && (
+        <View style={styles.viewToggle}>
+          <ViewTab label={t.tagebuch.viewList} icon="list" active={view === 'list'} onPress={showList} />
+          <ViewTab label={t.tagebuch.viewCalendar} icon="calendar" active={view === 'calendar'} onPress={showCalendar} />
+        </View>
+      )}
 
       {/* Locked without a subscription: sign in, or (signed in) get Premium. */}
       {!unlocked ? (
@@ -263,30 +317,21 @@ export function TagebuchScreen() {
             <ActivityIndicator color={colors.accent} style={{ marginTop: spacing.xl }} />
           ) : groups.length === 0 ? (
             <Text style={styles.empty}>{t.tagebuch.empty}</Text>
+          ) : view === 'list' ? (
+            groups.map((g, i) => renderDayBlock(g, i))
           ) : (
-            groups.map((g, i) => (
-              <FadeIn key={g.key} delay={staggerDelay(i)} style={styles.dayBlock}>
-                <Text style={styles.dayHeader}>{g.header}</Text>
-                <Card style={styles.dayCard}>
-                  {g.items.map((item, idx) => (
-                    <FeedRow
-                      key={item.data.id}
-                      item={item}
-                      last={idx === g.items.length - 1}
-                      selecting={selecting}
-                      selected={selected.has(itemKey(item))}
-                      onPress={() => onRowPress(item)}
-                      onLongPress={() => onRowLongPress(item)}
-                      onDelete={item.kind === 'meal' ? () => setDeleting([item.data]) : undefined}
-                    />
-                  ))}
-                </Card>
-                {/* Daily summary chips */}
-                <View style={styles.summaryRow}>
-                  <SummaryChip label={t.tagebuch.carbTotal} value={`${Math.round(g.carbTotal)} g`} />
-                </View>
-              </FadeIn>
-            ))
+            <MonthCalendar
+              month={calMonth}
+              daysWithEntries={daysWithEntries}
+              selectedDay={calendarDay ?? ''}
+              onSelectDay={(key) => {
+                // Open the popup only for days that actually have entries.
+                if (daysWithEntries.has(key)) setCalendarDay(key);
+              }}
+              onPrevMonth={() => setCalMonth((m) => shiftMonth(m, -1))}
+              onNextMonth={() => setCalMonth((m) => shiftMonth(m, 1))}
+              onToday={() => setCalMonth(startOfMonth(new Date()))}
+            />
           )}
         </>
       )}
@@ -323,6 +368,50 @@ export function TagebuchScreen() {
           { label: t.common.delete, variant: 'primary', onPress: confirmDelete },
         ]}
       />
+
+      {/* Calendar: a tapped day's entries as a popup */}
+      <Dialog
+        visible={popupGroup !== undefined}
+        title={popupGroup?.header ?? ''}
+        onClose={() => setCalendarDay(null)}
+        actions={[{ label: t.common.close, onPress: () => setCalendarDay(null) }]}
+      >
+        {popupGroup && (
+          <ScrollView style={styles.popupScroll} keyboardShouldPersistTaps="handled">
+            <View style={styles.popupList}>
+              {popupGroup.items.map((item, idx) => (
+                <FeedRow
+                  key={item.data.id}
+                  item={item}
+                  last={idx === popupGroup.items.length - 1}
+                  selecting={false}
+                  selected={false}
+                  onPress={() => {
+                    setCalendarDay(null);
+                    setEditKeys([itemKey(item)]);
+                  }}
+                  onLongPress={() => {}}
+                  onEdit={() => {
+                    setCalendarDay(null);
+                    setEditKeys([itemKey(item)]);
+                  }}
+                  onDelete={
+                    item.kind === 'meal'
+                      ? () => {
+                          setCalendarDay(null);
+                          setDeleting([item.data]);
+                        }
+                      : undefined
+                  }
+                />
+              ))}
+            </View>
+            <View style={styles.summaryRow}>
+              <SummaryChip label={t.tagebuch.carbTotal} value={`${Math.round(popupGroup.carbTotal)} g`} />
+            </View>
+          </ScrollView>
+        )}
+      </Dialog>
     </Screen>
   );
 }
@@ -334,6 +423,7 @@ function FeedRow({
   selected,
   onPress,
   onLongPress,
+  onEdit,
   onDelete,
 }: {
   item: FeedItem;
@@ -342,6 +432,8 @@ function FeedRow({
   selected: boolean;
   onPress: () => void;
   onLongPress: () => void;
+  /** Shows the edit (pencil) icon (not while selecting). */
+  onEdit?: () => void;
   /** Shows the trash icon (not while selecting). */
   onDelete?: () => void;
 }) {
@@ -387,16 +479,31 @@ function FeedRow({
           </Text>
         ) : null}
       </View>
-      {onDelete && !selecting && (
-        <Pressable
-          onPress={onDelete}
-          accessibilityRole="button"
-          accessibilityLabel={t.tagebuch.deleteEntryA11y(itemTitle(item, t))}
-          hitSlop={8}
-          style={({ pressed }) => [styles.deleteBtn, pressed && styles.deleteBtnPressed]}
-        >
-          <Ionicons name="trash-outline" size={20} color={colors.danger} />
-        </Pressable>
+      {!selecting && (onEdit || onDelete) && (
+        <View style={styles.rowActions}>
+          {onEdit && (
+            <Pressable
+              onPress={onEdit}
+              accessibilityRole="button"
+              accessibilityLabel={t.tagebuch.editEntryA11y(itemTitle(item, t))}
+              hitSlop={8}
+              style={({ pressed }) => [styles.actionBtn, pressed && styles.actionBtnPressed]}
+            >
+              <Ionicons name="pencil" size={18} color={colors.textSecondary} />
+            </Pressable>
+          )}
+          {onDelete && (
+            <Pressable
+              onPress={onDelete}
+              accessibilityRole="button"
+              accessibilityLabel={t.tagebuch.deleteEntryA11y(itemTitle(item, t))}
+              hitSlop={8}
+              style={({ pressed }) => [styles.actionBtn, pressed && styles.actionBtnPressed]}
+            >
+              <Ionicons name="trash-outline" size={20} color={colors.danger} />
+            </Pressable>
+          )}
+        </View>
       )}
     </Pressable>
   );
@@ -554,6 +661,125 @@ function buildGroups(meals: MealEntry[], sports: SportEntry[]): DayGroup[] {
   return Array.from(map.values());
 }
 
+const startOfMonth = (d: Date): Date => new Date(d.getFullYear(), d.getMonth(), 1);
+const shiftMonth = (d: Date, delta: number): Date => new Date(d.getFullYear(), d.getMonth() + delta, 1);
+
+/** Month grid cells, Monday-first, with leading/trailing blanks as null. */
+function monthCells(month: Date): Array<Date | null> {
+  const year = month.getFullYear();
+  const m = month.getMonth();
+  const offset = (new Date(year, m, 1).getDay() + 6) % 7; // Monday = 0
+  const days = new Date(year, m + 1, 0).getDate();
+  const cells: Array<Date | null> = [];
+  for (let i = 0; i < offset; i += 1) cells.push(null);
+  for (let d = 1; d <= days; d += 1) cells.push(new Date(year, m, d));
+  while (cells.length % 7 !== 0) cells.push(null);
+  return cells;
+}
+
+/** One of the two view tabs (Liste / Kalender). */
+function ViewTab({
+  label,
+  icon,
+  active,
+  onPress,
+}: {
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  active: boolean;
+  onPress: () => void;
+}) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[styles.viewTab, active && styles.viewTabActive]}
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
+    >
+      <Ionicons name={icon} size={16} color={active ? colors.textOnAccent : colors.textSecondary} style={styles.viewTabIcon} />
+      <Text style={[styles.viewTabText, active && styles.viewTabTextActive]}>{label}</Text>
+    </Pressable>
+  );
+}
+
+/** Month calendar: days with entries carry a dot; tap a day to show it below. */
+function MonthCalendar({
+  month,
+  daysWithEntries,
+  selectedDay,
+  onSelectDay,
+  onPrevMonth,
+  onNextMonth,
+  onToday,
+}: {
+  month: Date;
+  daysWithEntries: Set<string>;
+  selectedDay: string;
+  onSelectDay: (key: string) => void;
+  onPrevMonth: () => void;
+  onNextMonth: () => void;
+  onToday: () => void;
+}) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const t = useT();
+  const todayKey = dayKey(new Date().toISOString());
+  const cells = monthCells(month);
+  const weeks: Array<Array<Date | null>> = [];
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+  const weekdayOrder = [1, 2, 3, 4, 5, 6, 0]; // Monday-first over a Sunday-indexed array
+
+  return (
+    <View style={styles.calendar}>
+      <View style={styles.calHeader}>
+        <Pressable onPress={onPrevMonth} hitSlop={8} style={styles.calNavBtn} accessibilityLabel={t.tagebuch.prevMonth}>
+          <Ionicons name="chevron-back" size={20} color={colors.textPrimary} />
+        </Pressable>
+        <Pressable onPress={onToday} hitSlop={8}>
+          <Text style={styles.calMonthLabel}>{`${t.date.months[month.getMonth()]} ${month.getFullYear()}`}</Text>
+        </Pressable>
+        <Pressable onPress={onNextMonth} hitSlop={8} style={styles.calNavBtn} accessibilityLabel={t.tagebuch.nextMonth}>
+          <Ionicons name="chevron-forward" size={20} color={colors.textPrimary} />
+        </Pressable>
+      </View>
+
+      <View style={styles.weekRow}>
+        {weekdayOrder.map((wd) => (
+          <Text key={wd} style={styles.weekday}>{t.date.weekdaysShort[wd]}</Text>
+        ))}
+      </View>
+
+      {weeks.map((week, wi) => (
+        <View key={wi} style={styles.weekRow}>
+          {week.map((date, di) => {
+            if (!date) return <View key={di} style={styles.dayCell} />;
+            const k = dayKey(date.toISOString());
+            const has = daysWithEntries.has(k);
+            const isSel = k === selectedDay;
+            const isToday = k === todayKey;
+            return (
+              <Pressable
+                key={di}
+                style={styles.dayCell}
+                onPress={() => onSelectDay(k)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isSel }}
+              >
+                <View style={[styles.dayCircle, isSel && styles.daySelected, !isSel && isToday && styles.dayToday]}>
+                  <Text style={[styles.dayNum, isSel && styles.dayNumSelected]}>{date.getDate()}</Text>
+                </View>
+                <View style={[styles.dot, has ? (isSel ? styles.dotSelected : styles.dotOn) : styles.dotOff]} />
+              </Pressable>
+            );
+          })}
+        </View>
+      ))}
+    </View>
+  );
+}
+
 const makeStyles = (colors: Colors) =>
   StyleSheet.create({
     titleRow: {
@@ -564,6 +790,80 @@ const makeStyles = (colors: Colors) =>
     },
     title: { marginBottom: 0 },
     titleAction: { fontSize: 16, fontWeight: '600', color: colors.accent },
+
+    viewToggle: {
+      flexDirection: 'row',
+      backgroundColor: colors.bgSurface,
+      borderRadius: radius.pill,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: spacing.xs,
+      marginBottom: spacing.lg,
+    },
+    viewTab: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 8,
+      borderRadius: radius.pill,
+    },
+    viewTabActive: { backgroundColor: colors.accent },
+    viewTabIcon: { marginRight: 6 },
+    viewTabText: { fontSize: 15, fontWeight: '600', color: colors.textSecondary },
+    viewTabTextActive: { color: colors.textOnAccent },
+
+    calendar: {
+      backgroundColor: colors.bgSurface,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: spacing.md,
+      marginBottom: spacing.xl,
+    },
+    calHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: spacing.md,
+    },
+    calNavBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: radius.pill,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.bgSurfaceAlt,
+    },
+    calMonthLabel: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
+    weekRow: { flexDirection: 'row' },
+    weekday: {
+      flex: 1,
+      textAlign: 'center',
+      fontSize: 11,
+      fontWeight: '700',
+      color: colors.textTertiary,
+      paddingVertical: spacing.xs,
+    },
+    dayCell: { flex: 1, alignItems: 'center', paddingVertical: 4 },
+    dayCircle: {
+      width: 34,
+      height: 34,
+      borderRadius: radius.pill,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    daySelected: { backgroundColor: colors.accent },
+    dayToday: { borderWidth: 1, borderColor: colors.accent },
+    dayNum: { fontSize: 14, color: colors.textPrimary },
+    dayNumSelected: { color: colors.textOnAccent, fontWeight: '700' },
+    dot: { width: 5, height: 5, borderRadius: radius.pill, marginTop: 3 },
+    dotOn: { backgroundColor: colors.accent },
+    dotSelected: { backgroundColor: colors.accent },
+    dotOff: { backgroundColor: 'transparent' },
+    noEntriesDay: { fontSize: 14, color: colors.textTertiary, textAlign: 'center', marginTop: spacing.lg },
+    popupScroll: { maxHeight: 380 },
+    popupList: { marginTop: spacing.sm },
     lockedCard: { alignItems: 'center', marginTop: spacing.lg },
     lockedTitle: {
       fontSize: 18,
@@ -611,8 +911,9 @@ const makeStyles = (colors: Colors) =>
     rowMeta: { fontSize: 14, color: colors.textSecondary, marginTop: 2 },
     rowSub: { fontSize: 13, color: colors.textTertiary, marginTop: 2 },
     rowNote: { fontSize: 13, color: colors.textSecondary, fontStyle: 'italic', marginTop: 4 },
-    deleteBtn: { marginLeft: spacing.sm, padding: spacing.xs, borderRadius: radius.pill },
-    deleteBtnPressed: { backgroundColor: colors.bgInput },
+    rowActions: { flexDirection: 'row', alignItems: 'center', marginLeft: spacing.sm },
+    actionBtn: { padding: spacing.xs, marginLeft: spacing.xs, borderRadius: radius.pill },
+    actionBtnPressed: { backgroundColor: colors.bgInput },
     summaryRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
     chip: {
       flex: 1,

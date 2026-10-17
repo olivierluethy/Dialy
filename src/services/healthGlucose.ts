@@ -32,11 +32,23 @@ interface HcRecord {
   level?: { inMilligramsPerDeciliter?: number; inMillimolesPerLiter?: number };
 }
 
-/** Lazily require an optional native module; null when it isn't installed. */
-function optionalModule(name: string): any | null {
+// Optional native modules. Metro only accepts a string-literal `require`
+// inside try/catch (a dynamic `require(variable)` is rejected); with Expo's
+// optional-dependency handling this does not fail bundling when the package
+// isn't installed — it just returns null.
+function loadHealthKit(): any | null {
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    return require(name);
+    const mod = require('@kingstinct/react-native-healthkit');
+    return mod?.default ?? mod;
+  } catch {
+    return null;
+  }
+}
+function loadHealthConnect(): any | null {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    return require('react-native-health-connect');
   } catch {
     return null;
   }
@@ -46,18 +58,24 @@ let healthKit: any | undefined;
 let healthConnect: any | undefined;
 
 function hk(): any | null {
-  if (healthKit === undefined) healthKit = optionalModule('@kingstinct/react-native-healthkit')?.default ?? optionalModule('@kingstinct/react-native-healthkit');
+  if (healthKit === undefined) healthKit = loadHealthKit();
   return healthKit ?? null;
 }
 function hc(): any | null {
-  if (healthConnect === undefined) healthConnect = optionalModule('react-native-health-connect');
+  if (healthConnect === undefined) healthConnect = loadHealthConnect();
   return healthConnect ?? null;
 }
 
-/** Whether a health source exists on this platform/build. */
+/** Whether a usable health source exists on this platform/build. */
 export function isHealthAvailable(): boolean {
-  if (Platform.OS === 'ios') return hk() !== null;
-  if (Platform.OS === 'android') return hc() !== null;
+  if (Platform.OS === 'ios') {
+    const k = hk();
+    return !!k && (typeof k.requestAuthorization === 'function' || typeof k.isHealthDataAvailable === 'function');
+  }
+  if (Platform.OS === 'android') {
+    const c = hc();
+    return !!c && typeof c.requestPermission === 'function';
+  }
   return false;
 }
 

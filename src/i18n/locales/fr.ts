@@ -39,6 +39,7 @@ const fr: Dict = {
       'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre',
     ],
     weekdays: ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'],
+    weekdaysShort: ['Di', 'Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa'],
     long: (day, month, year) => `${day === 1 ? '1er' : day} ${month} ${year}`,
     withWeekday: (weekday, day, month, year) =>
       `${weekday} ${day === 1 ? '1er' : day} ${month} ${year}`,
@@ -201,6 +202,11 @@ const fr: Dict = {
     title: 'Journal',
     done: 'Terminé',
     select: 'Sélectionner',
+    viewList: 'Liste',
+    viewCalendar: 'Calendrier',
+    noEntriesDay: 'Aucune entrée ce jour.',
+    prevMonth: 'Mois précédent',
+    nextMonth: 'Mois suivant',
     locked: 'Journal verrouillé',
     tapToMark: 'Touche des entrées pour les sélectionner.',
     selectedCount: (n) =>
@@ -225,6 +231,7 @@ const fr: Dict = {
     deleteEntryTitle: 'Supprimer l’entrée',
     deleteEntryConfirm: (name: string) => `Supprimer « ${name} » du journal ?`,
     deleteEntryA11y: (name: string) => `Supprimer ${name}`,
+    editEntryA11y: (name: string) => `Modifier ${name}`,
     deleteEntriesConfirm: (n: number) => `Supprimer ${n} aliments du journal ?`,
   },
 

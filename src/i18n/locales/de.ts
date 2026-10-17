@@ -41,6 +41,7 @@ const de = {
       'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember',
     ],
     weekdays: ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'],
+    weekdaysShort: ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'],
     /** "16. Mai 2026" */
     long: (day: number, month: string, year: number) => `${day}. ${month} ${year}`,
     /** "Freitag, 16. Mai 2026" */
@@ -172,6 +173,11 @@ const de = {
     title: 'Tagebuch',
     done: 'Fertig',
     select: 'Auswählen',
+    viewList: 'Liste',
+    viewCalendar: 'Kalender',
+    noEntriesDay: 'Keine Einträge an diesem Tag.',
+    prevMonth: 'Vorheriger Monat',
+    nextMonth: 'Nächster Monat',
     locked: 'Tagebuch gesperrt',
     tapToMark: 'Einträge antippen, um sie zu markieren.',
     selectedCount: (n: number) => `${n} ${n === 1 ? 'Eintrag' : 'Einträge'} ausgewählt`,
@@ -194,6 +200,7 @@ const de = {
     deleteEntryTitle: 'Eintrag löschen',
     deleteEntryConfirm: (name: string) => `«${name}» aus dem Tagebuch löschen?`,
     deleteEntryA11y: (name: string) => `${name} löschen`,
+    editEntryA11y: (name: string) => `${name} bearbeiten`,
     deleteEntriesConfirm: (n: number) => `${n} Lebensmittel aus dem Tagebuch löschen?`,
   },
 
