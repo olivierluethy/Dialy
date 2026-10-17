@@ -53,7 +53,7 @@ const it: Dict = {
     blutzucker: 'Glicemia',
     sport: 'Sport',
     login: 'Accedi',
-    settings: 'Impostazioni',
+    settings: 'Account',
     contact: 'Contatto',
     glucoseImport: 'Dati glicemia',
     premium: 'Premium',

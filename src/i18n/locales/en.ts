@@ -53,7 +53,7 @@ const en: Dict = {
     blutzucker: 'Blood glucose',
     sport: 'Sport',
     login: 'Sign in',
-    settings: 'Settings',
+    settings: 'Account',
     contact: 'Contact',
     glucoseImport: 'Blood glucose data',
     premium: 'Premium',

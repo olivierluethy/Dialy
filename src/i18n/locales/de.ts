@@ -58,7 +58,7 @@ const de = {
     blutzucker: 'Blutzucker',
     sport: 'Sport',
     login: 'Anmelden',
-    settings: 'Einstellungen',
+    settings: 'Konto',
     contact: 'Kontakt',
     glucoseImport: 'Blutzucker-Daten',
     premium: 'Premium',
