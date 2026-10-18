@@ -21,6 +21,8 @@ alter table public.dexcom_connections enable row level security;
 -- Deliberately no client policies: only the authenticated Edge Function with
 -- the service-role key can see encrypted tokens or connection metadata.
 
-create unique index if not exists bg_readings_cgm_timestamp_unique
-  on public.bg_readings(user_id, logged_at, source)
-  where source = 'cgm' and deleted_at is null;
+-- A regular unique index is deliberately used (rather than a partial index)
+-- so PostgREST's `onConflict=user_id,logged_at,source` can use it during the
+-- import upsert. Manual and CGM values may still coexist at one timestamp.
+create unique index if not exists bg_readings_source_timestamp_unique
+  on public.bg_readings(user_id, logged_at, source);
