@@ -57,6 +57,7 @@ export type IconName =
   | 'settings'
   | 'key'
   | 'mail'
+  | 'google'
   // Appearance
   | 'moon'
   | 'sun'
@@ -131,6 +132,7 @@ export const ICONS: Record<IconName, Glyph> = {
   settings: 'settings-outline',
   key: 'key-outline',
   mail: 'mail-outline',
+  google: 'logo-google',
 
   moon: 'moon-outline',
   sun: 'sunny-outline',

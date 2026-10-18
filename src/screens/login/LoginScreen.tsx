@@ -104,7 +104,7 @@ function LoginForm() {
 
       <Button
         title="Continue with Google"
-        icon="logo-google"
+        icon="google"
         variant="secondary"
         onPress={signInWithGoogle}
         loading={loading}
