@@ -46,6 +46,45 @@ export const authService = {
     return { user: toUser(data.user), error: null };
   },
 
+  /**
+   * Starts Supabase's OAuth authorization-code flow. Google client secrets
+   * remain in Supabase/Google Cloud; this app receives only the final session.
+   */
+  async signInWithGoogle(): Promise<{ error: string | null }> {
+    const sb = getSupabase();
+    if (!sb) return { error: 'Google sign-in needs a configured online account service.' };
+    const { data, error } = await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: authRedirectUrl(), skipBrowserRedirect: true },
+    });
+    if (error || !data.url) return { error: error ? translateAuthError(error.message) : getT().auth.generic };
+    try {
+      await Linking.openURL(data.url);
+      return { error: null };
+    } catch {
+      return { error: getT().auth.generic };
+    }
+  },
+
+  /** Complete an OAuth code flow after the app is reopened by its deep link. */
+  async handleOAuthLink(url: string): Promise<{ user: AuthUser } | { error: string } | null> {
+    const sb = getSupabase();
+    if (!sb) return null;
+    const params = linkParams(url);
+    if (params.get('error') || params.get('error_code')) return { error: getT().auth.linkExpired };
+    const code = params.get('code');
+    if (code) {
+      const { data, error } = await sb.auth.exchangeCodeForSession(code);
+      return error || !data.user ? { error: translateAuthError(error?.message ?? '') } : { user: toUser(data.user)! };
+    }
+    // Supports providers/configurations that return a token fragment.
+    const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
+    if (!accessToken || !refreshToken) return null;
+    const { data, error } = await sb.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+    return error || !data.user ? { error: translateAuthError(error?.message ?? '') } : { user: toUser(data.user)! };
+  },
+
   /** `termsVersion`: the terms of use (legal/terms) the user accepted; stored in the user metadata. */
   async signUp(email: string, password: string, termsVersion: string): Promise<AuthResult> {
     const sb = getSupabase();
@@ -218,6 +257,12 @@ export const authService = {
 function recoveryRedirectUrl(): string {
   if (Platform.OS === 'web' && typeof window !== 'undefined') return window.location.origin;
   return Linking.createURL('/');
+}
+
+/** Same deep-link route is shared by password recovery and OAuth callbacks. */
+function authRedirectUrl(): string {
+  if (Platform.OS === 'web' && typeof window !== 'undefined') return window.location.origin;
+  return Linking.createURL('/auth/callback');
 }
 
 /** Query + fragment parameters of a link (Supabase puts the tokens in the #fragment). */

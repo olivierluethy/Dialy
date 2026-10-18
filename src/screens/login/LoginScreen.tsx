@@ -53,6 +53,14 @@ function LoginForm() {
     }
   };
 
+  const signInWithGoogle = async () => {
+    setError(null);
+    setLoading(true);
+    const { error: authError } = await authService.signInWithGoogle();
+    setLoading(false);
+    if (authError) setError(authError);
+  };
+
   return (
     <Screen>
       <View style={styles.header}>
@@ -93,6 +101,15 @@ function LoginForm() {
         <Text style={styles.dividerText}>{t.common.or}</Text>
         <View style={styles.divider} />
       </View>
+
+      <Button
+        title="Continue with Google"
+        icon="logo-google"
+        variant="secondary"
+        onPress={signInWithGoogle}
+        loading={loading}
+        style={styles.googleButton}
+      />
 
       <Button
         title={t.login.createAccount}
@@ -138,9 +155,10 @@ const makeStyles = (colors: Colors) =>
       marginBottom: spacing.md,
     },
     btn: { marginTop: spacing.sm },
-    dividerRow: { flexDirection: 'row', alignItems: 'center', marginVertical: spacing.xl },
+    dividerRow: { flexDirection: 'row', alignItems: 'center', marginVertical: spacing.lg },
     divider: { flex: 1, height: 1, backgroundColor: colors.border },
     dividerText: { color: colors.textTertiary, marginHorizontal: spacing.md },
+    googleButton: { marginBottom: spacing.md },
     legalLinks: { color: colors.textTertiary, textAlign: 'center', marginTop: spacing.xl },
     legalLink: { textDecorationLine: 'underline' },
     appearanceLabel: { marginTop: spacing.xxl },

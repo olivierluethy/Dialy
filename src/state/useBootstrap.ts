@@ -31,10 +31,17 @@ export function useBootstrap(): void {
         if (changed) useAppStore.getState().bumpDataRevision();
       });
 
-    // Password-reset link (from the e-mail) opened the app: sign in with its
-    // one-time session and ask for a new password.
+    // Password-recovery and OAuth redirects reopen the app. Both flows create
+    // a real Supabase session before the UI is updated.
     const handleLink = async (url: string | null): Promise<boolean> => {
       if (!url) return false;
+      const oauth = await authService.handleOAuthLink(url);
+      if (oauth) {
+        if ('error' in oauth) return false;
+        setUser(oauth.user);
+        void syncEngine.syncNow();
+        return true;
+      }
       const result = await authService.handleRecoveryLink(url);
       if (!result) return false;
       if (Platform.OS === 'web' && typeof window !== 'undefined') {

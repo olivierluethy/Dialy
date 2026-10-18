@@ -89,6 +89,9 @@ export function KHRechnerScreen() {
   // Search results carry names in the UI language: search again on a change.
   const language = useLanguage();
   const [query, setQuery] = useState('');
+  // Searching a large offline catalogue is fast, but a small debounce avoids
+  // doing work for every character while somebody is typing quickly.
+  const [committedQuery, setCommittedQuery] = useState('');
   const [results, setResults] = useState<Food[]>([]);
   // No foods on the device yet (first start, not downloaded so far).
   const [noFoods, setNoFoods] = useState(false);
@@ -160,8 +163,13 @@ export function KHRechnerScreen() {
   // Search runs in memory, so the spinner only shows on the very first load
   // (no flicker per keystroke). A new query starts again at the first page.
   useEffect(() => {
+    const timer = setTimeout(() => setCommittedQuery(query), 120);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  useEffect(() => {
     let active = true;
-    foodsRepo.search(query, category).then((rows) => {
+    foodsRepo.search(committedQuery, category).then((rows) => {
       if (active) {
         setResults(rows);
         if (rows.length > 0) setNoFoods(false);
@@ -173,7 +181,7 @@ export function KHRechnerScreen() {
     return () => {
       active = false;
     };
-  }, [query, category, dataRevision, language]);
+  }, [committedQuery, category, dataRevision, language]);
 
   // The select list only contains categories that actually contain foods.
   useEffect(() => {
@@ -210,9 +218,14 @@ export function KHRechnerScreen() {
           key={food.id}
           style={styles.resultRow}
           onPress={() => selectFoodRef.current(food)}
+          accessibilityRole="button"
+          accessibilityLabel={`${food.name}, ${foodCategoryLabel(food.categories[0] ?? '', t)}`}
         >
           <View style={styles.resultBody}>
             <Text style={styles.resultName}>{food.name}</Text>
+            {food.categories[0] && (
+              <Text style={styles.resultCategory}>{foodCategoryLabel(food.categories[0], t)}</Text>
+            )}
           </View>
           <Text style={styles.resultCarbs}>{food.carbs_per_100g} g / 100 g</Text>
         </Pressable>
@@ -416,6 +429,8 @@ export function KHRechnerScreen() {
           containerStyle={styles.searchField}
           style={query.length > 0 && styles.searchInputClearable}
           autoCorrect={false}
+          returnKeyType="search"
+          accessibilityLabel={t.khrechner.searchPlaceholder}
         />
         {query.length > 0 && (
           <Pressable
@@ -777,6 +792,7 @@ const makeStyles = (colors: Colors) =>
     },
     resultBody: { flex: 1, marginRight: spacing.md },
     resultName: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
+    resultCategory: { fontSize: 12, color: colors.textTertiary, marginTop: 2 },
     resultCarbs: { fontSize: 12, color: colors.textSecondary },
     resultCount: { fontSize: 12, color: colors.textTertiary, marginBottom: spacing.xs },
     categoryFilter: { marginBottom: spacing.md },

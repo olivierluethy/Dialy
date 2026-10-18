@@ -52,6 +52,8 @@ interface IndexedFood {
   key: string; // folded
   lower: string; // lower-case, umlauts kept
   germanKey: string | null; // folded German name, if it differs
+  /** Searchable words from the displayed, original and translated names. */
+  tokens: string[];
 }
 
 // Loaded once per language (foods with carbohydrates only), searched in
@@ -70,7 +72,14 @@ async function loadIndex(): Promise<IndexedFood[]> {
         const food = localize(german, lang);
         const key = foldText(food.name);
         const germanKey = food === german ? null : foldText(german.name);
-        return { food, key, lower: food.name.toLowerCase(), germanKey };
+        // Names in `names` act as useful aliases when a user knows a food by
+        // a different language. De-duplicating here keeps the hot search loop
+        // small even for the full ~23k catalogue.
+        const aliases = [food.name, german.name, ...Object.values(german.names ?? {})]
+          .map(foldText)
+          .join(' ');
+        const tokens = [...new Set(aliases.split(/[^a-z0-9]+/).filter((token) => token.length > 1))];
+        return { food, key, lower: food.name.toLowerCase(), germanKey, tokens };
       })
       .sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
     index = { lang, foods };
@@ -95,20 +104,18 @@ export const foodsRepo = {
     const terms = foldText(query).split(/[\s,;/]+/).filter(Boolean);
     if (terms.length === 0) return foods.map((f) => f.food);
     const exactTerms = query.toLowerCase().split(/[\s,;/]+/).filter(Boolean);
-    const first = terms[0]!;
-    const ranked: Array<{ food: Food; rank: number }> = [];
-    for (const { food, key, lower, germanKey } of foods) {
-      if (!terms.every((t) => key.includes(t))) {
-        if (germanKey && terms.every((t) => germanKey.includes(t))) ranked.push({ food, rank: 6 });
-        continue;
-      }
-      const i = key.indexOf(first);
-      const position = i === 0 ? 0 : /[a-z0-9]/.test(key[i - 1] ?? '') ? 2 : 1;
-      const exact = exactTerms.every((t) => lower.includes(t));
-      ranked.push({ food, rank: (exact ? 0 : 3) + position });
+    const normalizedQuery = terms.join(' ');
+    const ranked: Array<{ food: Food; score: number }> = [];
+    for (const candidate of foods) {
+      const score = scoreFood(candidate, terms, exactTerms, normalizedQuery);
+      if (score !== null) ranked.push({ food: candidate.food, score });
     }
-    // Array sort is stable, so the alphabetical order holds within a rank.
-    return ranked.sort((a, b) => a.rank - b.rank).map((r) => r.food);
+    // Scores deliberately leave large gaps: an exact phrase always wins over
+    // prefixes, which win over token/substring matches, then fuzzy matches.
+    // Alphabetical tie-breaking makes the result order predictable.
+    return ranked
+      .sort((a, b) => a.score - b.score || a.food.name.localeCompare(b.food.name))
+      .map((r) => r.food);
   },
 
   /** Categories that have at least one food. */
@@ -163,3 +170,77 @@ export const foodsRepo = {
     return names;
   },
 };
+
+/**
+ * Weighted relevance model. It is intentionally conservative: fuzzy matching
+ * only accepts short edit distances against complete words, so a typo such as
+ * "bananna" finds banana without filling the list with unrelated foods.
+ */
+function scoreFood(
+  candidate: IndexedFood,
+  terms: string[],
+  exactTerms: string[],
+  normalizedQuery: string
+): number | null {
+  const { key, lower, germanKey, tokens } = candidate;
+  if (key === normalizedQuery) return 0;
+  if (key.startsWith(normalizedQuery)) return 10;
+
+  let score = 0;
+  for (let i = 0; i < terms.length; i += 1) {
+    const term = terms[i]!;
+    const isExactCase = exactTerms.includes(term) && lower.includes(term);
+    if (tokens.includes(term)) {
+      score += isExactCase ? 20 : 24;
+      continue;
+    }
+    if (tokens.some((token) => token.startsWith(term))) {
+      score += 40;
+      continue;
+    }
+    if (key.includes(term) || germanKey?.includes(term)) {
+      score += 60;
+      continue;
+    }
+
+    // Candidate pruning: only compare words with a compatible first letter
+    // and length. This keeps a 23k-item catalogue responsive on mobile.
+    const maxDistance = term.length <= 4 ? 1 : term.length <= 8 ? 2 : 3;
+    let nearest = Number.POSITIVE_INFINITY;
+    for (const token of tokens) {
+      if (Math.abs(token.length - term.length) > maxDistance || token[0] !== term[0]) continue;
+      nearest = Math.min(nearest, damerauLevenshteinWithin(term, token, maxDistance));
+      if (nearest === 0) break;
+    }
+    if (nearest > maxDistance) return null;
+    score += 100 + nearest * 12;
+  }
+  return score;
+}
+
+/** Bounded Damerau-Levenshtein: insertion, deletion, substitution, transpose. */
+export function damerauLevenshteinWithin(a: string, b: string, limit: number): number {
+  if (Math.abs(a.length - b.length) > limit) return limit + 1;
+  let previous = Array.from({ length: b.length + 1 }, (_, i) => i);
+  let beforePrevious: number[] | null = null;
+  for (let i = 1; i <= a.length; i += 1) {
+    const current = [i];
+    let rowMin = current[0]!;
+    for (let j = 1; j <= b.length; j += 1) {
+      const substitution = previous[j - 1]! + (a[i - 1] === b[j - 1] ? 0 : 1);
+      const insertion = current[j - 1]! + 1;
+      const deletion = previous[j]! + 1;
+      const transpose =
+        i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1] && beforePrevious
+          ? beforePrevious[j - 2]! + 1
+          : Number.POSITIVE_INFINITY;
+      const value = Math.min(substitution, insertion, deletion, transpose);
+      current.push(value);
+      rowMin = Math.min(rowMin, value);
+    }
+    if (rowMin > limit) return limit + 1;
+    beforePrevious = previous;
+    previous = current;
+  }
+  return previous[b.length]!;
+}
