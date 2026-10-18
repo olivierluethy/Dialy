@@ -364,6 +364,10 @@ enabled = false
 
 # OAuth server configuration
 [auth.oauth_server]
+# Dexcom redirects from its authorization server without a Supabase JWT. The
+# function validates user JWTs itself for every non-callback request.
+[functions.dexcom]
+verify_jwt = false
 # Enable OAuth server functionality
 enabled = false
 # Path for OAuth consent flow UI

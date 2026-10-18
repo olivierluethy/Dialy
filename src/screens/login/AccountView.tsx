@@ -14,6 +14,7 @@ import { syncEngine } from '@/sync/syncEngine';
 import { isSupabaseConfigured } from '@/config';
 import { formatDate, formatTime } from '@/utils/format';
 import { useT, type Dict } from '@/i18n';
+import { dexcomService, type DexcomStatus } from '@/services/dexcom';
 
 /** Einstellungen: account, language, appearance — the Login tab once signed in. */
 export function AccountView() {
@@ -34,6 +35,30 @@ export function AccountView() {
     return () => clearInterval(id);
   }, []);
   const sync = describeSync(isSupabaseConfigured(), syncStatus, lastSyncedAt, now, t);
+  const [dexcom, setDexcom] = useState<DexcomStatus | null>(null);
+  const [dexcomBusy, setDexcomBusy] = useState(false);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+    dexcomService.status().then(setDexcom).catch(() => setDexcom(null));
+  }, []);
+
+  const connectDexcom = async () => {
+    setDexcomBusy(true);
+    try { await dexcomService.connect(); }
+    catch (error) { Alert.alert('Dexcom', error instanceof Error ? error.message : 'Connection could not start.'); }
+    finally { setDexcomBusy(false); }
+  };
+  const syncDexcom = async () => {
+    setDexcomBusy(true);
+    try { await dexcomService.sync(); setDexcom(await dexcomService.status()); useAppStore.getState().bumpDataRevision(); }
+    catch (error) { Alert.alert('Dexcom', error instanceof Error ? error.message : 'Sync failed.'); }
+    finally { setDexcomBusy(false); }
+  };
+  const disconnectDexcom = () => Alert.alert('Disconnect Dexcom?', 'Glucose readings already saved in your diary are kept.', [
+    { text: t.common.cancel, style: 'cancel' },
+    { text: 'Disconnect', style: 'destructive', onPress: async () => { await dexcomService.disconnect(); setDexcom({ connected: false, lastSyncedAt: null, error: null }); } },
+  ]);
 
   const logout = async () => {
     await authService.signOut();
@@ -143,6 +168,32 @@ export function AccountView() {
         </Pressable>
       </Card>
 
+      <SectionLabel style={styles.spaced}>Devices</SectionLabel>
+      <Card>
+        <View style={styles.row}>
+          <Icon name="glucose" size={20} color={colors.accent} />
+          <View style={styles.rowBody}>
+            <Text style={styles.rowTitle}>Dexcom CGM</Text>
+            <Text style={styles.rowSub}>
+              {!isSupabaseConfigured()
+                ? 'Connect an online account to manage devices.'
+                : dexcom?.connected
+                  ? dexcom.lastSyncedAt ? `Connected · last sync ${formatTime(dexcom.lastSyncedAt)}` : 'Connected'
+                  : 'Import your Dexcom readings securely.'}
+            </Text>
+          </View>
+        </View>
+        {dexcom?.error && <Text style={styles.deviceError}>{dexcom.error}</Text>}
+        {dexcom?.connected ? (
+          <View style={styles.deviceActions}>
+            <Button title="Sync now" variant="secondary" onPress={syncDexcom} loading={dexcomBusy} />
+            <Button title="Disconnect" variant="secondary" onPress={disconnectDexcom} disabled={dexcomBusy} />
+          </View>
+        ) : (
+          <Button title="Connect Dexcom" variant="secondary" onPress={connectDexcom} loading={dexcomBusy} style={styles.deviceConnect} />
+        )}
+      </Card>
+
       <SectionLabel style={styles.spaced}>{t.account.legal}</SectionLabel>
       <Card>
         <Pressable style={styles.linkRow} onPress={() => navigation.navigate('Privacy')}>
@@ -205,6 +256,9 @@ const makeStyles = (colors: Colors) =>
     rowTitle: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
     rowSub: { fontSize: 13, color: colors.textTertiary, marginTop: 2 },
     devHint: { fontSize: 12, color: colors.textTertiary, marginTop: spacing.md, fontStyle: 'italic' },
+    deviceConnect: { alignSelf: 'flex-start', marginTop: spacing.md },
+    deviceActions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md },
+    deviceError: { color: colors.warn, fontSize: 13, lineHeight: 18, marginTop: spacing.sm },
     linkRow: {
       flexDirection: 'row',
       alignItems: 'center',
