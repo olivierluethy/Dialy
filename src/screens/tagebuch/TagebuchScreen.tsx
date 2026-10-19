@@ -224,9 +224,9 @@ export function TagebuchScreen() {
           />
         ))}
       </Card>
-      <View style={styles.summaryRow}>
-        <SummaryChip label={t.tagebuch.carbTotal} value={`${Math.round(g.carbTotal)} g`} />
-      </View>
+      <Text style={styles.carbTotal}>
+        {Math.round(g.carbTotal)} g {t.tagebuch.carbTotal}
+      </Text>
     </FadeIn>
   );
 
@@ -376,9 +376,9 @@ export function TagebuchScreen() {
                 />
               ))}
             </View>
-            <View style={styles.summaryRow}>
-              <SummaryChip label={t.tagebuch.carbTotal} value={`${Math.round(popupGroup.carbTotal)} g`} />
-            </View>
+            <Text style={styles.carbTotal}>
+              {Math.round(popupGroup.carbTotal)} g {t.tagebuch.carbTotal}
+            </Text>
           </ScrollView>
         )}
       </Dialog>
@@ -652,16 +652,6 @@ function EditEntryDialog({
   );
 }
 
-function SummaryChip({ label, value }: { label: string; value: string }) {
-  const styles = useThemedStyles(makeStyles);
-  return (
-    <View style={styles.chip}>
-      <Text style={styles.chipValue}>{value}</Text>
-      <Text style={styles.chipLabel}>{label}</Text>
-    </View>
-  );
-}
-
 /** Merge meals + sports, sort newest first, group by local day. */
 function buildGroups(meals: MealEntry[], sports: SportEntry[]): DayGroup[] {
   const items: FeedItem[] = [
@@ -928,18 +918,13 @@ const makeStyles = (colors: Colors) =>
     rowActions: { flexDirection: 'row', alignItems: 'center', marginLeft: spacing.sm },
     actionBtn: { padding: spacing.xs, marginLeft: spacing.xs, borderRadius: radius.pill },
     actionBtnPressed: { backgroundColor: colors.bgInput },
-    summaryRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
-    chip: {
-      flex: 1,
-      backgroundColor: colors.bgSurfaceAlt,
-      borderRadius: radius.card,
-      borderWidth: 1,
-      borderColor: colors.border,
-      paddingVertical: spacing.md,
-      alignItems: 'center',
+    carbTotal: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: colors.textPrimary,
+      textAlign: 'center',
+      marginTop: spacing.md,
     },
-    chipValue: { fontSize: 18, fontWeight: '700', color: colors.accent },
-    chipLabel: { fontSize: 12, color: colors.textTertiary, marginTop: 2 },
     editFields: { gap: spacing.md, marginTop: spacing.lg },
     dateNavigation: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.xs },
     dayArrow: { width: 44, minHeight: 48, borderRadius: radius.input, backgroundColor: colors.bgSurfaceAlt, alignItems: 'center', justifyContent: 'center' },
