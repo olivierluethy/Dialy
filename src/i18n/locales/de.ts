@@ -72,6 +72,9 @@ const de = {
     closeMenu: 'Menü schliessen',
     toLight: 'Zum hellen Modus wechseln',
     toDark: 'Zum dunklen Modus wechseln',
+    groupDiabetes: 'Diabetes',
+    groupSettings: 'Einstellungen',
+    groupInfo: 'Informationen',
   },
 
   theme: {

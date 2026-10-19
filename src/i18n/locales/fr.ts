@@ -68,6 +68,9 @@ const fr: Dict = {
     closeMenu: 'Fermer le menu',
     toLight: 'Passer au mode clair',
     toDark: 'Passer au mode sombre',
+    groupDiabetes: 'Diabète',
+    groupSettings: 'Paramètres',
+    groupInfo: 'Informations',
   },
 
   theme: {

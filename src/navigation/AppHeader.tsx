@@ -10,7 +10,7 @@ import {
   type PressableStateCallbackType,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Icon } from '@/components/Icon';
+import { Icon, type IconName } from '@/components/Icon';
 import type { BottomTabHeaderProps } from '@react-navigation/bottom-tabs';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { radius, spacing, type Colors } from '@/theme/theme';
@@ -23,23 +23,25 @@ import type { LoginStackParamList, RootTabParamList } from '@/navigation/types';
 /**
  * Apple-style global navigation: a slim top bar with the Dialy mark on the
  * left and a two-line "hamburger" on the right. The hamburger opens a
- * full-screen menu: large section links (staggered fade-in), a short list
- * of secondary links, and a light/dark toggle pinned bottom-right. Replaces
- * the bottom tab bar.
+ * full-screen menu: large section links in titled groups (staggered
+ * fade-in) and a light/dark toggle pinned bottom-right. Replaces the bottom
+ * tab bar.
  */
 
 interface MenuItem {
   label: string;
   tab: keyof RootTabParamList;
   screen?: keyof LoginStackParamList;
+  /** Overlay group: the app sections (default), account or information. */
+  group?: 'account' | 'info';
 }
 
-const moreItems = (t: Dict): MenuItem[] => [
-  { label: t.nav.premium, tab: 'Login', screen: 'Paywall' },
-  { label: t.nav.privacy, tab: 'Login', screen: 'Privacy' },
-  { label: t.nav.terms, tab: 'Login', screen: 'Terms' },
-];
-const MORE_COUNT = 3;
+/** Icon + title heading each overlay group. */
+const groupTitle = (t: Dict, group: MenuItem['group']): { icon: IconName; label: string } => {
+  if (group === 'account') return { icon: 'settings', label: t.nav.groupSettings };
+  if (group === 'info') return { icon: 'info', label: t.nav.groupInfo };
+  return { icon: 'brand', label: t.nav.groupDiabetes };
+};
 
 const itemKey = (item: MenuItem) => item.screen ?? item.tab;
 
@@ -52,19 +54,23 @@ export function AppHeader({ navigation, route }: BottomTabHeaderProps) {
   const [open, setOpen] = useState(false);
 
   // Section order is fixed (§3): Ratgeber, KH-Rechner, Tagebuch, Sport,
-  // then Login and Kontakt (both screens of the Login stack).
+  // then Login, Kontakt, Datenschutz and Nutzungsbedingungen (all screens
+  // of the Login stack).
   const sections: MenuItem[] = [
     { label: t.nav.ratgeber, tab: 'Ratgeber' },
     { label: t.nav.khrechner, tab: 'KHRechner' },
     { label: t.nav.tagebuch, tab: 'Tagebuch' },
     { label: t.nav.blutzucker, tab: 'Blutzucker' },
     { label: t.nav.sport, tab: 'Sport' },
-    { label: user ? t.nav.settings : t.nav.login, tab: 'Login', screen: 'LoginHome' },
-    { label: t.nav.contact, tab: 'Login', screen: 'Contact' },
+    { label: user ? t.nav.settings : t.nav.login, tab: 'Login', screen: 'LoginHome', group: 'account' },
+    { label: t.nav.contact, tab: 'Login', screen: 'Contact', group: 'info' },
+    { label: t.nav.privacy, tab: 'Login', screen: 'Privacy', group: 'info' },
+    { label: t.nav.terms, tab: 'Login', screen: 'Terms', group: 'info' },
   ];
 
   // Highlight the section matching the focused screen; within the Login stack
-  // that's Kontakt on its screen and Anmelden/Einstellungen everywhere else.
+  // that's the matching link on its screen and Anmelden/Einstellungen
+  // everywhere else.
   const focused = getFocusedRouteNameFromRoute(route);
   const inTab = sections.filter((s) => s.tab === route.name);
   const activeItem =
@@ -130,13 +136,12 @@ function MenuOverlay({
   const styles = useThemedStyles(makeStyles);
   const setThemeMode = useAppStore((s) => s.setThemeMode);
   const t = useT();
-  const more = moreItems(t);
   const nextScheme = scheme === 'dark' ? 'light' : 'dark';
   const reducedMotion = useReducedMotion();
 
-  // One animated value per row (sections + secondary links), staggered in.
+  // One animated value per section row, staggered in.
   const anims = useRef(
-    Array.from({ length: sections.length + MORE_COUNT }, () => new Animated.Value(0))
+    Array.from({ length: sections.length }, () => new Animated.Value(0))
   ).current;
 
   useEffect(() => {
@@ -183,8 +188,20 @@ function MenuOverlay({
         <ScrollView contentContainerStyle={styles.menuList}>
           {sections.map((item, i) => {
             const active = itemKey(item) === activeKey;
+            // An icon + title heads each group.
+            const groupStart = i === 0 || sections[i - 1]!.group !== item.group;
+            const title = groupTitle(t, item.group);
             return (
               <Animated.View key={itemKey(item)} style={rowAnim(i)}>
+                {groupStart && (
+                  <View
+                    style={[styles.groupTitle, i > 0 && styles.groupTitleSpaced]}
+                    accessibilityRole="header"
+                  >
+                    <Icon name={title.icon} size={20} color={colors.textPrimary} />
+                    <Text style={styles.groupTitleText}>{title.label}</Text>
+                  </View>
+                )}
                 <Pressable
                   onPress={() => onSelect(item)}
                   style={styles.item}
@@ -207,29 +224,8 @@ function MenuOverlay({
           })}
         </ScrollView>
 
-        {/* Footer: secondary links bottom-left, appearance toggle bottom-right
-            (language: Einstellungen / Anmelden). */}
+        {/* Footer: appearance toggle bottom-right. */}
         <View style={styles.menuFooter}>
-          <View>
-            {more.map((item, i) => (
-              <Animated.View key={itemKey(item)} style={rowAnim(sections.length + i)}>
-                <Pressable
-                  onPress={() => onSelect(item)}
-                  style={styles.moreItem}
-                  accessibilityRole="link"
-                >
-                  {(state) => (
-                    <>
-                      <Text style={styles.moreText}>{item.label}</Text>
-                      {showChevron(state) && (
-                        <Icon name="chevronRight" size={16} color={colors.textTertiary} />
-                      )}
-                    </>
-                  )}
-                </Pressable>
-              </Animated.View>
-            ))}
-          </View>
           <Pressable
             onPress={() => setThemeMode(nextScheme)}
             style={({ pressed }) => [styles.themeToggle, pressed && styles.themeTogglePressed]}
@@ -275,6 +271,20 @@ const makeStyles = (colors: Colors) =>
       paddingHorizontal: spacing.lg,
     },
     menuList: { paddingHorizontal: spacing.xxl * 2, paddingTop: spacing.sm, paddingBottom: spacing.xxl },
+    groupTitle: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      marginBottom: spacing.sm,
+    },
+    groupTitleSpaced: { marginTop: spacing.xxl },
+    groupTitleText: {
+      fontSize: 13,
+      fontWeight: '700',
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+      color: colors.textPrimary,
+    },
     item: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -288,19 +298,10 @@ const makeStyles = (colors: Colors) =>
       color: colors.textPrimary,
     },
     itemActive: { color: colors.accent },
-    moreItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.xs,
-      paddingVertical: 4,
-    },
-    moreText: { fontSize: 17, fontWeight: '600', color: colors.textSecondary },
     menuFooter: {
       flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'flex-end',
-      paddingLeft: spacing.xxl * 2,
-      paddingRight: spacing.lg,
+      justifyContent: 'flex-end',
+      paddingHorizontal: spacing.lg,
       paddingVertical: spacing.lg,
     },
     themeToggle: {

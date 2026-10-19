@@ -67,6 +67,9 @@ const en: Dict = {
     closeMenu: 'Close menu',
     toLight: 'Switch to light mode',
     toDark: 'Switch to dark mode',
+    groupDiabetes: 'Diabetes',
+    groupSettings: 'Settings',
+    groupInfo: 'Information',
   },
 
   theme: {

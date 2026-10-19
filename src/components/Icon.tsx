@@ -55,6 +55,7 @@ export type IconName =
   | 'login'
   | 'logout'
   | 'settings'
+  | 'info'
   | 'key'
   | 'mail'
   | 'google'
@@ -130,6 +131,7 @@ export const ICONS: Record<IconName, Glyph> = {
   login: 'log-in-outline',
   logout: 'log-out-outline',
   settings: 'settings-outline',
+  info: 'information-circle-outline',
   key: 'key-outline',
   mail: 'mail-outline',
   google: 'logo-google',
