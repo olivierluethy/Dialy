@@ -8,6 +8,7 @@ import {
   Keyboard,
   ScrollView,
   Modal,
+  Animated,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { Icon } from '@/components/Icon';
@@ -247,11 +248,23 @@ export function KHRechnerScreen() {
     [meal]
   );
 
+  // Brief highlight of the total (top right) whenever a food is added, so it's
+  // visible that the meal — and its carb total — just changed.
+  const totalFlash = useRef(new Animated.Value(0)).current;
+  const flashTotal = () => {
+    totalFlash.setValue(0);
+    Animated.sequence([
+      Animated.timing(totalFlash, { toValue: 1, duration: 140, useNativeDriver: false }),
+      Animated.timing(totalFlash, { toValue: 0, duration: 420, useNativeDriver: false }),
+    ]).start();
+  };
+
   // Collect the current food + portion into the meal, then clear the editor
   // so the next food can be searched.
   const addToMeal = () => {
     if (!selected || grams <= 0) return;
     setMeal((m) => [...m, { key: uuidv4(), food: selected, grams }]);
+    flashTotal();
     scrollToTopAfterAddRef.current = true;
     Keyboard.dismiss();
     closeFood();
@@ -317,6 +330,16 @@ export function KHRechnerScreen() {
       : navigation.navigate('Login', { screen: 'LoginHome', params: { returnTo: 'KHRechner' } });
   const closeDialog = () => setDialog(null);
 
+  // Drive the total's flash: color jumps to the accent and the value pulses.
+  const totalFlashColor = totalFlash.interpolate({
+    inputRange: [0, 1],
+    outputRange: [colors.textSecondary, colors.accent],
+  });
+  const totalFlashScale = totalFlash.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.2],
+  });
+
   return (
     <Screen scrollRef={scrollRef}>
       <View style={styles.titleRow}>
@@ -332,8 +355,12 @@ export function KHRechnerScreen() {
             accessibilityLabel={t.khrechner.totalA11y(formatCarbs(mealCarbs))}
             hitSlop={6}
           >
-            <Text style={styles.totalValue}>{Math.round(mealCarbs)} g</Text>
-            <Text style={styles.totalUnit}>{t.units.carbs}</Text>
+            <Animated.View style={{ alignItems: 'flex-end', transform: [{ scale: totalFlashScale }] }}>
+              <Animated.Text style={[styles.totalValue, { color: totalFlashColor }]}>
+                {Math.round(mealCarbs)} g
+              </Animated.Text>
+              <Text style={styles.totalUnit}>{t.units.carbs}</Text>
+            </Animated.View>
           </Pressable>
             {/* Greyed out without an account, but still tappable to explain why. */}
             <Pressable
