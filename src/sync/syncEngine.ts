@@ -28,7 +28,7 @@ import { useAppStore } from '@/state/store';
  *  - Triggers: automatic. Every local change schedules a sync (debounced, so a
  *    burst of changes goes out together); also on app start, sign-in and
  *    return to the foreground. Without a connection it retries with growing
- *    pauses. (FCM — the server pinging the client — is prepared but off.)
+ *    pauses.
  *  - The account screen shows the resulting status (SyncStatus in the store).
  *
  * No-ops cleanly when Supabase isn't configured or no user is signed in.

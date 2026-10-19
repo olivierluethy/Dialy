@@ -6,7 +6,6 @@ import { getDb } from '@/db/database';
 import { pullFoods } from '@/services/foodSync';
 import { authService } from '@/services/auth';
 import { syncEngine } from '@/sync/syncEngine';
-import { fcm } from '@/services/fcm';
 import { Sentry } from '@/services/sentry';
 
 /**
@@ -14,7 +13,7 @@ import { Sentry } from '@/services/sentry';
  *  1. init crash reporting (no-op without DSN)
  *  2. open/migrate the local DB (offline source of truth)
  *  3. restore any existing Supabase session
- *  4. register FCM sync-ping handler (no-op without config) and sync-on-foreground
+ *  4. sync-on-foreground
  *  5. download the foods from Supabase (start + foreground)
  */
 export function useBootstrap(): void {
@@ -69,8 +68,6 @@ export function useBootstrap(): void {
           setUser(user);
           void syncEngine.syncNow();
         }
-        // FCM is the intended sync trigger (no polling). No-op when unconfigured.
-        await fcm.register(() => void syncEngine.syncNow());
       } catch (e) {
         Sentry.captureException(e);
       } finally {
@@ -78,8 +75,8 @@ export function useBootstrap(): void {
       }
     })();
 
-    // Fallback sync trigger for local dev when FCM is inactive: sync whenever
-    // the app returns to the foreground. Food changes too, once the DB is open.
+    // Sync trigger: sync whenever the app returns to the foreground.
+    // Food changes too, once the DB is open.
     const sub = AppState.addEventListener('change', (state) => {
       if (state !== 'active') return;
       if (useAppStore.getState().ready) refreshFoods();

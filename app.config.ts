@@ -89,7 +89,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     contactEmail: process.env.EXPO_PUBLIC_CONTACT_EMAIL ?? '',
     // Feature flags – everything external is off by default so the app
     // runs with zero configuration.
-    featureFcm: process.env.EXPO_PUBLIC_FEATURE_FCM === 'true',
     featureHealthImport: process.env.EXPO_PUBLIC_FEATURE_HEALTH === 'true',
   },
 });

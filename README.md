@@ -509,7 +509,6 @@ cp .env.example .env
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Supabase **anon**-Key (öffentlich, client-sicher) |
 | `EXPO_PUBLIC_SENTRY_DSN` | Sentry DSN (leer = No-op) |
 | `EXPO_PUBLIC_CONTACT_EMAIL` | Ausweich-Adresse, die das Kontaktformular nennt, wenn eine Nachricht nicht gesendet werden kann (offline); leer = Platzhalter `kontakt@dialy.example` |
-| `EXPO_PUBLIC_FEATURE_FCM` | `true` aktiviert FCM-Sync-Trigger (sonst Sync-on-Foreground) |
 | `EXPO_PUBLIC_FEATURE_HEALTH` | `true` aktiviert die Health-Import-Schnittstelle |
 
 > ⚠️ **Niemals** den Supabase Service-Role-Key oder DB-Zugangsdaten in den
@@ -648,9 +647,6 @@ ohne externe Konfiguration läuft. Im Code als `TODO(native)` markiert.
   Manuell-Fallback (immer verfügbar). Der native HealthKit /
   Health-Connect-Bridge braucht einen Dev/EAS-Build (nicht Expo Go) und
   `EXPO_PUBLIC_FEATURE_HEALTH=true`.
-- **FCM (Push/Sync-Trigger):** `src/services/fcm.ts` + Edge-Function
-  `supabase/functions/notify-sync`. Ohne Firebase ist FCM ein No-op; der Client
-  synchronisiert automatisch (siehe unten).
 - **Sentry:** `src/services/sentry.ts` — No-op ohne DSN.
 
 ---
@@ -670,8 +666,7 @@ ohne externe Konfiguration läuft. Im Code als `TODO(native)` markiert.
   beim App-Start, nach dem Anmelden und beim Zurückkehren in die App; im
   Browser zusätzlich, sobald die Verbindung zurück ist. Offline wiederholt die
   App den Versuch mit wachsenden Pausen (30 s bis 5 Min.). Einen Button gibt es
-  nicht; unter Konto → „Synchronisierung“ steht nur der Status. FCM (Server
-  stösst den Client an) ist vorbereitet, aber aus.
+  nicht; unter Konto → „Synchronisierung“ steht nur der Status.
 
 ---
 
@@ -712,7 +707,7 @@ Dialy/
 │  ├─ policy/gating.ts          # Konto/Premium-Gating (Single Source of Truth)
 │  ├─ db/                       # expo-sqlite, Repositories, Seed
 │  ├─ sync/                     # Supabase-Client + Sync-Engine (§7-Vertrag)
-│  ├─ services/                 # auth, health, fcm, sentry (geflaggt)
+│  ├─ services/                 # auth, health, sentry (geflaggt)
 │  ├─ components/               # UI-Bausteine (Screen, Button, Chart, …)
 │  ├─ navigation/               # Tabs + Stacks
 │  ├─ screens/                  # Ratgeber, KH-Rechner, Tagebuch, Sport, Login
@@ -720,7 +715,7 @@ Dialy/
 │  └─ utils/                    # Format, IDs, Sport-Kurven-Heuristik
 └─ supabase/
    ├─ migrations/               # Schema + RLS (SQL)
-   └─ functions/notify-sync/    # Edge-Function-Stub (Sync-Trigger)
+   └─ functions/dexcom/         # Edge-Function (Dexcom-OAuth-Proxy)
 ```
 
 ---

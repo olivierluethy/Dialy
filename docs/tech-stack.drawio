@@ -55,7 +55,7 @@
         <mxCell id="sync_client" parent="syncLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=12;" value="supabaseClient&#xa;@supabase/supabase-js" vertex="1">
           <mxGeometry height="45" width="210" x="240" y="40" as="geometry" />
         </mxCell>
-        <mxCell id="sync_services" parent="syncLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=12;" value="Services&#xa;auth · foodSync · dexcom · fcm · health · premium" vertex="1">
+        <mxCell id="sync_services" parent="syncLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=12;" value="Services&#xa;auth · foodSync · dexcom · health · premium" vertex="1">
           <mxGeometry height="45" width="270" x="470" y="40" as="geometry" />
         </mxCell>
         <mxCell id="beLane" parent="1" style="swimlane;startSize=28;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=13;verticalAlign=top;" value="Backend — Supabase" vertex="1">
@@ -67,7 +67,7 @@
         <mxCell id="be_auth" parent="beLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;fontSize=12;" value="Supabase Auth&#xa;(E-Mail · Google OAuth)" vertex="1">
           <mxGeometry height="55" width="180" x="200" y="40" as="geometry" />
         </mxCell>
-        <mxCell id="be_fn" parent="beLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;fontSize=12;" value="Edge Functions (Deno)&#xa;dexcom · notify-sync (Stub)" vertex="1">
+        <mxCell id="be_fn" parent="beLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;fontSize=12;" value="Edge Functions (Deno)&#xa;dexcom" vertex="1">
           <mxGeometry height="55" width="180" x="400" y="40" as="geometry" />
         </mxCell>
         <mxCell id="be_mig" parent="beLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;fontSize=12;" value="DB Migrations&#xa;(supabase CLI)" vertex="1">

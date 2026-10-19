@@ -44,4 +44,4 @@ The server-side implementation is `supabase/functions/dexcom/index.ts`; mobile c
 
 ## Optional existing configuration
 
-`EXPO_PUBLIC_SENTRY_DSN`, `EXPO_PUBLIC_FEATURE_FCM`, and `EXPO_PUBLIC_FEATURE_HEALTH` remain optional. The native HealthKit/Health Connect bridge is still not implemented; enabling its flag does not create a device integration.
+`EXPO_PUBLIC_SENTRY_DSN` and `EXPO_PUBLIC_FEATURE_HEALTH` remain optional. The native HealthKit/Health Connect bridge is still not implemented; enabling its flag does not create a device integration.
