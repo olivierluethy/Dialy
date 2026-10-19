@@ -220,13 +220,10 @@ export function KHRechnerScreen() {
           style={styles.resultRow}
           onPress={() => selectFoodRef.current(food)}
           accessibilityRole="button"
-          accessibilityLabel={`${food.name}, ${foodCategoryLabel(food.categories[0] ?? '', t)}`}
+          accessibilityLabel={`${food.name}, ${food.carbs_per_100g} g / 100 g`}
         >
           <View style={styles.resultBody}>
             <Text style={styles.resultName}>{food.name}</Text>
-            {food.categories[0] && (
-              <Text style={styles.resultCategory}>{foodCategoryLabel(food.categories[0], t)}</Text>
-            )}
           </View>
           <Text style={styles.resultCarbs}>{food.carbs_per_100g} g / 100 g</Text>
         </Pressable>
@@ -819,7 +816,6 @@ const makeStyles = (colors: Colors) =>
     },
     resultBody: { flex: 1, marginRight: spacing.md },
     resultName: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
-    resultCategory: { fontSize: 12, color: colors.textTertiary, marginTop: 2 },
     resultCarbs: { fontSize: 12, color: colors.textSecondary },
     resultCount: { fontSize: 12, color: colors.textTertiary, marginBottom: spacing.xs },
     categoryFilter: { marginBottom: spacing.md },
