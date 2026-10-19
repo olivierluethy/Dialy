@@ -25,7 +25,7 @@
         <mxCell id="fe_i18n" parent="feLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=12;" value="i18n · theme&#xa;(dark mode default)" vertex="1">
           <mxGeometry height="55" width="150" x="20" y="120" as="geometry" />
         </mxCell>
-        <mxCell id="fe_expomod" parent="feLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=12;" value="Expo-Module&#xa;secure-store · crypto · font · asset" vertex="1">
+        <mxCell id="fe_expomod" parent="feLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=12;" value="Expo-Module&#xa;crypto · font · asset · sqlite" vertex="1">
           <mxGeometry height="55" width="200" x="190" y="120" as="geometry" />
         </mxCell>
         <mxCell id="fe_screens" parent="feLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=12;" value="Screens · Components · Navigation" vertex="1">
@@ -43,7 +43,7 @@
         <mxCell id="st_repo" parent="stLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=12;" value="DB-Repositories&#xa;(schema · migrations)" vertex="1">
           <mxGeometry height="55" width="170" x="400" y="40" as="geometry" />
         </mxCell>
-        <mxCell id="st_async" parent="stLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=12;" value="AsyncStorage&#xa;SecureStore" vertex="1">
+        <mxCell id="st_async" parent="stLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=12;" value="AsyncStorage" vertex="1">
           <mxGeometry height="55" width="150" x="590" y="40" as="geometry" />
         </mxCell>
         <mxCell id="syncLane" parent="1" style="swimlane;startSize=28;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=13;verticalAlign=top;" value="Sync-Layer" vertex="1">

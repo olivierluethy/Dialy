@@ -77,7 +77,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   plugins: [
     'expo-asset',
     'expo-font',
-    'expo-secure-store',
     'expo-sqlite',
     ...healthPlugins,
   ],
