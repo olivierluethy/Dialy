@@ -648,12 +648,14 @@ export function KHRechnerScreen() {
                   fraction={nutrients.sugar / BAR_MAX.sugar}
                   color={colors.accent}
                 />
-                <NutrientBar
-                  label={t.khrechner.gi}
-                  value={nutrients.gi === null ? t.common.notAvailable : `${Math.round(nutrients.gi)}`}
-                  fraction={(nutrients.gi ?? 0) / BAR_MAX.gi}
-                  color={colors.accent}
-                />
+                {nutrients.gi !== null && (
+                  <NutrientBar
+                    label={t.khrechner.gi}
+                    value={`${Math.round(nutrients.gi)}`}
+                    fraction={nutrients.gi / BAR_MAX.gi}
+                    color={colors.accent}
+                  />
+                )}
                 <NutrientBar
                   label={t.khrechner.fat}
                   value={`${Math.round(nutrients.fat)} g`}
