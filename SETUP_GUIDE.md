@@ -37,7 +37,7 @@ The server-side implementation is `supabase/functions/dexcom/index.ts`; mobile c
 
 `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are runtime secrets. Do not add them to Expo config.
 
-4. Apply `0015_dexcom_connections.sql` and deploy with `supabase functions deploy dexcom --no-verify-jwt`. The callback lacks a Supabase JWT; the function validates JWTs itself for every app request.
+4. Apply `0017_dexcom_connections.sql` and deploy with `supabase functions deploy dexcom --no-verify-jwt`. The callback lacks a Supabase JWT; the function validates JWTs itself for every app request.
 5. In Settings → Devices, connect Dexcom, complete authorization, then choose Sync now. Only returned Dexcom records are imported; mg/dL is converted to mmol/L, timestamps are preserved, and `(user, timestamp, cgm)` duplicates are ignored.
 
 `expired` means the ten-minute connection state expired. API 400/403 commonly means callback mismatch, missing approval, wrong region, or unavailable sandbox credentials. Production is not verified by this repository.
