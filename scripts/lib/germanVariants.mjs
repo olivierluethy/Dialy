@@ -68,11 +68,28 @@ function convert(text, phrases, rules) {
   wordCache.set(rules, cache);
   let out = text;
   for (const [re, to] of phrases) out = out.replace(re, (_m, pre, hit) => pre + recase(hit, to));
-  return out.replace(WORD, (word) => {
+  out = out.replace(WORD, (word) => {
     let converted = cache.get(word);
     if (converted === undefined) cache.set(word, (converted = applyRules(word, rules)));
     return converted;
   });
+  return dropRepeats(out);
+}
+
+// The BLS lists synonyms side by side ("Karotte/Möhre", "Sauerrahm/Saure
+// Sahne", "(Sahnepulver, Rahmpulver)"); once converted both sides are the
+// same word, so keep it once: "Karotte/Karotte" -> "Karotte",
+// "Karotten-/Karottenpüree" -> "Karottenpüree", "(Rahmpulver, Rahmpulver)" ->
+// "(Rahmpulver)". Case doesn't matter ("Hähnchen/hähnchen").
+const SLASH_REPEAT = new RegExp(`(^|[^${LETTERS}-])([${LETTERS}-]+)/\\2(?=$|[^${LETTERS}])`, 'gi');
+const HYPHEN_REPEAT = new RegExp(`(^|[^${LETTERS}])([${LETTERS}]+)-/\\2(?=[${LETTERS}])`, 'gi');
+const COMMA_REPEAT = /\(([^(),]+), \1\)/gi;
+
+function dropRepeats(text) {
+  return text
+    .replace(SLASH_REPEAT, (_m, pre, word) => pre + word)
+    .replace(HYPHEN_REPEAT, (_m, pre, word) => pre + word)
+    .replace(COMMA_REPEAT, (_m, word) => `(${word})`);
 }
 
 // Ice cream flavours: "Vanilleeis" <-> "Vanilleglace". Only these, because
