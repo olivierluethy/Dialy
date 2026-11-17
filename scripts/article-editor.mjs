@@ -14,6 +14,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
 import { toGermanGerman, toSwissGerman } from './lib/germanVariants.mjs';
+import { stripOrganic } from './lib/organic.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = Number(process.env.PORT) || 8095;
@@ -272,7 +273,11 @@ async function bundledFoods() {
   // Both German variants are stored: `name` in Swiss German ("Schlagrahm",
   // "ss"), names['de-DE'] in German Standard German ("Schlagsahne", "ß")
   // where it differs (mirrors supabase/migrations/0032).
+  // "Bio" / "Organic" is dropped from all names (mirrors
+  // supabase/migrations/0042).
   for (const food of foods) {
+    food.name = stripOrganic(food.name);
+    food.names = Object.fromEntries(Object.entries(food.names).map(([lang, v]) => [lang, stripOrganic(v)]));
     const german = toGermanGerman(food.name);
     food.name = toSwissGerman(food.name);
     if (german !== food.name) food.names = { ...food.names, 'de-DE': german };
