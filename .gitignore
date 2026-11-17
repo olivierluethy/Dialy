@@ -38,3 +38,7 @@ yarn-error.*
 *.log
 # Dialy-Editor backups (contain user and health data)
 dialy-backup-*.json
+
+# USDA FoodData Central download for npm run import:usda (not needed afterwards)
+usda/
+usda.zip

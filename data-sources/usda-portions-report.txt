@@ -1,0 +1,60 @@
+USDA FoodData Central piece portions - 58 BLV/BLS foods
+
+bls-D771600	Croissant (Hefeblätterteig/Plunderteig)	<- Croissants, butter (fdc 174987)	1 Stück, klein 42 g, 1 Stück, mittel 57 g, 1 Stück, gross 67 g
+bls-E107122	Hühnerei pochiert	<- Egg, whole, raw, fresh (fdc 171287)	1 Stück, klein 38 g, 1 Stück, mittel 44 g, 1 Stück, gross 50 g
+bls-E111100	Hühnerei roh	<- Egg, whole, raw, fresh (fdc 171287)	1 Stück, klein 38 g, 1 Stück, mittel 44 g, 1 Stück, gross 50 g
+bls-E111132	Hühnerei gekocht	<- Egg, whole, raw, fresh (fdc 171287)	1 Stück, klein 38 g, 1 Stück, mittel 44 g, 1 Stück, gross 50 g
+bls-E111162	Hühnerei gebacken	<- Egg, whole, raw, fresh (fdc 171287)	1 Stück, klein 38 g, 1 Stück, mittel 44 g, 1 Stück, gross 50 g
+bls-F120100	Apfel geschält, roh	<- Apples, raw, with skin (Includes foods for USDA's Food Distribution Program) (fdc 171688)	1 Stück, klein 149 g, 1 Stück, mittel 182 g, 1 Stück, gross 223 g
+bls-F203100	Pfirsich roh	<- Peaches, yellow, raw (fdc 169928)	1 Stück, klein 130 g, 1 Stück, mittel 150 g, 1 Stück, gross 175 g
+bls-F504100	Dattel roh	<- Dates, medjool (fdc 168191)	1 Stück 24 g
+bls-F508100	Maracuja/Passionsfrucht, roh	<- Passion-fruit, (granadilla), purple, raw (fdc 169108)	1 Stück 18 g
+bls-F513100	Guave roh	<- Guavas, common, raw (fdc 173044)	1 Stück 55 g
+bls-F602100	Limette roh	<- Limes, raw (fdc 168155)	1 Stück 67 g
+bls-F607100	Clementine roh	<- Clementines, raw (fdc 168195)	1 Stück 74 g
+bls-G582100	Zucchini roh	<- Squash, summer, zucchini, includes skin, raw (fdc 169291)	1 Stück, klein 118 g, 1 Stück, mittel 196 g, 1 Stück, gross 323 g
+bls-G620100	Karotte/Möhre, roh	<- Carrots, raw (fdc 170393)	1 Stück, klein 50 g, 1 Stück, mittel 61 g, 1 Stück, gross 72 g
+bls-K110132	Kartoffel geschält, gekocht	<- Potatoes, flesh and skin, raw (fdc 170026)	1 Stück, klein 170 g, 1 Stück, mittel 213 g, 1 Stück, gross 369 g
+bls-K110162	Kartoffel geschält, gebacken	<- Potatoes, flesh and skin, raw (fdc 170026)	1 Stück, klein 170 g, 1 Stück, mittel 213 g, 1 Stück, gross 369 g
+bls-K120100	Kartoffel ungeschält, roh	<- Potatoes, flesh and skin, raw (fdc 170026)	1 Stück, klein 170 g, 1 Stück, mittel 213 g, 1 Stück, gross 369 g
+bls-K120134	Kartoffel ungeschält, gekocht	<- Potatoes, flesh and skin, raw (fdc 170026)	1 Stück, klein 170 g, 1 Stück, mittel 213 g, 1 Stück, gross 369 g
+bls-K120164	Kartoffel ungeschält, gebacken	<- Potatoes, flesh and skin, raw (fdc 170026)	1 Stück, klein 170 g, 1 Stück, mittel 213 g, 1 Stück, gross 369 g
+bls-K420100	Batate/Süßkartoffel, roh	<- Sweet potato, raw, unprepared (Includes foods for USDA's Food Distribution Program) (fdc 168482)	1 Stück 130 g
+bls-K420132	Batate/Süßkartoffel, gekocht	<- Sweet potato, raw, unprepared (Includes foods for USDA's Food Distribution Program) (fdc 168482)	1 Stück 130 g
+bls-K420162	Batate/Süßkartoffel, gebacken	<- Sweet potato, raw, unprepared (Includes foods for USDA's Food Distribution Program) (fdc 168482)	1 Stück 130 g
+blv-10406	Gipfeli (Durchschnitt)	<- Croissants, butter (fdc 174987)	1 Stück, klein 42 g, 1 Stück, mittel 57 g, 1 Stück, gross 67 g
+blv-1057	Kartoffel, geschält, gedämpft (ohne Zugabe von Salz)	<- Potatoes, flesh and skin, raw (fdc 170026)	1 Stück, klein 170 g, 1 Stück, mittel 213 g, 1 Stück, gross 369 g
+blv-13406	Süsskartoffel, roh	<- Sweet potato, raw, unprepared (Includes foods for USDA's Food Distribution Program) (fdc 168482)	1 Stück 130 g
+blv-13407	Süsskartoffel, gedämpft (ohne Zugabe von Salz)	<- Sweet potato, raw, unprepared (Includes foods for USDA's Food Distribution Program) (fdc 168482)	1 Stück 130 g
+blv-13882	Granatapfel, roh	<- Pomegranates, raw (fdc 169134)	1 Stück 282 g
+blv-14258	Kartoffel, ungeschält, im Ofen gebacken (ohne Zugabe von Fett und Salz)	<- Potatoes, flesh and skin, raw (fdc 170026)	1 Stück, klein 170 g, 1 Stück, mittel 213 g, 1 Stück, gross 369 g
+blv-14259	Kartoffel, früh, ungeschält, im Wasser gekocht (ohne Salz)	<- Potatoes, flesh and skin, raw (fdc 170026)	1 Stück, klein 170 g, 1 Stück, mittel 213 g, 1 Stück, gross 369 g
+blv-14262	Süsskartoffel, im Ofen gebacken (ohne Zubage von Fett und Salz)	<- Sweet potato, raw, unprepared (Includes foods for USDA's Food Distribution Program) (fdc 168482)	1 Stück 130 g
+blv-290	Hühnerei, ganz, roh	<- Egg, whole, raw, fresh (fdc 171287)	1 Stück, klein 38 g, 1 Stück, mittel 44 g, 1 Stück, gross 50 g
+blv-348	Tomate, roh	<- Tomatoes, red, ripe, raw, year round average (fdc 170457)	1 Stück, klein 91 g, 1 Stück, mittel 123 g, 1 Stück, gross 182 g
+blv-354	Gurke, roh	<- Cucumber, with peel, raw (fdc 168409)	1 Stück 301 g
+blv-355	Karotte, roh	<- Carrots, raw (fdc 170393)	1 Stück, klein 50 g, 1 Stück, mittel 61 g, 1 Stück, gross 72 g
+blv-359	Peperoni, grün, roh	<- Peppers, sweet, red, raw (fdc 170108)	1 Stück, klein 74 g, 1 Stück, mittel 119 g, 1 Stück, gross 164 g
+blv-360	Peperoni, rot, roh	<- Peppers, sweet, red, raw (fdc 170108)	1 Stück, klein 74 g, 1 Stück, mittel 119 g, 1 Stück, gross 164 g
+blv-367	Zucchetti, roh	<- Squash, summer, zucchini, includes skin, raw (fdc 169291)	1 Stück, klein 118 g, 1 Stück, mittel 196 g, 1 Stück, gross 323 g
+blv-368	Zwiebel, roh	<- Onions, raw (fdc 170000)	1 Stück, klein 70 g, 1 Stück, mittel 110 g, 1 Stück, gross 150 g
+blv-378	Apfel, roh	<- Apples, raw, with skin (Includes foods for USDA's Food Distribution Program) (fdc 171688)	1 Stück, klein 149 g, 1 Stück, mittel 182 g, 1 Stück, gross 223 g
+blv-379	Aprikose, roh	<- Apricots, raw (fdc 171697)	1 Stück 35 g
+blv-380	Avocado, roh	<- Avocados, raw, all commercial varieties (fdc 171705)	1 Stück 201 g
+blv-381	Banane, roh	<- Bananas, raw (fdc 173944)	1 Stück, klein 101 g, 1 Stück, mittel 118 g, 1 Stück, gross 136 g
+blv-382	Birne, roh	<- Pears, raw (fdc 169118)	1 Stück, klein 148 g, 1 Stück, mittel 178 g, 1 Stück, gross 230 g
+blv-386	Feige, roh	<- Figs, raw (fdc 173021)	1 Stück, klein 40 g, 1 Stück, mittel 50 g, 1 Stück, gross 64 g
+blv-393	Kaki, roh	<- Persimmons, japanese, raw (fdc 169941)	1 Stück 168 g
+blv-395	Kiwi, roh	<- Kiwifruit, green, raw (fdc 168153)	1 Stück 69 g
+blv-396	Mango, roh	<- Mangos, raw (fdc 169910)	1 Stück 336 g
+blv-397	Mandarine, roh	<- Tangerines, (mandarin oranges), raw (fdc 169105)	1 Stück, klein 76 g, 1 Stück, mittel 88 g, 1 Stück, gross 120 g
+blv-398	Zitrone, roh	<- Lemons, raw, without peel (fdc 167746)	1 Stück 58 g
+blv-401	Pfirsich, gelb, roh	<- Peaches, yellow, raw (fdc 169928)	1 Stück, klein 130 g, 1 Stück, mittel 150 g, 1 Stück, gross 175 g
+blv-405	Orange, roh	<- Oranges, raw, all commercial varieties (fdc 169097)	1 Stück, klein 96 g, 1 Stück, mittel 131 g, 1 Stück, gross 184 g
+blv-474	Pflaume, roh	<- Plums, raw (fdc 169949)	1 Stück 66 g
+blv-476	Quitte, roh	<- Quinces, raw (fdc 168163)	1 Stück 92 g
+blv-479	Zwetschge, roh	<- Plums, raw (fdc 169949)	1 Stück 66 g
+blv-813	Kartoffel, geschält, roh	<- Potatoes, flesh and skin, raw (fdc 170026)	1 Stück, klein 170 g, 1 Stück, mittel 213 g, 1 Stück, gross 369 g
+blv-834	Buttergipfeli, Vollkorn	<- Croissants, butter (fdc 174987)	1 Stück, klein 42 g, 1 Stück, mittel 57 g, 1 Stück, gross 67 g
+blv-836	Buttergipfeli, hell	<- Croissants, butter (fdc 174987)	1 Stück, klein 42 g, 1 Stück, mittel 57 g, 1 Stück, gross 67 g
+blv-986	Passionsfrucht, roh	<- Passion-fruit, (granadilla), purple, raw (fdc 169108)	1 Stück 18 g

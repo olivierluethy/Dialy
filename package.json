@@ -15,6 +15,7 @@
     "phone:link": "adb reverse tcp:8081 tcp:8081 && adb reverse tcp:54321 tcp:54321",
     "import:blv": "node scripts/import-blv.mjs",
     "import:menuch": "node scripts/import-menuch.mjs",
+    "import:usda": "node scripts/import-usda-portions.mjs",
     "import:bls": "node scripts/import-bls.mjs",
     "import:off": "node scripts/import-off.mjs",
     "import:names": "node scripts/import-food-names.mjs",

@@ -182,6 +182,9 @@ const en: Dict = {
       '1 Glas': '1 glass',
       '1 Tasse': '1 cup',
       '1 Stück': '1 piece',
+      '1 Stück, klein': '1 piece, small',
+      '1 Stück, mittel': '1 piece, medium',
+      '1 Stück, gross': '1 piece, large',
       '2 Stücke': '2 pieces',
       '1 Ei': '1 egg',
       '2 Eier': '2 eggs',
@@ -501,7 +504,7 @@ const en: Dict = {
       },
       {
         h: 'Sources',
-        b: 'Nutrient values of most foods in the carb counter: Swiss Food Composition Database, Federal Food Safety and Veterinary Office (FSVO), naehrwertdaten.ch. Usual portion sizes: FSVO, national nutrition survey menuCH 2014-15. Further foods and dishes: Max Rubner-Institut (2025), German Nutrient Database (BLS) version 4.0, licence CC BY 4.0. Branded drinks (e.g. Rivella, Coca-Cola): manufacturer information for Switzerland, as of October 2026. Branded products: Open Food Facts (openfoodfacts.org), Open Database License (ODbL) – collected by volunteers; the information on the package takes precedence.',
+        b: 'Nutrient values of most foods in the carb counter: Swiss Food Composition Database, Federal Food Safety and Veterinary Office (FSVO), naehrwertdaten.ch. Usual portion sizes: FSVO, national nutrition survey menuCH 2014-15. Piece weights of fruit, vegetables and eggs: U.S. Department of Agriculture, FoodData Central (fdc.nal.usda.gov), public domain. Further foods and dishes: Max Rubner-Institut (2025), German Nutrient Database (BLS) version 4.0, licence CC BY 4.0. Branded drinks (e.g. Rivella, Coca-Cola): manufacturer information for Switzerland, as of October 2026. Branded products: Open Food Facts (openfoodfacts.org), Open Database License (ODbL) – collected by volunteers; the information on the package takes precedence.',
       },
       {
         h: 'Contact',

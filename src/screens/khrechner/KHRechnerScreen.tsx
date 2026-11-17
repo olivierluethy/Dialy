@@ -23,7 +23,7 @@ import { BLACK, radius, spacing, type Colors } from '@/theme/theme';
 import { useTheme, useThemedStyles } from '@/theme/useTheme';
 import { foodsRepo } from '@/db/repositories/foods';
 import { hasFoods } from '@/services/foodSync';
-import { FOOD_CATEGORIES, USUAL_PORTION_LABEL } from '@/data/foodCategories';
+import { FOOD_CATEGORIES, USDA_PORTION_LABELS, USUAL_PORTION_LABEL } from '@/data/foodCategories';
 import { useLanguage, useT, type Dict } from '@/i18n';
 import { foodCategoryLabel, localizedPortionLabel } from '@/i18n/foods';
 import { mealsRepo } from '@/db/repositories/meals';
@@ -54,8 +54,9 @@ type DialogState =
   | { kind: 'error' };
 
 /**
- * "Quelle: BLV | menuCH" — where the nutrients and (after "|") the usual
- * portion come from. Null for the curated foods.
+ * "Quelle: BLV | menuCH | USDA" — where the nutrients and (after "|") the
+ * portions come from: the usual portion from menuCH, piece weights from USDA
+ * FoodData Central. Null for the curated foods.
  */
 function foodSourceText(food: Food, t: Dict): string | null {
   if (food.id.startsWith('brand-')) return t.khrechner.source(t.khrechner.sourceManufacturer);
@@ -66,8 +67,11 @@ function foodSourceText(food: Food, t: Dict): string | null {
       ? 'BLS 4.0 (Max Rubner-Institut)'
       : null;
   if (!nutrients) return null;
-  const fromMenuch = food.portions[0]?.label.startsWith(USUAL_PORTION_LABEL);
-  return t.khrechner.source(`${nutrients}${fromMenuch ? ' | menuCH' : ''}`);
+  const fromMenuch = food.portions.some((p) => p.label.startsWith(USUAL_PORTION_LABEL));
+  const fromUsda = food.portions.some((p) => USDA_PORTION_LABELS.includes(p.label));
+  return t.khrechner.source(
+    `${nutrients}${fromMenuch ? ' | menuCH' : ''}${fromUsda ? ' | USDA FoodData Central' : ''}`
+  );
 }
 
 // GI is a property of the food, not scaled by portion.

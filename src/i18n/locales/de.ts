@@ -475,7 +475,7 @@ const de = {
       },
       {
         h: 'Quellen',
-        b: 'Nährwerte der meisten Lebensmittel im KH-Rechner: Schweizer Nährwertdatenbank, Bundesamt für Lebensmittelsicherheit und Veterinärwesen (BLV), naehrwertdaten.ch. Übliche Portionsgrössen: BLV, Nationale Ernährungserhebung menuCH 2014-15. Weitere Lebensmittel und Gerichte: Max Rubner-Institut (2025), Bundeslebensmittelschlüssel (BLS) Version 4.0, Lizenz CC BY 4.0. Markengetränke (z. B. Rivella, Coca-Cola): Angaben der Hersteller für die Schweiz, Stand Oktober 2026. Markenprodukte: Open Food Facts (openfoodfacts.org), Open Database License (ODbL) – von Freiwilligen erfasst, Angaben auf der Verpackung haben Vorrang.',
+        b: 'Nährwerte der meisten Lebensmittel im KH-Rechner: Schweizer Nährwertdatenbank, Bundesamt für Lebensmittelsicherheit und Veterinärwesen (BLV), naehrwertdaten.ch. Übliche Portionsgrössen: BLV, Nationale Ernährungserhebung menuCH 2014-15. Stückgewichte von Früchten, Gemüse und Eiern: U.S. Department of Agriculture, FoodData Central (fdc.nal.usda.gov), gemeinfrei. Weitere Lebensmittel und Gerichte: Max Rubner-Institut (2025), Bundeslebensmittelschlüssel (BLS) Version 4.0, Lizenz CC BY 4.0. Markengetränke (z. B. Rivella, Coca-Cola): Angaben der Hersteller für die Schweiz, Stand Oktober 2026. Markenprodukte: Open Food Facts (openfoodfacts.org), Open Database License (ODbL) – von Freiwilligen erfasst, Angaben auf der Verpackung haben Vorrang.',
       },
       {
         h: 'Kontakt',

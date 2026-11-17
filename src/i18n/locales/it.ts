@@ -182,6 +182,9 @@ const it: Dict = {
       '1 Glas': '1 bicchiere',
       '1 Tasse': '1 tazza',
       '1 Stück': '1 pezzo',
+      '1 Stück, klein': '1 pezzo, piccolo',
+      '1 Stück, mittel': '1 pezzo, medio',
+      '1 Stück, gross': '1 pezzo, grande',
       '2 Stücke': '2 pezzi',
       '1 Ei': '1 uovo',
       '2 Eier': '2 uova',
@@ -507,7 +510,7 @@ const it: Dict = {
       },
       {
         h: 'Fonti',
-        b: 'Valori nutrizionali della maggior parte degli alimenti nel conta carboidrati: Banca dati svizzera dei valori nutritivi, Ufficio federale della sicurezza alimentare e di veterinaria (USAV), naehrwertdaten.ch. Porzioni abituali: USAV, indagine nazionale sull’alimentazione menuCH 2014-15. Altri alimenti e piatti: Max Rubner-Institut (2025), Bundeslebensmittelschlüssel (BLS) versione 4.0, licenza CC BY 4.0. Bevande di marca (p. es. Rivella, Coca-Cola): dati dei produttori per la Svizzera, stato ottobre 2026. Prodotti di marca: Open Food Facts (openfoodfacts.org), Open Database License (ODbL) – raccolti da volontari; fanno fede le indicazioni sulla confezione.',
+        b: 'Valori nutrizionali della maggior parte degli alimenti nel conta carboidrati: Banca dati svizzera dei valori nutritivi, Ufficio federale della sicurezza alimentare e di veterinaria (USAV), naehrwertdaten.ch. Porzioni abituali: USAV, indagine nazionale sull’alimentazione menuCH 2014-15. Pesi per pezzo di frutta, verdura e uova: U.S. Department of Agriculture, FoodData Central (fdc.nal.usda.gov), pubblico dominio. Altri alimenti e piatti: Max Rubner-Institut (2025), Bundeslebensmittelschlüssel (BLS) versione 4.0, licenza CC BY 4.0. Bevande di marca (p. es. Rivella, Coca-Cola): dati dei produttori per la Svizzera, stato ottobre 2026. Prodotti di marca: Open Food Facts (openfoodfacts.org), Open Database License (ODbL) – raccolti da volontari; fanno fede le indicazioni sulla confezione.',
       },
       {
         h: 'Contatto',

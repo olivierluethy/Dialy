@@ -185,6 +185,9 @@ const fr: Dict = {
       '1 Glas': '1 verre',
       '1 Tasse': '1 tasse',
       '1 Stück': '1 morceau',
+      '1 Stück, klein': '1 morceau, petit',
+      '1 Stück, mittel': '1 morceau, moyen',
+      '1 Stück, gross': '1 morceau, grand',
       '2 Stücke': '2 morceaux',
       '1 Ei': '1 œuf',
       '2 Eier': '2 œufs',
@@ -512,7 +515,7 @@ const fr: Dict = {
       },
       {
         h: 'Sources',
-        b: 'Valeurs nutritives de la plupart des aliments du calcul des glucides : Base de données suisse des valeurs nutritives, Office fédéral de la sécurité alimentaire et des affaires vétérinaires (OSAV), naehrwertdaten.ch. Tailles de portion habituelles : OSAV, enquête nationale sur l’alimentation menuCH 2014-15. Autres aliments et plats : Max Rubner-Institut (2025), Bundeslebensmittelschlüssel (BLS) version 4.0, licence CC BY 4.0. Boissons de marque (p. ex. Rivella, Coca-Cola) : indications des fabricants pour la Suisse, état octobre 2026. Produits de marque : Open Food Facts (openfoodfacts.org), Open Database License (ODbL) – saisis par des bénévoles ; les indications figurant sur l’emballage font foi.',
+        b: 'Valeurs nutritives de la plupart des aliments du calcul des glucides : Base de données suisse des valeurs nutritives, Office fédéral de la sécurité alimentaire et des affaires vétérinaires (OSAV), naehrwertdaten.ch. Tailles de portion habituelles : OSAV, enquête nationale sur l’alimentation menuCH 2014-15. Poids à la pièce des fruits, légumes et œufs : U.S. Department of Agriculture, FoodData Central (fdc.nal.usda.gov), domaine public. Autres aliments et plats : Max Rubner-Institut (2025), Bundeslebensmittelschlüssel (BLS) version 4.0, licence CC BY 4.0. Boissons de marque (p. ex. Rivella, Coca-Cola) : indications des fabricants pour la Suisse, état octobre 2026. Produits de marque : Open Food Facts (openfoodfacts.org), Open Database License (ODbL) – saisis par des bénévoles ; les indications figurant sur l’emballage font foi.',
       },
       {
         h: 'Contact',

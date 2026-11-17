@@ -7,6 +7,13 @@ export const USUAL_PORTION_LABEL = 'Übliche Portion';
 export const PACKAGE_PORTION_LABEL = 'Portion laut Packung';
 
 /**
+ * Piece portions of BLV/BLS fruit, vegetables, eggs and Gipfeli from USDA
+ * FoodData Central (scripts/import-usda-portions.mjs). On a BLV/BLS food
+ * these labels only come from there, so the KH-Rechner names the source.
+ */
+export const USDA_PORTION_LABELS = ['1 Stück', '1 Stück, klein', '1 Stück, mittel', '1 Stück, gross'];
+
+/**
  * Top-level food categories (those of the Swiss Food Composition Database,
  * stored in German), in the order shown by the KH-Rechner filter:
  * carbohydrate-rich groups first. The short chip labels are in the UI

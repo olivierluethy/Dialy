@@ -209,7 +209,17 @@ async function bundledFoods() {
     usual[id] >= MIN_PORTION_GRAMS
       ? { label: `${USUAL_PORTION_LABEL} (${usual[id]} g)`, grams: usual[id] }
       : null;
-  const sources = [[json('blvFoods.json'), menuch], [json('blsFoods.json'), menuch]];
+  // Piece weights of fruit, vegetables, eggs and Gipfeli from USDA FoodData
+  // Central (scripts/import-usda-portions.mjs, mirrors
+  // supabase/migrations/0034), after the usual portion.
+  const usda = existsSync(join(root, 'src', 'data', 'usdaPortions.json'))
+    ? json('usdaPortions.json').portions
+    : {};
+  const generic = (id) => [
+    menuch(id),
+    ...(usda[id] ?? []).map(([label, grams]) => ({ label, grams })),
+  ].filter(Boolean);
+  const sources = [[json('blvFoods.json'), generic], [json('blsFoods.json'), generic]];
   if (existsSync(join(root, 'src', 'data', 'offFoods.json'))) {
     const off = json('offFoods.json');
     // [id, amount, "g" | "ml"], as in seed.ts.
@@ -217,8 +227,8 @@ async function bundledFoods() {
     sources.push([off, (id) => {
       const serving = servings.get(id);
       return serving && serving[0] >= MIN_PORTION_GRAMS
-        ? { label: `${PACKAGE_PORTION_LABEL} (${serving[0]} ${serving[1]})`, grams: serving[0] }
-        : null;
+        ? [{ label: `${PACKAGE_PORTION_LABEL} (${serving[0]} ${serving[1]})`, grams: serving[0] }]
+        : [];
     }]);
   }
 
@@ -242,7 +252,7 @@ async function bundledFoods() {
   for (const [source, portionFor] of sources) {
     for (const [id, name, group, categoryIdx, carbs, sugar, fat] of source.foods) {
       if (curatedNames.has(nameKey(name))) continue;
-      const portion = portionFor(id);
+      const portions = portionFor(id);
       // Only OFF names carry a brand; BLS/BLV parentheses are descriptions.
       const isOff = id.startsWith('off-');
       foods.push({
@@ -254,7 +264,7 @@ async function bundledFoods() {
         sugar_per_100g: sugar,
         fat_per_100g: fat,
         glycemic_index: null,
-        portions: portion ? [portion] : [],
+        portions,
         names: isOff ? stripBrandNames(namesFor(id)) : namesFor(id),
       });
     }
