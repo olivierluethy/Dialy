@@ -1158,6 +1158,8 @@
     'carbs_per_100g, sugar_per_100g, fat_per_100g, glycemic_index, portions, active, names';
   const FOOD_LIST_LIMIT = 200;
   const IMPORT_CHUNK = 500;
+  // The KH-Rechner only lists foods from 3 g carbs per 100 g (0039).
+  const MIN_CARBS_PER_100G = 3;
   const collator = new Intl.Collator('de');
   let foodCategories = []; // [{ name, label }]
   let bundledFoods = []; // from src/data, for the import
@@ -1332,7 +1334,12 @@
         setImportStatus(`${done} von ${add.length} angelegt …`);
         const rows = add.slice(i, i + IMPORT_CHUNK).map((f) => ({
           // A few Open Food Facts products state more sugar than carbs.
-          ...toRow({ ...f, sugar_per_100g: Math.min(f.sugar_per_100g, f.carbs_per_100g) }, true),
+          // Under 3 g carbs per 100 g a food is transferred inactive: the
+          // KH-Rechner doesn't list it (0039_hide_low_carb_foods.sql).
+          ...toRow(
+            { ...f, sugar_per_100g: Math.min(f.sugar_per_100g, f.carbs_per_100g) },
+            f.carbs_per_100g >= MIN_CARBS_PER_100G
+          ),
           names: f.names || {},
         }));
         const { error } = await sb.from('foods').insert(rows);
