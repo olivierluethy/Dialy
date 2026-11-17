@@ -578,8 +578,9 @@ const it: Dict = {
     intro:
       'Manca un alimento, un valore è sbagliato o hai un’altra richiesta? Scrivici – esaminiamo ogni segnalazione.',
     kindNew: 'Nuovo alimento',
-    kindFix: 'Segnala errore',
     kindOther: 'Altro',
+    fixHint:
+      'Un valore è sbagliato o manca una porzione? Segnalalo direttamente sull’alimento nel conta carboidrati.',
     foodName: 'Nome dell’alimento *',
     foodNamePlaceholder: 'p. es. panino integrale di farro',
     valuesLabel: 'Valori nutrizionali per 100 g (se noti)',
@@ -593,12 +594,6 @@ const it: Dict = {
     subjectPlaceholder: 'p. es. domanda sul diario',
     message: 'Messaggio *',
     messagePlaceholder: 'Cosa vorresti comunicarci?',
-    whichFood: 'Quale alimento è sbagliato? *',
-    foodValues: (carbs, sugar, fat) =>
-      `${carbs} g carboidrati · ${sugar} g zuccheri · ${fat} g grassi per 100 g`,
-    otherFoodA11y: 'Scegli un altro alimento',
-    correction: 'Correzione proposta *',
-    correctionPlaceholder: 'p. es. 48 g di carboidrati per 100 g secondo la confezione',
     send: 'Invia',
     thanks: 'Grazie!',
     sentMessage: 'Il tuo messaggio ci è arrivato. Grazie per il tuo aiuto!',
@@ -609,6 +604,21 @@ const it: Dict = {
     errorNotConfigured:
       'Il modulo di contatto richiede una connessione al server Dialy, che qui non è configurato.',
     errorUnavailable: 'Al momento non è stato possibile inviare il messaggio. Riprova più tardi.',
+  },
+
+  /** Report an error / suggest a portion right on a food in the KH-Rechner. */
+  feedback: {
+    reportError: 'Segnala errore',
+    suggestPortion: 'Proponi una porzione',
+    reportLabel: 'Che cosa non va? *',
+    reportPlaceholder: 'p. es. 48 g di carboidrati per 100 g secondo la confezione',
+    portionLabel: 'Denominazione *',
+    portionLabelPlaceholder: 'p. es. 1 pezzo, 1 fetta, 1 vasetto',
+    portionGrams: 'Grammi *',
+    portionGramsInvalid: 'Indica i grammi come numero tra 1 e 2000.',
+    remark: 'Osservazione',
+    remarkPlaceholder: 'p. es. secondo la confezione',
+    sent: 'Grazie! La tua segnalazione ci è arrivata.',
   },
 
   auth: {

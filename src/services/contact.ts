@@ -2,18 +2,22 @@ import { getSupabase, isNetworkError } from '@/sync/supabaseClient';
 import { getT } from '@/i18n';
 
 /**
- * Kontakt form: messages are written to the Supabase table
- * `contact_messages` (insert-only via RLS). The sender's account is attached
- * by the database when signed in. Nothing is queued offline.
+ * Messages to the Dialy team, written to the Supabase table
+ * `contact_messages` (insert-only via RLS): new foods and other requests
+ * from the Kontakt form, error reports ('food_fix') and portion suggestions
+ * ('portion', 0038) from a food in the KH-Rechner. The sender's account is
+ * attached by the database when signed in. Nothing is queued offline.
  */
 
 export interface ContactMessage {
-  kind: 'new_food' | 'food_fix' | 'other';
+  kind: 'new_food' | 'food_fix' | 'portion' | 'other';
   food_name: string; // subject for 'other'
-  food_id?: string | null;
+  food_id?: string | null; // food_fix and portion
   carbs_per_100g?: number | null;
   sugar_per_100g?: number | null;
   fat_per_100g?: number | null;
+  portion_label?: string | null; // portion only
+  portion_grams?: number | null; // portion only
   message: string;
   app_version?: string | null;
 }

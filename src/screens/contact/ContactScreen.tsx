@@ -1,25 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import Constants from 'expo-constants';
-import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
-import { Card, SectionLabel } from '@/components/primitives';
+import { SectionLabel } from '@/components/primitives';
 import { Button } from '@/components/Button';
 import { TextField } from '@/components/TextField';
 import { SelectableChip } from '@/components/Chip';
 import { Dialog } from '@/components/Dialog';
 import { spacing, type Colors } from '@/theme/theme';
-import { useTheme, useThemedStyles } from '@/theme/useTheme';
-import { foodsRepo } from '@/db/repositories/foods';
+import { useThemedStyles } from '@/theme/useTheme';
 import { config } from '@/config';
-import { useLanguage, useT } from '@/i18n';
+import { useT } from '@/i18n';
 import { contactErrorText, sendContactMessage, type ContactError } from '@/services/contact';
-import type { Food } from '@/types/models';
 
-type Kind = 'new' | 'fix' | 'other';
+type Kind = 'new' | 'other';
 type DialogState = null | 'sent' | ContactError;
-
-const PICKER_RESULTS = 6;
 
 /** "12,5" → 12.5; empty → null; not a number or outside 0–100 g → NaN. */
 function parseGrams(v: string): number | null {
@@ -30,14 +25,14 @@ function parseGrams(v: string): number | null {
 }
 
 /**
- * Kontakt: suggest a new food or report a wrong one. "Senden" writes the
+ * Kontakt: suggest a new food or send another request. "Senden" writes the
  * message to Supabase (services/contact.ts); it needs an internet connection.
+ * Errors in a food and portion sizes are reported on the food itself in the
+ * KH-Rechner (FoodFeedbackForm), so the form only points there.
  */
 export function ContactScreen() {
-  const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const t = useT();
-  const language = useLanguage();
   const [kind, setKind] = useState<Kind>('new');
 
   // Neues Lebensmittel
@@ -46,11 +41,6 @@ export function ContactScreen() {
   const [sugar, setSugar] = useState('');
   const [fat, setFat] = useState('');
 
-  // Fehler melden
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<Food[]>([]);
-  const [food, setFood] = useState<Food | null>(null);
-
   // Sonstiges
   const [subject, setSubject] = useState('');
 
@@ -58,36 +48,18 @@ export function ContactScreen() {
   const [dialog, setDialog] = useState<DialogState>(null);
   const [sending, setSending] = useState(false);
 
-  useEffect(() => {
-    let active = true;
-    if (!query.trim()) {
-      setResults([]);
-      return;
-    }
-    foodsRepo.search(query).then((rows) => {
-      if (active) setResults(rows.slice(0, PICKER_RESULTS));
-    });
-    return () => {
-      active = false;
-    };
-  }, [query, language]);
-
   const values = { carbs: parseGrams(carbs), sugar: parseGrams(sugar), fat: parseGrams(fat) };
   const valuesValid = Object.values(values).every((v) => !Number.isNaN(v));
   const canSend =
     kind === 'new'
       ? name.trim().length > 0 && valuesValid
-      : kind === 'fix'
-        ? food !== null && message.trim().length > 0
-        : subject.trim().length > 0 && message.trim().length > 0;
+      : subject.trim().length > 0 && message.trim().length > 0;
 
   const reset = () => {
     setName('');
     setCarbs('');
     setSugar('');
     setFat('');
-    setQuery('');
-    setFood(null);
     setSubject('');
     setMessage('');
   };
@@ -107,20 +79,12 @@ export function ContactScreen() {
             message: message.trim(),
             app_version,
           }
-        : kind === 'fix'
-          ? {
-              kind: 'food_fix',
-              food_name: food!.name,
-              food_id: food!.id,
-              message: message.trim(),
-              app_version,
-            }
-          : {
-              kind: 'other',
-              food_name: subject.trim(),
-              message: message.trim(),
-              app_version,
-            }
+        : {
+            kind: 'other',
+            food_name: subject.trim(),
+            message: message.trim(),
+            app_version,
+          }
     );
     setSending(false);
     if ('ok' in result) {
@@ -140,16 +104,12 @@ export function ContactScreen() {
           onPress={() => setKind('new')}
         />
         <SelectableChip
-          label={t.contact.kindFix}
-          selected={kind === 'fix'}
-          onPress={() => setKind('fix')}
-        />
-        <SelectableChip
           label={t.contact.kindOther}
           selected={kind === 'other'}
           onPress={() => setKind('other')}
         />
       </View>
+      <Text style={styles.fixHint}>{t.contact.fixHint}</Text>
 
       {kind === 'new' ? (
         <>
@@ -195,7 +155,7 @@ export function ContactScreen() {
             style={styles.multiline}
           />
         </>
-      ) : kind === 'other' ? (
+      ) : (
         <>
           <TextField
             label={t.contact.subject}
@@ -212,61 +172,6 @@ export function ContactScreen() {
             multiline
             maxLength={4000}
             style={styles.multiline}
-          />
-        </>
-      ) : (
-        <>
-          <SectionLabel>{t.contact.whichFood}</SectionLabel>
-          {food ? (
-            <Card style={styles.selectedFood}>
-              <View style={styles.selectedRow}>
-                <View style={styles.flex}>
-                  <Text style={styles.foodName}>{food.name}</Text>
-                  <Text style={styles.foodValues}>
-                    {t.contact.foodValues(food.carbs_per_100g, food.sugar_per_100g, food.fat_per_100g)}
-                  </Text>
-                </View>
-                <Pressable
-                  onPress={() => setFood(null)}
-                  accessibilityRole="button"
-                  accessibilityLabel={t.contact.otherFoodA11y}
-                  hitSlop={8}
-                >
-                  <Icon name="clear" size={22} color={colors.textTertiary} />
-                </Pressable>
-              </View>
-            </Card>
-          ) : (
-            <>
-              <TextField
-                value={query}
-                onChangeText={setQuery}
-                placeholder={t.khrechner.searchPlaceholder}
-                autoCorrect={false}
-              />
-              {results.map((f) => (
-                <Pressable
-                  key={f.id}
-                  style={styles.resultRow}
-                  onPress={() => {
-                    setFood(f);
-                    setQuery('');
-                  }}
-                >
-                  <Text style={styles.resultName}>{f.name}</Text>
-                  <Text style={styles.resultCarbs}>{f.carbs_per_100g} g / 100 g</Text>
-                </Pressable>
-              ))}
-            </>
-          )}
-          <TextField
-            label={t.contact.correction}
-            value={message}
-            onChangeText={setMessage}
-            placeholder={t.contact.correctionPlaceholder}
-            multiline
-            style={styles.multiline}
-            containerStyle={styles.spaced}
           />
         </>
       )}
@@ -310,27 +215,12 @@ const makeStyles = (colors: Colors) =>
       flexDirection: 'row',
       flexWrap: 'wrap',
       gap: spacing.sm,
-      marginBottom: spacing.lg + 21,
+      marginBottom: spacing.md,
     },
+    fixHint: { fontSize: 13, color: colors.textTertiary, marginBottom: spacing.lg },
     valuesRow: { flexDirection: 'row', gap: spacing.sm },
     valueField: { flex: 1 },
     multiline: { minHeight: 110, paddingTop: spacing.md, textAlignVertical: 'top' },
-    selectedFood: { marginBottom: spacing.sm },
-    selectedRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-    flex: { flex: 1 },
-    foodName: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
-    foodValues: { fontSize: 13, color: colors.textTertiary, marginTop: 2 },
-    resultRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: spacing.md,
-      paddingVertical: spacing.sm,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    resultName: { flex: 1, fontSize: 15, fontWeight: '600', color: colors.textPrimary },
-    resultCarbs: { fontSize: 13, color: colors.textSecondary },
     spaced: { marginTop: spacing.md },
     error: { fontSize: 13, color: colors.danger, marginTop: -spacing.xs, marginBottom: spacing.sm },
     hint: {

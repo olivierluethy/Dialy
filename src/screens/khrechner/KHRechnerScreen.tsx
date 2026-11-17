@@ -26,6 +26,7 @@ import { hasFoods } from '@/services/foodSync';
 import { FOOD_CATEGORIES, USDA_PORTION_LABELS, USUAL_PORTION_LABEL } from '@/data/foodCategories';
 import { useLanguage, useT, type Dict } from '@/i18n';
 import { foodCategoryLabel, localizedPortionLabel } from '@/i18n/foods';
+import { FoodFeedbackForm, type FeedbackKind } from '@/screens/khrechner/FoodFeedbackForm';
 import { mealsRepo } from '@/db/repositories/meals';
 import { useAppStore } from '@/state/store';
 import { can } from '@/policy/gating';
@@ -108,6 +109,8 @@ export function KHRechnerScreen() {
   const [selected, setSelected] = useState<Food | null>(null);
   const [portionListOpen, setPortionListOpen] = useState(false);
   const [selectedPortionIndex, setSelectedPortionIndex] = useState<number | null>(null);
+  // "Fehler melden" / "Portionsgrösse vorschlagen" open on the selected food.
+  const [feedback, setFeedback] = useState<FeedbackKind | null>(null);
   const [grams, setGrams] = useState(0);
   const [meal, setMeal] = useState<MealItem[]>([]);
   const [saving, setSaving] = useState(false);
@@ -200,6 +203,7 @@ export function KHRechnerScreen() {
     scrollToTopAfterAddRef.current = false;
     setSelected(food);
     setPortionListOpen(false);
+    setFeedback(null);
     setSelectedPortionIndex(null);
     // Start at 100 g; portions are applied only through the select list.
     setGramsExternal(100);
@@ -276,6 +280,7 @@ export function KHRechnerScreen() {
   const closeFood = () => {
     setSelected(null);
     setPortionListOpen(false);
+    setFeedback(null);
   };
 
   const clearMeal = () => setMeal([]);
@@ -538,6 +543,11 @@ export function KHRechnerScreen() {
                   </Pressable>
                 </View>
 
+                {/* Report an error / suggest a portion instead of the calculator. */}
+                {feedback ? (
+                  <FoodFeedbackForm food={selected} kind={feedback} onClose={() => setFeedback(null)} />
+                ) : (
+                <>
                 {/* Portion presets (BLV foods have none: grams only) */}
                 {selected.portions.length > 0 && (
                   <>
@@ -681,6 +691,17 @@ export function KHRechnerScreen() {
                 >
                   <Text style={styles.addMealLabel}>{t.khrechner.addToMeal}</Text>
                 </Pressable>
+
+                <View style={styles.feedbackLinks}>
+                  <Pressable accessibilityRole="button" onPress={() => setFeedback('error')} hitSlop={8}>
+                    <Text style={styles.feedbackLink}>{t.feedback.reportError}</Text>
+                  </Pressable>
+                  <Pressable accessibilityRole="button" onPress={() => setFeedback('portion')} hitSlop={8}>
+                    <Text style={styles.feedbackLink}>{t.feedback.suggestPortion}</Text>
+                  </Pressable>
+                </View>
+                </>
+                )}
               </Card>
             </ScrollView>
           )}
@@ -860,6 +881,15 @@ const makeStyles = (colors: Colors) =>
     foodHeaderText: { flex: 1 },
     foodName: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
     foodSource: { fontSize: 12, color: colors.textTertiary, marginTop: 2 },
+    feedbackLinks: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      columnGap: spacing.lg,
+      rowGap: spacing.xs,
+      marginTop: spacing.md,
+    },
+    feedbackLink: { fontSize: 13, color: colors.textSecondary, textDecorationLine: 'underline' },
     closeBtn: { marginLeft: spacing.md, marginTop: 1 },
     portionFilter: { marginBottom: spacing.lg },
     portionOptionSelected: { backgroundColor: colors.bgSurfaceAlt },

@@ -550,8 +550,9 @@ const deDE: Dict = {
     intro:
       'Fehlt ein Lebensmittel, stimmt ein Wert nicht oder hast du ein anderes Anliegen? Schreib uns – wir prüfen jeden Hinweis.',
     kindNew: 'Neues Lebensmittel',
-    kindFix: 'Fehler melden',
     kindOther: 'Sonstiges',
+    fixHint:
+      'Stimmt ein Wert nicht oder fehlt eine Portionsgröße? Melde es direkt im KH-Rechner beim Lebensmittel.',
     foodName: 'Name des Lebensmittels *',
     foodNamePlaceholder: 'z. B. Dinkel-Vollkornbrötchen',
     valuesLabel: 'Nährwerte pro 100 g (falls bekannt)',
@@ -565,12 +566,6 @@ const deDE: Dict = {
     subjectPlaceholder: 'z. B. Frage zum Tagebuch',
     message: 'Nachricht *',
     messagePlaceholder: 'Was möchtest du uns mitteilen?',
-    whichFood: 'Welches Lebensmittel ist falsch? *',
-    foodValues: (carbs: number, sugar: number, fat: number) =>
-      `${carbs} g KH · ${sugar} g Zucker · ${fat} g Fett pro 100 g`,
-    otherFoodA11y: 'Anderes Lebensmittel wählen',
-    correction: 'Korrekturvorschlag *',
-    correctionPlaceholder: 'z. B. Laut Verpackung 48 g KH pro 100 g',
     send: 'Senden',
     thanks: 'Danke!',
     sentMessage: 'Deine Nachricht ist bei uns angekommen. Danke für deine Hilfe!',
@@ -582,6 +577,21 @@ const deDE: Dict = {
       'Das Kontaktformular braucht eine Verbindung zum Dialy-Server, der hier nicht eingerichtet ist.',
     errorUnavailable:
       'Die Nachricht konnte gerade nicht gesendet werden. Bitte versuche es später noch einmal.',
+  },
+
+  /** Report an error / suggest a portion right on a food in the KH-Rechner. */
+  feedback: {
+    reportError: 'Fehler melden',
+    suggestPortion: 'Portionsgröße vorschlagen',
+    reportLabel: 'Was stimmt nicht? *',
+    reportPlaceholder: 'z. B. Laut Verpackung 48 g KH pro 100 g',
+    portionLabel: 'Bezeichnung *',
+    portionLabelPlaceholder: 'z. B. 1 Stück, 1 Scheibe, 1 Becher',
+    portionGrams: 'Gramm *',
+    portionGramsInvalid: 'Bitte die Gramm als Zahl zwischen 1 und 2000 angeben.',
+    remark: 'Bemerkung',
+    remarkPlaceholder: 'z. B. laut Verpackung',
+    sent: 'Danke! Deine Meldung ist bei uns angekommen.',
   },
 
   auth: {

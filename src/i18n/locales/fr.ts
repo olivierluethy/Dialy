@@ -583,8 +583,9 @@ const fr: Dict = {
     intro:
       'Un aliment manque, une valeur est fausse ou tu as une autre demande ? Écris-nous – nous examinons chaque message.',
     kindNew: 'Nouvel aliment',
-    kindFix: 'Signaler une erreur',
     kindOther: 'Autre',
+    fixHint:
+      'Une valeur est fausse ou une portion manque ? Signale-le directement sur l’aliment dans le calcul des glucides.',
     foodName: 'Nom de l’aliment *',
     foodNamePlaceholder: 'p. ex. petit pain complet à l’épeautre',
     valuesLabel: 'Valeurs nutritives pour 100 g (si connues)',
@@ -598,12 +599,6 @@ const fr: Dict = {
     subjectPlaceholder: 'p. ex. question sur le journal',
     message: 'Message *',
     messagePlaceholder: 'Que souhaites-tu nous dire ?',
-    whichFood: 'Quel aliment est faux ? *',
-    foodValues: (carbs, sugar, fat) =>
-      `${carbs} g glucides · ${sugar} g sucres · ${fat} g lipides pour 100 g`,
-    otherFoodA11y: 'Choisir un autre aliment',
-    correction: 'Correction proposée *',
-    correctionPlaceholder: 'p. ex. 48 g de glucides pour 100 g selon l’emballage',
     send: 'Envoyer',
     thanks: 'Merci !',
     sentMessage: 'Ton message nous est bien parvenu. Merci pour ton aide !',
@@ -615,6 +610,21 @@ const fr: Dict = {
       'Le formulaire de contact nécessite une connexion au serveur Dialy, qui n’est pas configuré ici.',
     errorUnavailable:
       'Le message n’a pas pu être envoyé pour le moment. Réessaie plus tard.',
+  },
+
+  /** Report an error / suggest a portion right on a food in the KH-Rechner. */
+  feedback: {
+    reportError: 'Signaler une erreur',
+    suggestPortion: 'Proposer une portion',
+    reportLabel: 'Qu’est-ce qui ne va pas ? *',
+    reportPlaceholder: 'p. ex. 48 g de glucides pour 100 g selon l’emballage',
+    portionLabel: 'Désignation *',
+    portionLabelPlaceholder: 'p. ex. 1 pièce, 1 tranche, 1 pot',
+    portionGrams: 'Grammes *',
+    portionGramsInvalid: 'Indique les grammes sous forme de nombre entre 1 et 2000.',
+    remark: 'Remarque',
+    remarkPlaceholder: 'p. ex. selon l’emballage',
+    sent: 'Merci ! Ton signalement nous est bien parvenu.',
   },
 
   auth: {

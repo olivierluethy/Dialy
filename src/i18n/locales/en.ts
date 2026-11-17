@@ -572,8 +572,9 @@ const en: Dict = {
     intro:
       'Is a food missing, is a value wrong or do you have another request? Write to us – we check every message.',
     kindNew: 'New food',
-    kindFix: 'Report an error',
     kindOther: 'Other',
+    fixHint:
+      'Is a value wrong or a portion size missing? Report it right on the food in the carb counter.',
     foodName: 'Name of the food *',
     foodNamePlaceholder: 'e.g. wholegrain spelt roll',
     valuesLabel: 'Nutrients per 100 g (if known)',
@@ -587,12 +588,6 @@ const en: Dict = {
     subjectPlaceholder: 'e.g. question about the diary',
     message: 'Message *',
     messagePlaceholder: 'What would you like to tell us?',
-    whichFood: 'Which food is wrong? *',
-    foodValues: (carbs, sugar, fat) =>
-      `${carbs} g carbs · ${sugar} g sugar · ${fat} g fat per 100 g`,
-    otherFoodA11y: 'Choose another food',
-    correction: 'Suggested correction *',
-    correctionPlaceholder: 'e.g. 48 g carbs per 100 g according to the package',
     send: 'Send',
     thanks: 'Thank you!',
     sentMessage: 'Your message has reached us. Thank you for your help!',
@@ -603,6 +598,21 @@ const en: Dict = {
     errorNotConfigured:
       'The contact form needs a connection to the Dialy server, which is not set up here.',
     errorUnavailable: 'The message could not be sent right now. Please try again later.',
+  },
+
+  /** Report an error / suggest a portion right on a food in the KH-Rechner. */
+  feedback: {
+    reportError: 'Report an error',
+    suggestPortion: 'Suggest a portion size',
+    reportLabel: 'What is wrong? *',
+    reportPlaceholder: 'e.g. 48 g carbs per 100 g according to the package',
+    portionLabel: 'Name *',
+    portionLabelPlaceholder: 'e.g. 1 piece, 1 slice, 1 pot',
+    portionGrams: 'Grams *',
+    portionGramsInvalid: 'Please enter the grams as a number between 1 and 2000.',
+    remark: 'Remark',
+    remarkPlaceholder: 'e.g. according to the package',
+    sent: 'Thank you! Your report has reached us.',
   },
 
   auth: {
