@@ -75,6 +75,11 @@ function foodSourceText(food: Food, t: Dict): string | null {
   );
 }
 
+/** Grams for the nutrient bars: one decimal below 10 g (1.5 g, not 2 g), else whole. */
+function formatNutrientGrams(g: number): string {
+  return `${g < 10 ? Math.round(g * 10) / 10 : Math.round(g)} g`;
+}
+
 // GI is a property of the food, not scaled by portion.
 function portionNutrients(food: Food, grams: number) {
   const f = grams / 100;
@@ -652,13 +657,13 @@ export function KHRechnerScreen() {
                 <SectionLabel style={styles.nutrientLabel}>{t.khrechner.nutrients}</SectionLabel>
                 <NutrientBar
                   label={t.khrechner.carbs}
-                  value={`${Math.round(nutrients.carbs)} g`}
+                  value={formatNutrientGrams(nutrients.carbs)}
                   fraction={nutrients.carbs / BAR_MAX.carbs}
                   color={colors.accent}
                 />
                 <NutrientBar
                   label={t.khrechner.sugar}
-                  value={`${Math.round(nutrients.sugar)} g`}
+                  value={formatNutrientGrams(nutrients.sugar)}
                   fraction={nutrients.sugar / BAR_MAX.sugar}
                   color={colors.accent}
                 />
@@ -672,7 +677,7 @@ export function KHRechnerScreen() {
                 )}
                 <NutrientBar
                   label={t.khrechner.fat}
-                  value={`${Math.round(nutrients.fat)} g`}
+                  value={formatNutrientGrams(nutrients.fat)}
                   fraction={nutrients.fat / BAR_MAX.fat}
                   color={colors.accent}
                 />
