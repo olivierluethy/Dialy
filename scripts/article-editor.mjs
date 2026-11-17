@@ -199,9 +199,15 @@ async function bundledFoods() {
     for (const [lang, map] of Object.entries(translations)) if (map[id]) names[lang] = map[id];
     return names;
   };
+  // Imported portions below 10 g (a spoon of oil, "1 g" package servings)
+  // are left out (mirrors supabase/migrations/0030). Curated foods keep
+  // theirs, e.g. "1 Plättchen" Traubenzucker (6 g).
+  const MIN_PORTION_GRAMS = 10;
   const usual = json('menuchPortions.json').portions;
   const menuch = (id) =>
-    usual[id] ? { label: `${USUAL_PORTION_LABEL} (${usual[id]} g)`, grams: usual[id] } : null;
+    usual[id] >= MIN_PORTION_GRAMS
+      ? { label: `${USUAL_PORTION_LABEL} (${usual[id]} g)`, grams: usual[id] }
+      : null;
   const sources = [[json('blvFoods.json'), menuch], [json('blsFoods.json'), menuch]];
   if (existsSync(join(root, 'src', 'data', 'offFoods.json'))) {
     const off = json('offFoods.json');
@@ -209,7 +215,7 @@ async function bundledFoods() {
     const servings = new Map((off.portions || []).map(([id, amount, unit]) => [id, [amount, unit]]));
     sources.push([off, (id) => {
       const serving = servings.get(id);
-      return serving
+      return serving && serving[0] >= MIN_PORTION_GRAMS
         ? { label: `${PACKAGE_PORTION_LABEL} (${serving[0]} ${serving[1]})`, grams: serving[0] }
         : null;
     }]);

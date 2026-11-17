@@ -307,7 +307,8 @@ for (const r of rows) {
     const n = Number(r[col + 1]);
     if (Number.isFinite(median) && Number.isFinite(n) && n > (best?.n ?? 0)) best = { median, n };
   }
-  if (best && best.n >= MIN_N && best.median > 0) portions.set(name, Math.round(best.median));
+  // Portions below 10 g (oils, seeds: about a spoonful) are not offered.
+  if (best && best.n >= MIN_N && best.median >= 10) portions.set(name, Math.round(best.median));
 }
 
 const missingCategories = RULES.map(([c]) => c).filter((c) => !portions.has(c));
@@ -371,5 +372,5 @@ writeFileSync(
 console.log(`✔ ${blvCount} of ${blv.foods.length} BLV foods got a usual portion.`);
 if (blsTotal) console.log(`✔ ${blsCount} of ${blsTotal} BLS foods got a usual portion.`);
 if (missingCategories.length) {
-  console.log(`  Skipped (too few observations or not in file): ${[...new Set(missingCategories)].join(', ')}`);
+  console.log(`  Skipped (too few observations, under 10 g or not in file): ${[...new Set(missingCategories)].join(', ')}`);
 }

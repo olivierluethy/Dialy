@@ -189,9 +189,10 @@ for await (const line of rl) {
   if (BRAND_DRINK.test(`${name} ${brand}`) && DRINK_WORD.test(`${name} ${brand}`)) { reject('Markengetränk schon kuratiert', info); continue; }
 
   // Serving from the package, unless missing, absurd or just "100 g".
+  // Below 10 g it is mostly a data error ("Basmati-Reis 1 g").
   const sq = num(p.serving_quantity);
   const unit = p.serving_quantity_unit === 'ml' ? 'ml' : 'g';
-  const portion = sq && sq >= 1 && sq <= 1000 && sq !== 100 ? [round1(sq), unit] : null;
+  const portion = sq && sq >= 10 && sq <= 1000 && sq !== 100 ? [round1(sq), unit] : null;
 
   const candidate = {
     id: `off-${p.code}`,
