@@ -38,8 +38,12 @@ export interface Food extends SyncMeta {
   names: FoodNames; // name in the other UI languages; German is `name`
 }
 
-/** Translated food names, e.g. { en: 'Apple', fr: 'Pomme' }; any may be missing. */
-export type FoodNames = Partial<Record<'en' | 'fr' | 'it', string>>;
+/**
+ * Food names in the other UI languages, e.g. { en: 'Apple', fr: 'Pomme' };
+ * any may be missing. `name` is Swiss German; 'de-DE' holds the German
+ * Standard German name where it differs ("Schlagsahne" for "Schlagrahm").
+ */
+export type FoodNames = Partial<Record<'de-DE' | 'en' | 'fr' | 'it', string>>;
 
 export interface MealEntry extends SyncMeta {
   food_id: string | null;

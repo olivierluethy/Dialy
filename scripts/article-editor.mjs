@@ -13,6 +13,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
+import { toGermanGerman, toSwissGerman } from './lib/germanVariants.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = Number(process.env.PORT) || 8095;
@@ -257,6 +258,14 @@ async function bundledFoods() {
         names: isOff ? stripBrandNames(namesFor(id)) : namesFor(id),
       });
     }
+  }
+  // Both German variants are stored: `name` in Swiss German ("Schlagrahm",
+  // "ss"), names['de-DE'] in German Standard German ("Schlagsahne", "ß")
+  // where it differs (mirrors supabase/migrations/0032).
+  for (const food of foods) {
+    const german = toGermanGerman(food.name);
+    food.name = toSwissGerman(food.name);
+    if (german !== food.name) food.names = { ...food.names, 'de-DE': german };
   }
   // Chip labels as in the German app.
   const categories = FOOD_CATEGORIES.map((name) => ({ name, label: de.foodCategories[name] ?? name }));

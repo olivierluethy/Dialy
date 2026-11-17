@@ -75,6 +75,9 @@ async function loadIndex(): Promise<IndexedFood[]> {
         // Names in `names` act as useful aliases when a user knows a food by
         // a different language. De-duplicating here keeps the hot search loop
         // small even for the full ~23k catalogue.
+        // The names include the other German variant ('de-DE'), so "Sahne"
+        // finds "Schlagrahm" in Swiss German and "Poulet" "Hähnchenbrust" in
+        // German.
         const aliases = [food.name, german.name, ...Object.values(german.names ?? {})]
           .map(foldText)
           .join(' ');

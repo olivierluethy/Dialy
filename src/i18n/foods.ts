@@ -3,16 +3,17 @@ import { USUAL_PORTION_LABEL, PACKAGE_PORTION_LABEL } from '@/data/foodCategorie
 import type { FoodNames } from '@/types/models';
 
 /**
- * Food data in the UI language. The foods table is German (names,
+ * Food data in the UI language. The foods table is Swiss German (names,
  * categories, portion labels — also what the Dialy-Editor edits); this
  * translates for display:
- *   - names: from the food's `names` (Supabase, with the food). Foods
- *     without a translation (Open Food Facts products, foods added in the
- *     Dialy-Editor) keep their German name.
+ *   - names: from the food's `names` (Supabase, with the food), including
+ *     'de-DE' for German Standard German where it differs ("Schlagsahne"
+ *     for "Schlagrahm"). Foods without a translation (Open Food Facts
+ *     products, foods added in the Dialy-Editor) keep their Swiss name.
  *   - categories and portion labels: from the UI dictionary.
  */
 
-/** Name in `lang`; `germanName` (as stored) if there's no translation. */
+/** Name in `lang`; `germanName` (as stored, Swiss German) if there's no translation. */
 export function localizedFoodName(germanName: string, names: FoodNames, lang: Language): string {
   if (lang === 'de') return germanName;
   return names[lang] || germanName;

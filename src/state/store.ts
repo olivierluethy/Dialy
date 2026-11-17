@@ -37,7 +37,8 @@ interface AppState {
   themeMode: ThemeMode;
   setThemeMode: (m: ThemeMode) => void;
 
-  // UI language: 'system' (default) follows the device, else de/en/fr/it.
+  // UI language: 'system' (default) follows the device, else de (Swiss
+  // German), de-DE (German), en, fr or it.
   language: LanguageSetting;
   setLanguage: (l: LanguageSetting) => void;
 

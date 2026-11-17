@@ -13,7 +13,7 @@ import { useAppStore } from '@/state/store';
 import { OfflineNotice } from '@/components/OfflineNotice';
 import { articlesErrorText, articlesService, type ArticlesError } from '@/services/articles';
 import { formatDate } from '@/utils/format';
-import { useLanguage, useT } from '@/i18n';
+import { isGerman, useLanguage, useT } from '@/i18n';
 import type { Article } from '@/types/models';
 import type { RatgeberStackParamList } from '@/navigation/types';
 
@@ -82,7 +82,7 @@ export function RatgeberScreen() {
       ) : (
         <>
         {/* Articles are written in German only (so far). */}
-        {language !== 'de' && <Text style={styles.germanOnly}>{t.ratgeber.germanOnly}</Text>}
+        {!isGerman(language) && <Text style={styles.germanOnly}>{t.ratgeber.germanOnly}</Text>}
         {articles.map((a, i) => (
           <FadeIn key={a.id} delay={staggerDelay(i)}>
             <Pressable

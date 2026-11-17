@@ -336,7 +336,11 @@
         <form id="food-form" class="card" novalidate>
           <div class="p-cat" id="food-source"></div>
           <div class="grid" style="margin-top: 12px">
-            <div class="full"><label for="ff-name">Name</label><input id="ff-name" required maxlength="200"></div>
+            <div class="full"><label for="ff-name">Name (Schweiz)</label><input id="ff-name" required maxlength="200"></div>
+            <div class="full">
+              <label for="ff-name-de">Name in Deutschland</label>
+              <input id="ff-name-de" maxlength="200" placeholder="leer = wie oben, z. B. Schlagsahne für Schlagrahm, Hähnchen für Poulet">
+            </div>
             <div>
               <label for="ff-group">Untergruppe</label>
               <input id="ff-group" list="food-groups" maxlength="100" placeholder="wird unter dem Namen angezeigt">
@@ -1176,7 +1180,18 @@
       fat_per_100g: Number(row.fat_per_100g),
       glycemic_index: row.glycemic_index === null ? null : Number(row.glycemic_index),
       portions: Array.isArray(row.portions) ? row.portions : [],
+      // German Standard German name, where it differs from the Swiss `name`.
+      nameDe: (row.names && row.names['de-DE']) || '',
     };
+  }
+
+  // The food's names with 'de-DE' set to `nameDe`, or removed when it is
+  // empty or the same as the Swiss name. Other languages stay.
+  function namesWithGerman(names, name, nameDe) {
+    const out = { ...(names || {}) };
+    if (nameDe && nameDe !== name) out['de-DE'] = nameDe;
+    else delete out['de-DE'];
+    return out;
   }
 
   function toRow(food, active) {
@@ -1204,7 +1219,7 @@
         // Changed after it was imported or added (the trigger touches updated_at).
         edited: new Date(row.updated_at) - new Date(row.created_at) > 1000,
         custom: row.id.startsWith('custom-'),
-        key: fold(`${food.name} ${food.food_group}`),
+        key: fold(`${food.name} ${food.nameDe} ${food.food_group}`),
       };
     }).sort((a, b) => collator.compare(a.name, b.name));
     if (currentFood) currentFood = foods.find((f) => f.id === currentFood.id) || null;
@@ -1375,7 +1390,7 @@
 
   // -- form
   const ff = {
-    name: $('ff-name'), group: $('ff-group'), gi: $('ff-gi'),
+    name: $('ff-name'), nameDe: $('ff-name-de'), group: $('ff-group'), gi: $('ff-gi'),
     carbs: $('ff-carbs'), sugar: $('ff-sugar'), fat: $('ff-fat'),
   };
 
@@ -1402,6 +1417,7 @@
   function fillFood(f, draft) {
     const src = f || draft || {};
     ff.name.value = src.name || '';
+    ff.nameDe.value = src.nameDe || '';
     ff.group.value = src.food_group || '';
     ff.gi.value = src.glycemic_index ?? '';
     ff.carbs.value = src.carbs_per_100g ?? '';
@@ -1431,6 +1447,7 @@
       .filter((p) => p.label || !Number.isNaN(p.grams));
     return {
       name: ff.name.value.trim(),
+      nameDe: ff.nameDe.value.trim(),
       food_group: ff.group.value.trim(),
       categories: [...$('ff-cats').querySelectorAll('input:checked')].map((c) => c.value),
       carbs_per_100g: num(ff.carbs.value),
@@ -1554,7 +1571,11 @@
       return;
     }
     const id = currentFood ? currentFood.id : `custom-${crypto.randomUUID()}`;
-    saveFood(toRow({ ...f, id }, currentFood ? currentFood.active : true), 'Gespeichert ✓');
+    const stored = dbFoods.get(id);
+    saveFood({
+      ...toRow({ ...f, id }, currentFood ? currentFood.active : true),
+      names: namesWithGerman(stored && stored.names, f.name, f.nameDe),
+    }, 'Gespeichert ✓');
   });
 
   // Saves the stored values (not unsaved form changes) with the new state.

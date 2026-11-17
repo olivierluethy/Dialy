@@ -1,5 +1,6 @@
 import { useAppStore } from '@/state/store';
 import de, { type Dict } from '@/i18n/locales/de';
+import deDE from '@/i18n/locales/de-DE';
 import en from '@/i18n/locales/en';
 import fr from '@/i18n/locales/fr';
 import it from '@/i18n/locales/it';
@@ -7,31 +8,46 @@ import it from '@/i18n/locales/it';
 /**
  * UI languages. German is the reference (and the language of the stored
  * data: food names, categories, portion labels); the others translate it.
+ * German comes in two variants: 'de' is Swiss Standard German (Rahm, Poulet,
+ * "ss"), 'de-DE' German Standard German (Sahne, Hähnchen, "ß"). Food names
+ * in German Standard German are stored with the food (names['de-DE']).
  *
  * Components get the dictionary with `useT()` (re-renders on a language
  * change); plain functions outside React use `getT()`.
  */
-export type Language = 'de' | 'en' | 'fr' | 'it';
+export type Language = 'de' | 'de-DE' | 'en' | 'fr' | 'it';
 /** The user's choice: a language, or follow the device. */
 export type LanguageSetting = Language | 'system';
 
 export type { Dict };
 
-const DICTS: Record<Language, Dict> = { de, en, fr, it };
+const DICTS: Record<Language, Dict> = { de, 'de-DE': deDE, en, fr, it };
 
-/** Picker order: the Swiss national languages first. Names in their own language. */
+/** Both German variants. */
+export const isGerman = (lang: Language): boolean => lang === 'de' || lang === 'de-DE';
+
+/**
+ * Picker order: the Swiss national languages first, German (Germany) next to
+ * Swiss German. Names in their own language.
+ */
 export const LANGUAGES: Array<{ code: Language; name: string; short: string }> = [
-  { code: 'de', name: 'Deutsch', short: 'DE' },
+  { code: 'de', name: 'Deutsch (Schweiz)', short: 'DE-CH' },
+  { code: 'de-DE', name: 'Deutsch (Deutschland)', short: 'DE-DE' },
   { code: 'fr', name: 'Français', short: 'FR' },
   { code: 'it', name: 'Italiano', short: 'IT' },
   { code: 'en', name: 'English', short: 'EN' },
 ];
 
-/** Device language if supported, else German. */
+/**
+ * Device language if supported, else Swiss German. German outside
+ * Switzerland and Liechtenstein (Germany, Austria, …) uses the German
+ * variant.
+ */
 export function systemLanguage(): Language {
   try {
     const locale = Intl.DateTimeFormat().resolvedOptions().locale;
-    const base = locale.toLowerCase().split(/[-_]/)[0];
+    const [base, region] = locale.toLowerCase().split(/[-_]/);
+    if (base === 'de') return !region || region === 'ch' || region === 'li' ? 'de' : 'de-DE';
     if (base && base in DICTS) return base as Language;
   } catch {
     // No Intl support: fall through.
