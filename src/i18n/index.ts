@@ -4,6 +4,8 @@ import deDE from '@/i18n/locales/de-DE';
 import en from '@/i18n/locales/en';
 import fr from '@/i18n/locales/fr';
 import it from '@/i18n/locales/it';
+import es from '@/i18n/locales/es';
+import pt from '@/i18n/locales/pt';
 
 /**
  * UI languages. German is the reference (and the language of the stored
@@ -15,20 +17,21 @@ import it from '@/i18n/locales/it';
  * Components get the dictionary with `useT()` (re-renders on a language
  * change); plain functions outside React use `getT()`.
  */
-export type Language = 'de' | 'de-DE' | 'en' | 'fr' | 'it';
+export type Language = 'de' | 'de-DE' | 'en' | 'fr' | 'it' | 'es' | 'pt';
 /** The user's choice: a language, or follow the device. */
 export type LanguageSetting = Language | 'system';
 
 export type { Dict };
 
-const DICTS: Record<Language, Dict> = { de, 'de-DE': deDE, en, fr, it };
+const DICTS: Record<Language, Dict> = { de, 'de-DE': deDE, en, fr, it, es, pt };
 
 /** Both German variants. */
 export const isGerman = (lang: Language): boolean => lang === 'de' || lang === 'de-DE';
 
 /**
  * Picker order: the Swiss national languages first, German (Germany) next to
- * Swiss German. Names in their own language.
+ * Swiss German, then English, Spanish and Portuguese. Names in their own
+ * language. Portuguese is European Portuguese.
  */
 export const LANGUAGES: Array<{ code: Language; name: string; short: string }> = [
   { code: 'de', name: 'Deutsch (Schweiz)', short: 'DE-CH' },
@@ -36,6 +39,8 @@ export const LANGUAGES: Array<{ code: Language; name: string; short: string }> =
   { code: 'fr', name: 'Français', short: 'FR' },
   { code: 'it', name: 'Italiano', short: 'IT' },
   { code: 'en', name: 'English', short: 'EN' },
+  { code: 'es', name: 'Español', short: 'ES' },
+  { code: 'pt', name: 'Português', short: 'PT' },
 ];
 
 /**

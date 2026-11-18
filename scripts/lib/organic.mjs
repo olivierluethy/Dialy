@@ -2,7 +2,8 @@
  * Food names without "Bio" / "Organic": the KH-Rechner does not tell organic
  * and conventional foods apart, they have the same carbs. Removes the word
  * in all languages ("Bio", "Bio-", "(Bio)", "BIO", "Organic", "biologique",
- * "biologico", "Biologischer Landbau"): "Bio Joghurt" -> "Joghurt",
+ * "biologico", "ecológico", "biológico", "Biologischer Landbau"):
+ * "Bio Joghurt" -> "Joghurt",
  * "Gemüsereis mit Bio-Poulet" -> "Gemüsereis mit Poulet".
  *
  * Brand names that contain the word stay as they are (Biotta, Bionella,
@@ -17,7 +18,7 @@
 const BRAND = /jardin bio|bio primo|ener ?bio|biomilk|biofrench|bio-mate/i;
 const SEP = '\\s,;:/(&+-';
 const WORD = new RegExp(
-  `(^|[${SEP}])(organic-bio|bio knospe|biologische[rsnm]? (?:landwirtschaft|landbau)|biologische[rsnm]?|biologique|biologic[oa]|organic|bio)(?=$|[\\s,;:/)&+.!-])-?`,
+  `(^|[${SEP}])(organic-bio|bio knospe|biologische[rsnm]? (?:landwirtschaft|landbau)|biologische[rsnm]?|biologique|biol[oó]gic[oa]s?|ecol[oó]gic[oa]s?|organic|bio)(?=$|[\\s,;:/)&+.!-])-?`,
   'gi'
 );
 

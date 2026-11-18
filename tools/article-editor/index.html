@@ -1295,14 +1295,19 @@
   }
   // -- transfer from src/data
   // Foods in the data files that the database doesn't have yet, and existing
-  // ones still without translations (edited before 0013). Nothing else is
-  // touched, so edits in the database always win.
+  // ones missing a translation language (edited before 0013, or a language
+  // added later, e.g. es/pt). Only missing languages are added, so edits in
+  // the database always win.
   function missingFoods() {
     const add = bundledFoods.filter((f) => !dbFoods.has(f.id));
-    const names = bundledFoods.filter((f) => {
+    const names = [];
+    for (const f of bundledFoods) {
       const row = dbFoods.get(f.id);
-      return row && Object.keys(f.names || {}).length > 0 && Object.keys(row.names || {}).length === 0;
-    });
+      if (!row) continue;
+      const have = row.names || {};
+      const extra = Object.fromEntries(Object.entries(f.names || {}).filter(([lang, v]) => v && lang !== 'de-DE' && !have[lang]));
+      if (Object.keys(extra).length > 0) names.push({ id: f.id, names: { ...extra, ...have } });
+    }
     return { add, names };
   }
 
@@ -1314,7 +1319,7 @@
       ? `Die Datenbank enthält noch keine Lebensmittel. Die App lädt sie von dort – ${missing.add.length} Lebensmittel aus src/data (kuratiert, BLV, BLS, Open Food Facts) übernehmen?`
       : [
           missing.add.length && `${missing.add.length} Lebensmittel aus src/data fehlen in der Datenbank.`,
-          missing.names.length && `${missing.names.length} Lebensmittel haben noch keine Übersetzungen.`,
+          missing.names.length && `Bei ${missing.names.length} Lebensmitteln fehlen Übersetzungen.`,
           'Bestehende Einträge werden nicht überschrieben.',
         ].filter(Boolean).join(' ');
   }

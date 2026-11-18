@@ -8,15 +8,20 @@ import type { FoodNames } from '@/types/models';
  * translates for display:
  *   - names: from the food's `names` (Supabase, with the food), including
  *     'de-DE' for German Standard German where it differs ("Schlagsahne"
- *     for "Schlagrahm"). Foods without a translation (Open Food Facts
- *     products, foods added in the Dialy-Editor) keep their Swiss name.
+ *     for "Schlagrahm"). A food without a Spanish or Portuguese name shows
+ *     the English one, if any. Foods without a translation (foods added in
+ *     the Dialy-Editor) keep their Swiss name.
  *   - categories and portion labels: from the UI dictionary.
  */
+
+/** Languages whose missing food names fall back to another translation. */
+const FOOD_NAME_FALLBACK: Partial<Record<Language, keyof FoodNames>> = { es: 'en', pt: 'en' };
 
 /** Name in `lang`; `germanName` (as stored, Swiss German) if there's no translation. */
 export function localizedFoodName(germanName: string, names: FoodNames, lang: Language): string {
   if (lang === 'de') return germanName;
-  return names[lang] || germanName;
+  const fallback = FOOD_NAME_FALLBACK[lang];
+  return names[lang] || (fallback && names[fallback]) || germanName;
 }
 
 /** Stored names (JSON text from the foods table); {} if missing or broken. */

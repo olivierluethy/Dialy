@@ -177,7 +177,7 @@ const api = {
  * database (public.foods, 0013_foods_from_database.sql) - the app no longer
  * bundles them. Curated foods and brand drinks, then BLV, BLS and Open Food
  * Facts (if imported) without the ones named like a curated food, with their
- * names in en/fr/it (src/data/foodNames). The .ts data files load through
+ * names in en/fr/it/es/pt (src/data/foodNames). The .ts data files load through
  * Node's type stripping (Node 22.18+).
  */
 async function bundledFoods() {
@@ -195,7 +195,7 @@ async function bundledFoods() {
   ]);
   const json = (file) => JSON.parse(readFileSync(join(root, 'src', 'data', file), 'utf8'));
   const translations = Object.fromEntries(
-    ['en', 'fr', 'it'].map((lang) => [lang, json(`foodNames/${lang}.json`)]));
+    ['en', 'fr', 'it', 'es', 'pt'].map((lang) => [lang, json(`foodNames/${lang}.json`)]));
   const namesFor = (id) => {
     const names = {};
     for (const [lang, map] of Object.entries(translations)) if (map[id]) names[lang] = map[id];
@@ -248,7 +248,7 @@ async function bundledFoods() {
     Object.fromEntries(Object.entries(names).map(([lang, v]) => [lang, stripBrand(v)]));
   const foods = [...SEED_FOODS, ...BRAND_DRINKS].map(({ names, ...food }) => ({
     ...food,
-    names: { en: names.en, fr: names.fr, it: names.it },
+    names: { en: names.en, fr: names.fr, it: names.it, es: names.es, pt: names.pt },
   }));
   for (const [source, portionFor] of sources) {
     for (const [id, name, group, categoryIdx, carbs, sugar, fat] of source.foods) {

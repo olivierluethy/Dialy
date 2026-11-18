@@ -23,8 +23,8 @@ function mapRow(row: FoodRow): Food {
 // Explicit fold table (instead of String.normalize) so it behaves the same on
 // every JS engine, Hermes included.
 const FOLD: Record<string, string> = {
-  ä: 'a', à: 'a', á: 'a', â: 'a',
-  ö: 'o', ò: 'o', ó: 'o', ô: 'o',
+  ä: 'a', à: 'a', á: 'a', â: 'a', ã: 'a',
+  ö: 'o', ò: 'o', ó: 'o', ô: 'o', õ: 'o',
   ü: 'u', ù: 'u', ú: 'u', û: 'u',
   é: 'e', è: 'e', ê: 'e', ë: 'e',
   î: 'i', ï: 'i', í: 'i', ì: 'i',
@@ -39,7 +39,7 @@ const FOLD: Record<string, string> = {
  * (SQLite's lower()/LIKE only fold ASCII, which is why search runs in JS.)
  */
 export const foldText = (s: string): string =>
-  s.toLowerCase().replace(/[äàáâöòóôüùúûéèêëîïíìçñßœæ’]/g, (c) => FOLD[c] ?? c);
+  s.toLowerCase().replace(/[äàáâãöòóôõüùúûéèêëîïíìçñßœæ’]/g, (c) => FOLD[c] ?? c);
 
 /** The food with its name in `lang` (stored names are German). */
 const localize = (food: Food, lang: Language): Food => {

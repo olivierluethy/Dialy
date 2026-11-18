@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Builds the food-name translations src/data/foodNames/{en,fr,it}.json
+ * Builds the food-name translations src/data/foodNames/{en,fr,it,es,pt}.json
  * (food id -> name) for the KH-Rechner. German names stay in the food files
  * themselves; run this after import:blv / import:bls.
  *
@@ -26,6 +26,9 @@
  * so off-names.tsv comes first — German product name (without the brand in
  * brackets), English, French, Italian; tab-separated, translated from the
  * German. The brand suffix " (Migros)" is kept as it is.
+ *
+ * Spanish and Portuguese (all sources): food-names-es-pt.tsv, translated
+ * from the English names above (Spain Spanish, European Portuguese).
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -44,6 +47,7 @@ const BLV_FILES = {
 const BLS_FILE = 'BLS_4_0_Daten_2025_DE.xlsx';
 const BLS_FR_IT = 'bls-names-fr-it.tsv';
 const OFF_NAMES = 'off-names.tsv';
+const ES_PT = 'food-names-es-pt.tsv';
 
 const cellValue = (v) => {
   if (v === null || v === undefined) return '';
@@ -72,8 +76,8 @@ const withCarbs = (f) => new Set(readJson(f).foods.filter((x) => x[4] > 0).map((
 const blvIds = withCarbs('blvFoods.json');
 const blsIds = withCarbs('blsFoods.json');
 
-const names = { en: {}, fr: {}, it: {} };
-const missing = { en: 0, fr: 0, it: 0 };
+const names = { en: {}, fr: {}, it: {}, es: {}, pt: {} };
+const missing = { en: 0, fr: 0, it: 0, es: 0, pt: 0 };
 
 // ------------------------------------------------------------ BLV
 for (const [lang, file] of Object.entries(BLV_FILES)) {
@@ -138,6 +142,30 @@ if (existsSync(join(root, 'src', 'data', 'offFoods.json'))) {
     translated += 1;
   }
   console.log(`Open Food Facts: ${translated} of ${off.foods.length} products translated`);
+}
+
+// ------------------------------------------------------------ Spanish, Portuguese
+// Translated from the English names: food-names-es-pt.tsv (English, Spanish,
+// Portuguese; tab-separated, header line). Open Food Facts names carry the
+// brand suffix " (Migros)", which is looked up without and kept as it is.
+if (existsSync(src(ES_PT))) {
+  const byEnglish = new Map();
+  for (const line of readFileSync(src(ES_PT), 'utf8').split(/\r?\n/).slice(1)) {
+    const [en, es, pt] = line.split('\t').map((s) => (s ?? '').trim());
+    if (en && es && pt) byEnglish.set(en, { es, pt });
+  }
+  for (const [id, en] of Object.entries(names.en)) {
+    const generic = id.startsWith('off-') ? en.replace(/\s*\([^()]*\)\s*$/, '').trim() || en : en;
+    const t = byEnglish.get(generic);
+    if (!t) {
+      missing.es += 1;
+      missing.pt += 1;
+      continue;
+    }
+    const brand = en.slice(generic.length);
+    names.es[id] = t.es + brand;
+    names.pt[id] = t.pt + brand;
+  }
 }
 
 // ------------------------------------------------------------ write
